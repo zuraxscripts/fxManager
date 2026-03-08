@@ -1,0 +1,15 @@
+{
+  "name": "@fxmanager/core",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "bun --hot src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome lint ./src"
+  },
+  "dependencies": {
+    "@fxmanager/database": "workspace:*",
+    "@fxmanager/types": "workspace:*"
+  }
+}

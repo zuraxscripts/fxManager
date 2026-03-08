@@ -1,0 +1,29 @@
+{
+  "name": "fxmanager",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "bun@1.2.0",
+  "workspaces": [
+    "packages/*",
+    "shared/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev dev:client --parallel",
+    "dev:core": "turbo run dev --filter=@fxmanager/core",
+    "dev:panel": "turbo run dev dev:client --filter=@fxmanager/panel",
+    "build": "turbo run build && bun run build.ts",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check --write .",
+    "typecheck": "turbo run typecheck",
+    "db:studio": "drizzle-kit studio"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@types/bun": "latest",
+    "@types/node": "^25.3.5",
+    "drizzle-kit": "^0.31.0",
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.0"
+  }
+}
