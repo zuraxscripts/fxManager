@@ -8,6 +8,7 @@ import { serverRoutes } from './routes/server';
 import { playerRoutes } from './routes/players';
 import { resourceRoutes } from './routes/resource';
 import { wsRoutes } from './ws';
+import { authRoutes } from './routes/auth';
 
 const PORT = Number(process.env.PANEL_PORT ?? 4000);
 const isDev = process.env.NODE_ENV !== 'production';
@@ -30,6 +31,7 @@ export function startPanel(pm: IProcessManager) {
     .use(serverRoutes(pm))
     .use(playerRoutes)
     .use(resourceRoutes)
+    .use(authRoutes)
     .use(wsRoutes(pm))
     .get('/api/health', () => ({ ok: true, ts: Date.now() }));
 
