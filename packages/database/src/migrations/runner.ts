@@ -1,10 +1,5 @@
 import type { Database } from 'bun:sqlite';
-
-export interface Migration {
-  version: number;
-  description: string;
-  up: string[];
-}
+import { Migration } from './types';
 
 // ─── Bootstrap the version tracking table ────────────────────────────────────
 // This is the only table created outside the migration system itself.
