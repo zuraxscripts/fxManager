@@ -12,11 +12,11 @@ import { createSettingsRepository } from './repositories/settings';
 import { createApiTokensRepository } from './repositories/api-tokens';
 
 export * from './schema';
-export type { Migration } from './migrations/runner';
+export type { Migration } from './migrations/types';
 
 // ─── Initialise ───────────────────────────────────────────────────────────────
 
-const dbPath = process.env.DB_PATH ?? './data/panel.db';
+const dbPath = process.env.NODE_ENV === 'production' ? './data/panel.db' : '../../data/panel.db';
 const dbDir = dirname(dbPath);
 if (!existsSync(dbDir)) mkdirSync(dbDir, { recursive: true });
 
