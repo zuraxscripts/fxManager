@@ -9,6 +9,6 @@ export default defineConfig({
   out: './packages/database/src/migrations/generated',
   dialect: 'sqlite',
   dbCredentials: {
-    url: process.env.DB_PATH ?? './data/panel.db',
+    url: './data/panel.db',
   },
 });

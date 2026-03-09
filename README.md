@@ -147,7 +147,6 @@ The panel will be available at `http://your-server-ip:4000`.
 | Variable           | Default           | Description                       |
 |--------------------|-------------------|-----------------------------------|
 | `PANEL_PORT`       | `4000`            | Web panel port                    |
-| `DB_PATH`          | `./data/panel.db` | SQLite database path              |
 | `FIVEM_EXECUTABLE` | `./FXServer`      | Path to FXServer binary           |
 | `FIVEM_DATA_PATH`  | `./server-data`   | Path to server-data folder        |
 | `FIVEM_CFG`        | `server.cfg`      | Config file name inside data path |
