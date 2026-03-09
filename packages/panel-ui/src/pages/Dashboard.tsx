@@ -9,7 +9,8 @@ import { STATUS_VARIANT } from '@/static/server-state';
 import type { ServerState } from '@fxmanager/types';
 
 const serverState: ServerState = {
-    status: 'stopped'
+    status: 'stopped',
+    restarts: 5
 }
 
 export default function Dashboard() {

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 
 
 const logs: ConsoleOutputEvent[] = [];
-const sendCommand = (cmd: string) => {};
+const sendCommand = (cmd: string) => console.log('[PLACEHOLDER] exec command', cmd);
 
 export default function Console() {
     const bottomRef = useRef<HTMLDivElement>(null)
@@ -19,7 +19,7 @@ export default function Console() {
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-    }, [logs])
+    }, [/* logs - commented being that it's hardcoded */])
 
     const submit = () => {
         const cmd = input.trim()
