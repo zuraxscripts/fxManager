@@ -24,7 +24,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
           <div className="grid flex-1 text-left text-sm leading-tight">
             <span className="text-base font-bold">
-              <span className="text-primary">FX</span>Panel
+              <span className="text-primary">fx</span>Manager
             </span>
           </div>
         </SidebarMenuButton>
