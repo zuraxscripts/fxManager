@@ -11,10 +11,10 @@ import Console from './pages/Console';
 
 export function App() {
   const { user } = useAuth();
-  
+
   return (
     <Routes>
-      <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} replace />} />
+      <Route path="/" element={<Navigate to={user ? '/dashboard' : '/login'} replace />} />
       <Route path="/login" element={<ProtectedRoute element={LoginPage} auth={false} />} />
 
       <Route element={<AppLayout />}>

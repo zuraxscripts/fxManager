@@ -6,7 +6,7 @@ import { LoadingScreen } from './loading';
 export function ProtectedRoute({ auth = true, element: Element }: ProtectedRouteProps) {
   const { user, loading } = useAuth();
 
-  if (loading) return <LoadingScreen message='Loading session' />;
+  if (loading) return <LoadingScreen message="Loading session" />;
 
   if (!user && auth) {
     return <Navigate to="/login" replace />;

@@ -9,7 +9,7 @@ class MockProcessManager extends EventEmitter implements IProcessManager {
     restarts: 0,
     pid: undefined,
     startedAt: undefined,
-    lastCrashAt: undefined
+    lastCrashAt: undefined,
   };
 
   getState(): ServerState {
@@ -24,24 +24,24 @@ class MockProcessManager extends EventEmitter implements IProcessManager {
       pid: newStatus === 'running' ? Math.floor(Math.random() * 10000) : undefined,
       startedAt: newStatus === 'running' ? new Date() : this.state.startedAt,
       restarts: newStatus === 'starting' ? this.state.restarts + 1 : this.state.restarts,
-      lastCrashAt: newStatus === 'crashed' ? new Date() : this.state.lastCrashAt
+      lastCrashAt: newStatus === 'crashed' ? new Date() : this.state.lastCrashAt,
     };
-    
+
     this.emit('stateChange', this.state);
     this.emit('log', `System state updated to: ${newStatus}`);
   }
 
   async start(): Promise<void> {
     if (this.state.status === 'running') return;
-    
+
     this.updateStatus('starting');
-    await new Promise(r => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 1500));
     this.updateStatus('running');
   }
 
   async stop(): Promise<void> {
     this.updateStatus('stopping');
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 1000));
     this.updateStatus('stopped');
   }
 

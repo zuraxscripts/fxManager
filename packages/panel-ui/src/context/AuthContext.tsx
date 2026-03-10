@@ -12,8 +12,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function init() {
       try {
-        const me = await QueryService({ endpoint: '/auth/me', method: 'GET' })
-        setUser(me)
+        const me = await QueryService({ endpoint: '/auth/me', method: 'GET' });
+        setUser(me);
       } finally {
         setLoading(false);
       }
@@ -21,17 +21,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     init();
   }, []);
 
-  const login = useCallback(async (username: string, password: string) => {
-    await QueryService({
-      endpoint: '/auth/login',
-      method: 'POST',
-      body: { username, password },
-    })
-    const me = await QueryService({ endpoint: '/auth/me', method: 'GET' })
-    setUser(me)
-    navigate('/dashboard');
-  }, [navigate]);
-
+  const login = useCallback(
+    async (username: string, password: string) => {
+      await QueryService({
+        endpoint: '/auth/login',
+        method: 'POST',
+        body: { username, password },
+      });
+      const me = await QueryService({ endpoint: '/auth/me', method: 'GET' });
+      setUser(me);
+      navigate('/dashboard');
+    },
+    [navigate],
+  );
 
   const logout = useCallback(async () => {
     await QueryService({
@@ -42,8 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>{children}</AuthContext.Provider>
   );
 }

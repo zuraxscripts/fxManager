@@ -1,4 +1,4 @@
-import { ApiError } from "@/types/api";
+import { ApiError } from '@/types/api';
 
 const HOSTNAME = import.meta.env.DEV ? 'localhost:4000' : window.location.host;
 const IS_SECURE = window.location.protocol === 'https:';
@@ -39,7 +39,7 @@ export async function QueryService({
       throw new ApiError(
         errorData.message || `Request failed with status ${response.status}`,
         response.status,
-        errorData
+        errorData,
       );
     }
 

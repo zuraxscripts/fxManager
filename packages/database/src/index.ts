@@ -46,5 +46,5 @@ export const repo = {
   audit: createAuditRepository(db),
   settings: createSettingsRepository(db),
   apiTokens: createApiTokensRepository(db),
-  auth:      createAuthRepository(db),
+  auth: createAuthRepository(db),
 };
