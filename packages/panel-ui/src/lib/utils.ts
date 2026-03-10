@@ -10,7 +10,7 @@ export function formatUptime(startedAt: Date | string, seconds: boolean = false)
   const h = Math.floor(diff / 3600);
   const m = Math.floor((diff % 3600) / 60);
 
-  if (seconds) return `${h}h ${m}m`;
+  if (!seconds) return `${h}h ${m}m`;
 
   const s = diff % 60;
   return `${h}h ${m}m ${s}s`;
