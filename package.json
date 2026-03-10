@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "turbo run dev dev:client --parallel",
     "dev:core": "turbo run dev --filter=@fxmanager/core",
-    "dev:panel": "turbo run dev dev:client --filter=@fxmanager/panel",
+    "dev:panel": "turbo run dev:isolated --filter=@fxmanager/panel-ui --filter=@fxmanager/panel",
     "build": "turbo run build && bun run build.ts",
     "lint": "biome lint .",
     "format": "biome format --write .",

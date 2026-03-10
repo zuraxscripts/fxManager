@@ -16,6 +16,10 @@
       "persistent": true,
       "cache": false
     },
+    "dev:isolated": {
+      "persistent": true,
+      "cache": false
+    },
     "typecheck": {
       "dependsOn": ["^typecheck"],
       "cache": true
