@@ -1,32 +1,40 @@
 import { useEffect, useRef, useState } from 'react';
-import { Terminal, SendHorizonal } from 'lucide-react';
-import type { ConsoleOutputEvent } from '@fxmanager/types';
+import { Terminal, SendHorizonal, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useConsoleSocket } from '@/hooks/use-ws-channels';
+import type { ConsoleOutputEvent } from '@fxmanager/types';
 
-const logs: ConsoleOutputEvent[] = [];
-const sendCommand = (cmd: string) => console.log('[PLACEHOLDER] exec command', cmd);
+function LogLine({ event }: { event: ConsoleOutputEvent }) {
+  return (
+    <div className="font-mono text-sm leading-tight whitespace-pre-wrap">
+      <span className="text-gray-500 mr-2">[{new Date(event.ts).toLocaleTimeString()}]</span>
+      {event.segments.map((seg, i) => (
+        <span key={i} style={{ color: seg.color }}>
+          {seg.text}
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export default function Console() {
+  const { logs, sendCommand } = useConsoleSocket();
   const bottomRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState('');
   const [history, setHistory] = useState<string[]>([]);
   const [histIdx, setHistIdx] = useState(-1);
 
-  useEffect(
-    () => {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    },
-    [
-      /* logs - commented being that it's hardcoded */
-    ],
-  );
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [logs]);
 
   const submit = () => {
     const cmd = input.trim();
     if (!cmd) return;
+    console.log('Sending command down ws', cmd);
     sendCommand(cmd);
     setHistory((h) => [cmd, ...h].slice(0, 50));
     setHistIdx(-1);
@@ -54,29 +62,26 @@ export default function Console() {
         <h1 className="text-2xl font-bold">Console</h1>
       </div>
 
+      {/* ToDo:
+       * Fix jumping around of the elements when logs update
+       * Consider storing console output on client ? - server only stores 5k at a time
+       */}
       <Card className="flex flex-1 flex-col overflow-hidden bg-card/50">
         <ScrollArea className="flex-1 p-4">
           <div className="font-mono text-xs leading-relaxed">
             {logs.length === 0 ? (
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground text-center">
                 No output yet. Start the server to see logs.
               </span>
             ) : (
-              logs.map((log, i) => (
-                <div
-                  key={i}
-                  className={log.source === 'stderr' ? 'text-destructive' : 'text-foreground/80'}
-                >
-                  {log.line}
-                </div>
-              ))
+              logs.map((log) => <LogLine event={log} key={log.id} />)
             )}
             <div ref={bottomRef} />
           </div>
         </ScrollArea>
 
         <div className="flex items-center gap-2 border-t p-3">
-          <span className="font-mono text-primary">›</span>
+          <ArrowRight className="text-primary" />
           <Input
             value={input}
             onChange={(e) => setInput(e.target.value)}
