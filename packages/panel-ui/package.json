@@ -1,5 +1,5 @@
 {
-  "name": "panel-ui",
+  "name": "@fxmanager/panel-ui",
   "private": true,
   "version": "0.0.1",
   "type": "module",
