@@ -36,8 +36,6 @@ export async function QueryService({
         errorData = { message: response.statusText };
       }
 
-      console.log(response);
-
       throw new ApiError(
         errorData.message || `Request failed with status ${response.status}`,
         response.status,

@@ -7,7 +7,6 @@ export const sessionAuth = new Elysia({ name: 'session-auth' }).derive(
   { as: 'scoped' },
   ({ cookie, status }) => {
     const sessionId = cookie[COOKIE_NAME]?.value as string;
-    console.log('[panel - mdwr] session auth', sessionId);
     if (!sessionId) return status(401, { error: 'Not authenticated' });
     const result = repo.auth.validateSession(sessionId);
     if (!result) return status(401, { error: 'Session expired' });

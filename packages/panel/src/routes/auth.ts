@@ -36,7 +36,6 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
   .post(
     '/login',
     async ({ body, cookie, status }) => {
-      console.log('[panel] Received login req', body, status);
       const user = await repo.auth.verifyPassword(body.username, body.password);
       if (!user) return status(401, { error: 'Invalid credentials' });
       const session = repo.auth.createSession(user.id);
