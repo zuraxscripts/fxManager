@@ -40,6 +40,7 @@ export const adminUsers = sqliteTable(
     username: text('username').notNull().unique(),
     passwordHash: text('password_hash').notNull(),
     playerId: integer('player_id').references(() => players.id, { onDelete: 'set null' }),
+    permissions: integer('permissions').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     lastLoginAt: integer('last_login_at', { mode: 'timestamp' }),
   },

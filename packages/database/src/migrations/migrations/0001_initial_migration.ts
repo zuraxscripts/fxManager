@@ -13,18 +13,32 @@ export const migration_0001_initial: Migration = {
       last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
 
+    `CREATE TABLE IF NOT EXISTS audit_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      admin_id INTEGER,
+      action TEXT NOT NULL,
+      target TEXT,
+      metadata TEXT,
+      created_at INTEGER NOT NULL
+    )`,
+
+    `CREATE INDEX audit_admin_idx ON audit_log (admin_id)`,
+    `CREATE INDEX audit_created_idx ON audit_log (created_at)`,
+
+    // region auth tables
+
     `CREATE TABLE IF NOT EXISTS admin_users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT NOT NULL UNIQUE,
       password_hash TEXT NOT NULL,
       player_id TEXT REFERENCES players (id) ON DELETE SET NULL,
+      permissions INTEGER NOT NULL DEFAULT 0,
       created_at INTEGER NOT NULL,
       last_login_at INTEGER
     )`,
 
     `CREATE INDEX admin_username_idx ON admin_users (username)`,
 
-    // region auth tables
     `CREATE TABLE IF NOT EXISTS sessions (
       id TEXT PRIMARY KEY,
       admin_id INTEGER NOT NULL REFERENCES admin_users (id) ON DELETE CASCADE,
@@ -44,18 +58,6 @@ export const migration_0001_initial: Migration = {
     )`,
 
     `CREATE INDEX tokens_token_idx ON api_tokens (token)`,
-
-    `CREATE TABLE IF NOT EXISTS audit_log (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      admin_id INTEGER,
-      action TEXT NOT NULL,
-      target TEXT,
-      metadata TEXT,
-      created_at INTEGER NOT NULL
-    )`,
-
-    `CREATE INDEX audit_admin_idx ON audit_log (admin_id)`,
-    `CREATE INDEX audit_created_idx ON audit_log (created_at)`,
 
     // region player data tables
     `CREATE TABLE IF NOT EXISTS player_identifiers (
