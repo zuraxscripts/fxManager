@@ -1,5 +1,6 @@
 import { AuthContext } from '@/hooks/use-auth';
 import { QueryService } from '@/lib/query';
+import type { ApiError } from '@/types/api';
 import type { AuthUser } from '@/types/auth';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +15,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const me = await QueryService({ endpoint: '/auth/me', method: 'GET' });
         setUser(me);
+      } catch (err) {
+        const status = (err as ApiError).status;
+        if (status !== 401) console.error('Unable to check status', status);
       } finally {
         setLoading(false);
       }
