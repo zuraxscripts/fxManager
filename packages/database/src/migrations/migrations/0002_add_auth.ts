@@ -8,6 +8,7 @@ export const migration_0002_auth: Migration = {
         id            INTEGER PRIMARY KEY AUTOINCREMENT,
         username      TEXT    NOT NULL UNIQUE,
         password_hash TEXT    NOT NULL,
+        player_id     TEXT             REFERENCES players (id) ON DELETE SET NULL, -- links to players table
         created_at    INTEGER NOT NULL,
         last_login_at INTEGER
       )`,
