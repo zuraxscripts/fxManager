@@ -14,7 +14,7 @@ export async function QueryService({
   method: 'GET' | 'POST';
   body?: unknown;
   headers?: Record<string, string>;
-}) {
+}, showError: boolean = false) {
   const protocol = IS_SECURE ? 'https' : 'http';
   const url = `${protocol}://${HOSTNAME}${endpoint}`;
 
@@ -46,7 +46,7 @@ export async function QueryService({
 
     return await response.json();
   } catch (err) {
-    console.error('QueryService Error:', err);
+    if (showError || import.meta.env.DEV) console.error('QueryService Error:', err);
     throw err;
   }
 }
