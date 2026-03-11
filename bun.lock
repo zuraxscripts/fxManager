@@ -115,6 +115,13 @@
         "@types/node": "^25.4.0",
       },
     },
+    "shared/utils": {
+      "name": "@fxmanager/utils",
+      "version": "0.1.0",
+      "dependencies": {
+        "@fxmanager/types": "workspace:*",
+      },
+    },
   },
   "packages": {
     "@antfu/ni": ["@antfu/ni@25.0.0", "", { "dependencies": { "ansis": "^4.0.0", "fzf": "^0.5.2", "package-manager-detector": "^1.3.0", "tinyexec": "^1.0.1" }, "bin": { "na": "bin/na.mjs", "ni": "bin/ni.mjs", "nr": "bin/nr.mjs", "nci": "bin/nci.mjs", "nlx": "bin/nlx.mjs", "nun": "bin/nun.mjs", "nup": "bin/nup.mjs" } }, "sha512-9q/yCljni37pkMr4sPrI3G4jqdIk074+iukc5aFJl7kmDCCsiJrbZ6zKxnES1Gwg+i9RcDZwvktl23puGslmvA=="],
@@ -312,6 +319,8 @@
     "@fxmanager/resource": ["@fxmanager/resource@workspace:packages/resource"],
 
     "@fxmanager/types": ["@fxmanager/types@workspace:shared/types"],
+
+    "@fxmanager/utils": ["@fxmanager/utils@workspace:shared/utils"],
 
     "@hono/node-server": ["@hono/node-server@1.19.11", "", { "peerDependencies": { "hono": "^4" } }, "sha512-dr8/3zEaB+p0D2n/IUrlPF1HZm586qgJNXK1a9fhg/PzdtkK7Ksd5l312tJX2yBuALqDYBlG20QEbayqPyxn+g=="],
 
