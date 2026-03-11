@@ -1,4 +1,5 @@
 import { ApiError } from '@/types/api';
+import { toast } from 'sonner';
 
 const HOSTNAME = import.meta.env.DEV ? 'localhost:4000' : window.location.host;
 const IS_SECURE = window.location.protocol === 'https:';
@@ -47,6 +48,21 @@ export async function QueryService({
   } catch (err) {
     console.error('QueryService Error:', err);
     throw err;
+  }
+}
+
+export async function HandleServerAction(action: 'start' | 'stop' | 'restart') {
+  try {
+    await QueryService({
+      endpoint: `/server/${action}`,
+      method: 'POST',
+    });
+  } catch (err) {
+    console.error(`Unable to execute action ${action}`, (err as Error).message);
+    toast.error(`Unable to ${action} on server`, {
+      richColors: true,
+      position: 'top-center',
+    });
   }
 }
 

@@ -1,9 +1,8 @@
 import { Activity, Clock, Hash, Play, RefreshCw, RotateCcw, Square } from 'lucide-react';
-import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { QueryService } from '@/lib/query';
+import { HandleServerAction } from '@/lib/query';
 import { formatUptime } from '@/lib/utils';
 import { STATUS_VARIANT } from '@/static/server-state';
 import { useServerStateSocket } from '@/hooks/use-ws-channels';
@@ -30,21 +29,6 @@ export default function Dashboard() {
       icon: Clock,
     },
   ];
-
-  async function handleAction(action: 'start' | 'stop' | 'restart') {
-    try {
-      await QueryService({
-        endpoint: `/server/${action}`,
-        method: 'POST',
-      });
-    } catch (err) {
-      console.error(`Unable to execute action ${action}`, (err as Error).message);
-      toast.error(`Unable to ${action} on server`, {
-        richColors: true,
-        position: 'top-center',
-      });
-    }
-  }
 
   return (
     <div className="space-y-6">
@@ -77,7 +61,7 @@ export default function Dashboard() {
             size="sm"
             variant="outline"
             disabled={!canStart}
-            onClick={() => handleAction('start')}
+            onClick={() => HandleServerAction('start')}
             className="border-green-500/30 text-green-400 hover:bg-green-500/10 disabled:opacity-40"
           >
             <Play className="mr-1.5 h-3.5 w-3.5" /> Start
@@ -86,7 +70,7 @@ export default function Dashboard() {
             size="sm"
             variant="outline"
             disabled={!isRunning}
-            onClick={() => handleAction('stop')}
+            onClick={() => HandleServerAction('stop')}
             className="border-destructive/30 text-destructive hover:bg-destructive/10 disabled:opacity-40"
           >
             <Square className="mr-1.5 h-3.5 w-3.5" /> Stop
@@ -95,7 +79,7 @@ export default function Dashboard() {
             size="sm"
             variant="outline"
             disabled={!isRunning}
-            onClick={() => handleAction('restart')}
+            onClick={() => HandleServerAction('restart')}
             className="border-primary/30 text-primary hover:bg-primary/10 disabled:opacity-40"
           >
             <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> Restart
