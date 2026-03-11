@@ -1,5 +1,5 @@
 import type { EventEmitter } from 'events';
-import { ConsoleOutputEvent } from './socket';
+import type { ConsoleOutputEvent } from './socket';
 
 export type ServerStatus = 'stopped' | 'starting' | 'running' | 'stopping' | 'crashed';
 
