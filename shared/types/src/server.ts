@@ -18,6 +18,7 @@ export interface ServerConfig {
   autoRestart: boolean;
   maxRestarts: number;
   restartDelayMs: number;
+  webServerPort: number;
 }
 
 export interface IProcessManager extends EventEmitter {

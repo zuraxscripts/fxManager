@@ -8,6 +8,7 @@ const DEFAULTS: ServerConfig = {
   autoRestart: true,
   maxRestarts: 5,
   restartDelayMs: 5000,
+  webServerPort: process.env.PANEL_PORT ? Number(process.env.PANEL_PORT) : 4000,
 };
 
 export function loadConfig(): ServerConfig {
