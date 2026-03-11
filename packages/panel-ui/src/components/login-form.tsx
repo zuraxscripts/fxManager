@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Field, FieldGroup, FieldLabel, FieldSeparator } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { GalleryVerticalEndIcon } from 'lucide-react';
+import { Server } from 'lucide-react';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
@@ -27,13 +27,17 @@ export function LoginForm({ className, ...props }: React.ComponentProps<'div'>) 
       <form onSubmit={(e) => handleSubmit(e)}>
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
-            <a href="#" className="flex flex-col items-center gap-2 font-medium">
-              <div className="flex size-8 items-center justify-center rounded-md">
-                <GalleryVerticalEndIcon className="size-6" />
+            <div className="flex flex-col items-center gap-2 font-medium group">
+              <div className="relative flex size-10 items-center justify-center rounded-xl">
+                <div className="absolute inset-0 rounded-xl bg-primary/50 blur-md" />
+
+                <Server className="size-6 text-primary-foreground z-10" />
               </div>
-              <span className="sr-only">Acme Inc.</span>
-            </a>
-            <h1 className="text-xl font-bold">Welcome to Acme Inc.</h1>
+              <span className="sr-only">Fx Manager</span>
+            </div>
+            <h1 className="text-xl font-bold mt-5">
+              <span className="text-primary">fx</span>Manager WebPanel
+            </h1>
           </div>
           <Field>
             <FieldLabel htmlFor="username">Username</FieldLabel>
