@@ -4,17 +4,20 @@ import { toast } from 'sonner';
 const HOSTNAME = import.meta.env.DEV ? 'localhost:4000' : window.location.host;
 const IS_SECURE = window.location.protocol === 'https:';
 
-export async function QueryService({
-  endpoint,
-  method,
-  body = null,
-  headers = {},
-}: {
-  endpoint: string;
-  method: 'GET' | 'POST';
-  body?: unknown;
-  headers?: Record<string, string>;
-}, showError: boolean = false) {
+export async function QueryService(
+  {
+    endpoint,
+    method,
+    body = null,
+    headers = {},
+  }: {
+    endpoint: string;
+    method: 'GET' | 'POST';
+    body?: unknown;
+    headers?: Record<string, string>;
+  },
+  showError: boolean = false,
+) {
   const protocol = IS_SECURE ? 'https' : 'http';
   const url = `${protocol}://${HOSTNAME}${endpoint}`;
 
