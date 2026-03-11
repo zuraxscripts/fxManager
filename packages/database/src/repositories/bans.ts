@@ -1,6 +1,6 @@
 import { eq, and, isNull, or, gt } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
-import { bans, players } from '../schema';
+import { bans, players, playerIdentifiers } from '../schema';
 import type * as schema from '../schema';
 
 type DB = BunSQLiteDatabase<typeof schema>;
@@ -29,15 +29,18 @@ export function createBansRepository(db: DB) {
         .get();
     },
 
+    // ToDo: update to check across multiple identifiers and also HWIDS
     isLicenseBanned(license: string): boolean {
       const now = new Date();
       const result = db
         .select({ banId: bans.id })
         .from(bans)
         .innerJoin(players, eq(bans.playerId, players.id))
+        .innerJoin(playerIdentifiers, eq(playerIdentifiers.playerId, players.id))
         .where(
           and(
-            eq(players.license, license),
+            eq(playerIdentifiers.type, 'license'),
+            eq(playerIdentifiers.value, license),
             isNull(bans.revokedAt),
             or(isNull(bans.expiresAt), gt(bans.expiresAt, now)),
           ),

@@ -1,26 +1,53 @@
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
-import { players } from '../schema';
+import { players, playerIdentifiers } from '../schema';
 import type * as schema from '../schema';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
 export function createPlayersRepository(db: DB) {
   return {
-    upsert(license: string, name: string) {
-      const now = new Date();
+    findByLicense(license: string) {
       return db
-        .insert(players)
-        .values({ license, name, firstSeen: now, lastSeen: now })
-        .onConflictDoUpdate({
-          target: players.license,
-          set: { name, lastSeen: now },
+        .select({
+          player: players,
         })
-        .returning();
+        .from(players)
+        .innerJoin(playerIdentifiers, eq(playerIdentifiers.playerId, players.id))
+        .where(and(eq(playerIdentifiers.type, 'license'), eq(playerIdentifiers.value, license)))
+        .get();
     },
 
-    findByLicense(license: string) {
-      return db.select().from(players).where(eq(players.license, license)).get();
+    async upsert(license: string, name: string) {
+      const now = new Date();
+      return db.transaction(async (tx) => {
+        const existingIdentifier = tx
+          .select()
+          .from(playerIdentifiers)
+          .where(and(eq(playerIdentifiers.type, 'license'), eq(playerIdentifiers.value, license)))
+          .get();
+
+        if (existingIdentifier) {
+          return tx
+            .update(players)
+            .set({ name, lastSeen: now })
+            .where(eq(players.id, existingIdentifier.playerId))
+            .returning();
+        } else {
+          const [newPlayer] = await tx
+            .insert(players)
+            .values({ name, firstSeen: now, lastSeen: now })
+            .returning();
+
+          await tx.insert(playerIdentifiers).values({
+            playerId: newPlayer.id,
+            type: 'license',
+            value: license,
+          });
+
+          return [newPlayer];
+        }
+      });
     },
 
     findById(id: number) {
