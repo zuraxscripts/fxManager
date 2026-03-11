@@ -8,9 +8,17 @@ import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
 import Players from './pages/Players';
 import Console from './pages/Console';
+import { LoadingScreen } from './components/loading';
+import SetupPage from './pages/Setup';
 
 export function App() {
-  const { user } = useAuth();
+  const { user, loading, settings } = useAuth();
+
+  if (loading) return <LoadingScreen message="Loading session" />;
+
+  if (!settings.isSetup) {
+    return <SetupPage />;
+  }
 
   return (
     <Routes>
