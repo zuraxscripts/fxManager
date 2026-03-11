@@ -30,7 +30,8 @@ packages/
   database/   - Drizzle schema, migrations, repositories
   resource/   - Drop-in FiveM/RedM Lua resource
 shared/
-  types/      - Shared TypeScript types across all packages
+  types/      - Shared TypeScript types
+  utils/      - Shared helper functions
 ```
 
 ---
