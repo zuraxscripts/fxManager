@@ -8,7 +8,7 @@
     "shared/*"
   ],
   "scripts": {
-    "dev": "turbo run dev dev:client --parallel",
+    "dev": "turbo run dev --parallel",
     "dev:core": "turbo run dev --filter=@fxmanager/core",
     "dev:panel": "turbo run dev:isolated --filter=@fxmanager/panel-ui --filter=@fxmanager/panel",
     "build": "turbo run build && bun run build.ts",
