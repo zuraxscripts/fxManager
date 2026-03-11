@@ -40,8 +40,8 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
       this.setState('running', { pid: this.proc.pid, startedAt: new Date() });
       repo.audit.log({ adminId: 'system', action: 'server.start' });
 
-      this.pipeOutput(this.proc.stdout, 'stdout');
-      this.pipeOutput(this.proc.stderr, 'stderr');
+      this.pipeOutput(this.proc.stdout as ReadableStream<Uint8Array<ArrayBuffer>>, 'stdout');
+      this.pipeOutput(this.proc.stderr as ReadableStream<Uint8Array<ArrayBuffer>>, 'stderr');
 
       // Watch for exit
       this.proc.exited.then((code) => this.onExit(code));
