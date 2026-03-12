@@ -16,7 +16,7 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
     return { ...this.state };
   }
 
-  async start(): Promise<void> {
+  async start(adminId?: number): Promise<void> {
     if (this.state.status === 'running' || this.state.status === 'starting') {
       throw new Error('Server is already running or starting');
     }
@@ -38,7 +38,7 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
       });
 
       this.setState('running', { pid: this.proc.pid, startedAt: new Date() });
-      repo.audit.log({ adminId: 'system', action: 'server.start' });
+      repo.audit.log({ adminId, action: 'server.start' });
 
       this.pipeOutput(this.proc.stdout as ReadableStream<Uint8Array<ArrayBuffer>>, 'stdout');
       this.pipeOutput(this.proc.stderr as ReadableStream<Uint8Array<ArrayBuffer>>, 'stderr');
@@ -51,7 +51,7 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
     }
   }
 
-  async stop(): Promise<void> {
+  async stop(adminId?: number): Promise<void> {
     if (!this.proc || this.state.status === 'stopped') {
       throw new Error('Server is not running');
     }
@@ -62,13 +62,13 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
     this.proc.kill();
     await this.proc.exited;
     this.setState('stopped');
-    repo.audit.log({ adminId: 'system', action: 'server.stop' });
+    repo.audit.log({ adminId, action: 'server.stop' });
   }
 
-  async restart(): Promise<void> {
+  async restart(adminId?: number): Promise<void> {
     if (this.state.status === 'running') await this.stop();
     await this.start();
-    repo.audit.log({ adminId: 'system', action: 'server.restart' });
+    repo.audit.log({ adminId, action: 'server.restart' });
   }
 
   sendCommand(command: string): void {
