@@ -1,8 +1,8 @@
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, inArray, isNull, or, gt } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
-import { players, playerIdentifiers } from '../schema';
+import { players, playerIdentifiers, bans } from '../schema';
 import type * as schema from '../schema';
-import { PlayerIdentifiers } from '@fxmanager/types';
+import { Ban, PlayerIdentifiers } from '@fxmanager/types';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
@@ -76,6 +76,37 @@ export function createPlayersRepository(db: DB) {
           return [newPlayer];
         }
       });
+    },
+
+    checkBanned(identifiers: PlayerIdentifiers): Ban | null {
+      const now = new Date();
+
+      const identifierValues = Object.values(identifiers).filter(Boolean);
+
+      if (identifierValues.length === 0) return null;
+
+      const activeBan = db
+        .select({
+          id: bans.id,
+          playerId: bans.playerId,
+          reason: bans.reason,
+          bannedBy: bans.bannedBy,
+          createdAt: bans.createdAt,
+          expiresAt: bans.expiresAt,
+        })
+        .from(bans)
+        .innerJoin(playerIdentifiers, eq(bans.playerId, playerIdentifiers.playerId))
+        .where(
+          and(
+            inArray(playerIdentifiers.value, identifierValues),
+            isNull(bans.revokedAt),
+            or(isNull(bans.expiresAt), gt(bans.expiresAt, now)),
+          ),
+        )
+        .limit(1)
+        .get();
+
+      return activeBan ?? null;
     },
 
     findById(id: number) {
