@@ -1,7 +1,7 @@
 import './config/env';
 
 import { applyMigrations } from '@fxmanager/database';
-import { processManager } from './process/manager';
+import { processManager } from './services/process/manager';
 import { startPanel } from '../../panel/src/index';
 import { loadConfig } from './config';
 
@@ -16,7 +16,7 @@ applyMigrations();
 const { webServerPort } = loadConfig();
 startPanel({
   port: webServerPort,
-  pm: processManager
+  pm: processManager,
 });
 
 // 3. Graceful shutdown
