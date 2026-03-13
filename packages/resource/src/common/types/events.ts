@@ -4,5 +4,5 @@ export type DeferralsDeferObj = {
   update: (message: string) => {};
   done: (failureReason?: string) => void;
   handover: (data: Record<string, any>) => void;
-  presentCard: (card: string, cb: (data: any, rawData: string) => void) => void; 
+  presentCard: (card: string, cb: (data: any, rawData: string) => void) => void;
 };
