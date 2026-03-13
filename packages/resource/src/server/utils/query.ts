@@ -37,7 +37,7 @@ export async function QueryManager(
     if (!response.ok) {
       let errorData: { message: string };
       try {
-        errorData = await response.json() as { message: string };
+        errorData = (await response.json()) as { message: string };
       } catch {
         errorData = { message: response.statusText };
       }
