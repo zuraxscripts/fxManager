@@ -6,7 +6,7 @@ interface CoreAPIStartParams {
   port?: number;
 }
 
-export function startPanel({ port = 4005 }: CoreAPIStartParams) {
+export function startAPI({ port = 4005 }: CoreAPIStartParams) {
   const app = new Elysia()
     .use(cors())
     .use(resourceAuth)
