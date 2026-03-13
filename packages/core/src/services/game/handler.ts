@@ -1,15 +1,19 @@
 import { repo } from '@fxmanager/database';
-import {
+import type {
   BanDataCard,
   DeferralCheckResponse,
+  IProcessManager,
   OnlinePlayer,
   PlayerIdentifiers,
 } from '@fxmanager/types';
 
-export class GameHandler {
+export class GameManager {
+  private pm: IProcessManager;
   private playerlist: OnlinePlayer[] = [];
 
-  constructor() {}
+  constructor(pm: IProcessManager) {
+    this.pm = pm;
+  }
 
   // region player handling
   getPlayerList() {
@@ -56,10 +60,16 @@ export class GameHandler {
   }: { name: string; identifiers: PlayerIdentifiers; serverId: number }) {
     const player = await repo.players.upsert(name, identifiers);
 
-    this.playerlist.push({
+    const playerPayload = {
       serverId,
       health: -1,
       ...player,
+    } satisfies OnlinePlayer;
+
+    this.playerlist.push(playerPayload);
+    this.pm.handleGameEvent({
+      event: 'player.join',
+      data: playerPayload,
     });
   }
 
@@ -76,5 +86,9 @@ export class GameHandler {
     const newPlaytime = player.playtime + sessionDuration;
 
     repo.players.updatePlaytime(player.id, newPlaytime);
+    this.pm.handleGameEvent({
+      event: 'player.drop',
+      data: { serverId: player.serverId },
+    });
   }
 }
