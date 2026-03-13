@@ -1,8 +1,8 @@
 import { AuthContext } from '@/hooks/use-auth';
 import { QueryService } from '@/lib/query';
-import type { ApiError } from '@/types/api';
 import type { AuthUser } from '@/types/auth';
 import type { Settings } from '@/types/settings';
+import type { ApiError } from '@fxmanager/types';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';

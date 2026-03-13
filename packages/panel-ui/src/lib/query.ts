@@ -1,4 +1,4 @@
-import { ApiError } from '@/types/api';
+import { ApiError } from '@fxmanager/types';
 import { toast } from 'sonner';
 
 const HOSTNAME = import.meta.env.DEV ? 'localhost:4000' : window.location.host;
