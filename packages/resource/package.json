@@ -12,6 +12,7 @@
 		"lint": "biome lint --write"
 	},
 	"devDependencies": {
+        "@fxmanager/types": "workspace:*",
 		"@citizenfx/client": "latest",
 		"@citizenfx/server": "latest",
 		"@jgoz/esbuild-plugin-typecheck": "^4.0.3",
