@@ -1,6 +1,6 @@
 import type { EventEmitter } from 'events';
 import type { ConsoleOutputEvent } from './socket';
-import { GameEventPayload } from './game-api';
+import type { GameEventPayload } from './game-api';
 
 export type ServerStatus = 'stopped' | 'starting' | 'running' | 'stopping' | 'crashed';
 
