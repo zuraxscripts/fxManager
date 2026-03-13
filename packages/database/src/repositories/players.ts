@@ -2,28 +2,42 @@ import { eq, desc, and, inArray, isNull, or, gt } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { players, playerIdentifiers, bans } from '../schema';
 import type * as schema from '../schema';
-import { Ban, PlayerIdentifiers } from '@fxmanager/types';
+import { Ban, Player, PlayerIdentifiers } from '@fxmanager/types';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
 export function createPlayersRepository(db: DB) {
   return {
-    findByLicense(license: string) {
-      return db
-        .select({
-          player: players,
-        })
+    findByLicense(license: string): Player | null {
+      const result = db
+        .select({ player: players })
         .from(players)
         .innerJoin(playerIdentifiers, eq(playerIdentifiers.playerId, players.id))
         .where(and(eq(playerIdentifiers.type, 'license'), eq(playerIdentifiers.value, license)))
         .get();
+
+      if (!result) return null;
+
+      const identifierRows = db
+        .select()
+        .from(playerIdentifiers)
+        .where(eq(playerIdentifiers.playerId, result.player.id))
+        .all();
+
+      const identifiers = identifierRows.reduce((acc, curr) => {
+        acc[curr.type as keyof PlayerIdentifiers] = curr.value;
+
+        return acc;
+      }, {} as PlayerIdentifiers);
+
+      return { ...result.player, identifiers };
     },
 
     /* ToDo:
      * Consideration, if a player has the same identifier as another drop ? Deny connection ?
      */
 
-    async upsert(name: string, identifiers: PlayerIdentifiers) {
+    async upsert(name: string, identifiers: PlayerIdentifiers): Promise<Player> {
       const now = new Date();
       return db.transaction(async (tx) => {
         const existingIdentifier = tx
@@ -61,7 +75,7 @@ export function createPlayersRepository(db: DB) {
               .onConflictDoNothing();
           }
 
-          return [updatedPlayer];
+          return { ...updatedPlayer, identifiers };
         } else {
           const [newPlayer] = await tx
             .insert(players)
@@ -73,7 +87,7 @@ export function createPlayersRepository(db: DB) {
             .values(identifierRows.map((row) => ({ ...row, playerId: newPlayer.id })))
             .onConflictDoNothing();
 
-          return [newPlayer];
+          return { ...newPlayer, identifiers };
         }
       });
     },
@@ -109,8 +123,24 @@ export function createPlayersRepository(db: DB) {
       return activeBan ?? null;
     },
 
-    findById(id: number) {
-      return db.select().from(players).where(eq(players.id, id)).get();
+    findById(id: number): Player | null {
+      const player = db.select().from(players).where(eq(players.id, id)).get();
+
+      if (!player) return null;
+
+      const identifierRows = db
+        .select()
+        .from(playerIdentifiers)
+        .where(eq(playerIdentifiers.playerId, id))
+        .all();
+
+      const identifiers = identifierRows.reduce((acc, curr) => {
+        acc[curr.type as keyof PlayerIdentifiers] = curr.value;
+
+        return acc;
+      }, {} as PlayerIdentifiers);
+
+      return { ...player, identifiers };
     },
 
     list(page = 1, pageSize = 50) {
