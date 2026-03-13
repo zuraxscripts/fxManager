@@ -1,4 +1,4 @@
-import { Player } from './players';
+import type { Player } from './players';
 
 export type BanDataCard =
   | {
