@@ -66,9 +66,9 @@ CREATE TABLE
         `id` INTEGER PRIMARY KEY AUTOINCREMENT,
         `player_id` INTEGER NOT NULL,
         `reason` TEXT,
-        `revoked` INTEGER DEFAULT 0, -- 0 active | 1 revoked / inactive
+        `revoked` INTEGER NOT NULL DEFAULT 0, -- 0 active | 1 revoked / inactive
         `issuer` INTEGER NULL, -- null then system issued (i.e. banned via api)
-        `issued_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+        `issued_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE,
         FOREIGN KEY (`issuer`) REFERENCES `admins` (`id`) ON DELETE SET NULL
     );
@@ -105,9 +105,9 @@ CREATE TABLE
     IF NOT EXISTS `players` (
         `id` INTEGER PRIMARY KEY AUTOINCREMENT,
         `name` TEXT NOT NULL,
-        `playtime` INTEGER DEFAULT 0, -- playtime in minutes
-        `first_seen` DATETIME DEFAULT CURRENT_TIMESTAMP,
-        `last_seen` DATETIME DEFAULT CURRENT_TIMESTAMP
+        `playtime` INTEGER NOT NULL DEFAULT 0, -- playtime in minutes
+        `first_seen` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `last_seen` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
 
 -- Dumping structure for table panel.report_messages
@@ -117,7 +117,7 @@ CREATE TABLE
         `player_id` INTEGER NULL,
         `admin_id` INTEGER NULL,
         `message` TEXT NOT NULL,
-        `timestamp` DATETIME DEFAULT CURRENT_TIMESTAMP,
+        `timestamp` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE SET NULL,
         FOREIGN KEY (`admin_id`) REFERENCES `admins` (`id`) ON DELETE SET NULL
     );
@@ -129,8 +129,8 @@ CREATE TABLE
         `reporter_id` INTEGER NOT NULL,
         `subject` TEXT NOT NULL,
         `status` TEXT DEFAULT "open", -- states: "open" | "inprogress" | "resolved"
-        `opened_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-        `last_action` DATETIME DEFAULT CURRENT_TIMESTAMP,
+        `opened_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        `last_action` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (`reporter_id`) REFERENCES `players` (`id`) ON DELETE CASCADE
     );
 
@@ -167,8 +167,8 @@ CREATE TABLE
         `id` INTEGER PRIMARY KEY AUTOINCREMENT,
         `player_id` INTEGER NOT NULL,
         `reason` TEXT,
-        `read` INTEGER DEFAULT 0, -- 0 not ack'd | 1 ack'd by player (allows offline warns)
-        `revoked` INTEGER DEFAULT 0, -- 0 active | 1 revoked / inactive
+        `read` INTEGER NOT NULL DEFAULT 0, -- 0 not ack'd | 1 ack'd by player (allows offline warns)
+        `revoked` INTEGER NOT NULL DEFAULT 0, -- 0 active | 1 revoked / inactive
         `issuer` INTEGER NULL, -- null then system issued (i.e. banned via api)
         `issued_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (`player_id`) REFERENCES `players` (`id`) ON DELETE CASCADE,

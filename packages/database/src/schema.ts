@@ -13,9 +13,9 @@ import { sql } from 'drizzle-orm';
 export const players = sqliteTable('players', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   name: text('name').notNull(),
-  playtime: integer('playtime').default(0),
-  firstSeen: integer('first_seen', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
-  lastSeen: integer('last_seen', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+  playtime: integer('playtime').notNull().default(0),
+  firstSeen: integer('first_seen', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+  lastSeen: integer('last_seen', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
 export const playerIdentifiers = sqliteTable(
@@ -40,7 +40,7 @@ export const adminUsers = sqliteTable(
     username: text('username').notNull().unique(),
     passwordHash: text('password_hash').notNull(),
     playerId: integer('player_id').references(() => players.id, { onDelete: 'set null' }),
-    permissions: integer('permissions').notNull().default(0),
+    permissions: integer('permissions').default(0).notNull(),
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     lastLoginAt: integer('last_login_at', { mode: 'timestamp' }),
   },
@@ -84,10 +84,10 @@ export const warns = sqliteTable('warns', {
     .notNull()
     .references(() => players.id, { onDelete: 'cascade' }),
   reason: text('reason'),
-  read: integer('read').default(0), // 0 not ack'd | 1 ack'd
-  revoked: integer('revoked').default(0),
+  read: integer('read').default(0).notNull(), // 0 not ack'd | 1 ack'd
+  revoked: integer('revoked').default(0).notNull(),
   issuer: integer('issuer').references(() => adminUsers.id, { onDelete: 'set null' }),
-  issuedAt: integer('issued_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+  issuedAt: integer('issued_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
 export const kicks = sqliteTable('kicks', {
@@ -96,9 +96,9 @@ export const kicks = sqliteTable('kicks', {
     .notNull()
     .references(() => players.id, { onDelete: 'cascade' }),
   reason: text('reason'),
-  revoked: integer('revoked').default(0),
+  revoked: integer('revoked').default(0).notNull(),
   issuer: integer('issuer').references(() => adminUsers.id, { onDelete: 'set null' }),
-  issuedAt: integer('issued_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+  issuedAt: integer('issued_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
 // ─── Reports & Notes ──────────────────────────────────────────────────────────
@@ -109,9 +109,11 @@ export const reports = sqliteTable('reports', {
     .notNull()
     .references(() => players.id, { onDelete: 'cascade' }),
   subject: text('subject').notNull(),
-  status: text('status').default('open'), // open, inprogress, resolved
-  openedAt: integer('opened_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
-  lastAction: integer('last_action', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+  status: text('status').default('open').notNull(), // open, inprogress, resolved
+  openedAt: integer('opened_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+  lastAction: integer('last_action', { mode: 'timestamp' })
+    .default(sql`CURRENT_TIMESTAMP`)
+    .notNull(),
 });
 
 export const reportMessages = sqliteTable('report_messages', {
@@ -120,7 +122,7 @@ export const reportMessages = sqliteTable('report_messages', {
   playerId: integer('player_id').references(() => players.id, { onDelete: 'set null' }),
   adminId: integer('admin_id').references(() => adminUsers.id, { onDelete: 'set null' }),
   message: text('message').notNull(),
-  timestamp: integer('timestamp', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+  timestamp: integer('timestamp', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
 export const playerNotes = sqliteTable('player_notes', {
@@ -130,7 +132,7 @@ export const playerNotes = sqliteTable('player_notes', {
     .references(() => players.id, { onDelete: 'cascade' }),
   content: text('content'),
   issuer: integer('issuer').references(() => adminUsers.id, { onDelete: 'set null' }),
-  issuedAt: integer('issued_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`),
+  issuedAt: integer('issued_at', { mode: 'timestamp' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 });
 
 // ─── System ───────────────────────────────────────────────────────────────────
