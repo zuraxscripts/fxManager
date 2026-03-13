@@ -1,6 +1,5 @@
-import type { IProcessManager } from '@fxmanager/types';
 import Elysia, { t } from 'elysia';
-import type { GameHandler } from '../../services/game/handler';
+import type { GameManager } from '../../services/game/manager';
 
 const playerIdentifiers = t.Object({
   license: t.String(),
@@ -9,7 +8,7 @@ const playerIdentifiers = t.Object({
   steam: t.Optional(t.String()),
 });
 
-export const playerRoutes = (gh: GameHandler) =>
+export const playerRoutes = (gh: GameManager) =>
   new Elysia({ prefix: '/api/players' })
     .post(
       '/deferrals',
