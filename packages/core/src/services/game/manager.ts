@@ -44,6 +44,7 @@ export class GameManager {
 
       return {
         access: false,
+        type: 'ban',
         ban: data,
       };
     }

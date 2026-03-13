@@ -19,10 +19,12 @@ export type DeferralCheckResponse =
     }
   | {
       access: false;
+      type: 'ban';
       ban: BanDataCard;
     }
   | {
       access: false;
+      type: 'error';
       reason: string;
     };
 
