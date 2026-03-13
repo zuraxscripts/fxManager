@@ -10,7 +10,7 @@ export function createPlayersRepository(db: DB) {
   return {
     isStaff(playerId: number): boolean {
       const result = db
-        .select({ id: sql<number>`1` }) 
+        .select({ id: sql<number>`1` })
         .from(adminUsers)
         .where(eq(adminUsers.playerId, playerId))
         .limit(1)
@@ -165,14 +165,24 @@ export function createPlayersRepository(db: DB) {
       return { ...player, isStaff, identifiers };
     },
 
-    list(page = 1, pageSize = 50) {
-      return db
-        .select()
+    list(page = 1, pageSize = 50): Omit<Player, 'identifiers'>[] {
+      const rows = db
+        .select({
+          id: players.id,
+          name: players.name,
+          playtime: players.playtime,
+          lastSeen: players.lastSeen,
+          firstSeen: players.firstSeen,
+          isStaff: sql<boolean>`CASE WHEN ${adminUsers.playerId} IS NOT NULL THEN 1 ELSE 0 END`,
+        })
         .from(players)
+        .leftJoin(adminUsers, eq(players.id, adminUsers.playerId))
         .orderBy(desc(players.lastSeen))
         .limit(pageSize)
         .offset((page - 1) * pageSize)
         .all();
+
+      return rows;
     },
   };
 }
