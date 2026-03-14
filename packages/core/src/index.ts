@@ -5,8 +5,6 @@ import { applyMigrations } from '@fxmanager/database';
 applyMigrations();
 
 import { loadConfig } from './config';
-import { startPanel } from '../../panel/src/index';
-import { startAPI } from './api';
 import { ProcessManager } from './services/process/manager';
 import { GameManager } from './services/game/manager';
 
@@ -16,13 +14,15 @@ const { webServerPort, internalPort } = loadConfig();
 const processManager = new ProcessManager();
 const gameManager = new GameManager(processManager);
 
-// initialize the internal API endpoint
+// initialize API and Panel dynamically
+const { startPanel } = await import('../../panel/src/index');
+const { startAPI } = await import('./api');
+
 startAPI({
   port: internalPort,
   gm: gameManager,
 });
 
-// initialize the web panel
 startPanel({
   port: webServerPort,
   pm: processManager,
