@@ -1,7 +1,10 @@
 import './config/env';
 
-import { loadConfig } from './config';
+// critical first step
 import { applyMigrations } from '@fxmanager/database';
+applyMigrations();
+
+import { loadConfig } from './config';
 import { startPanel } from '../../panel/src/index';
 import { startAPI } from './api';
 import { ProcessManager } from './services/process/manager';
@@ -12,9 +15,6 @@ console.log('[core] FiveM Panel starting...');
 const { webServerPort, internalPort } = loadConfig();
 const processManager = new ProcessManager();
 const gameManager = new GameManager(processManager);
-
-// check and update database migrations
-applyMigrations();
 
 // initialize the internal API endpoint
 startAPI({
