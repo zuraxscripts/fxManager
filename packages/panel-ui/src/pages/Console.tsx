@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Terminal, SendHorizonal, ArrowRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
+// import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useConsoleSocket } from '@/hooks/use-ws-channels';
@@ -66,19 +66,19 @@ export default function Console() {
        * Fix jumping around of the elements when logs update
        * Consider storing console output on client ? - server only stores 5k at a time
        */}
-      <Card className="flex flex-1 flex-col overflow-hidden bg-card/50">
-        <ScrollArea className="flex-1 p-4">
-          <div className="font-mono text-xs leading-relaxed">
-            {logs.length === 0 ? (
-              <span className="text-muted-foreground text-center">
-                No output yet. Start the server to see logs.
-              </span>
-            ) : (
-              logs.map((log) => <LogLine event={log} key={log.id} />)
-            )}
-            <div ref={bottomRef} />
-          </div>
-        </ScrollArea>
+      <Card className="flex flex-1 flex-col bg-card/50">
+        {/* <ScrollArea className="flex-1 p-4"> */}
+        <div className="font-mono text-xs overflow-auto leading-relaxed">
+          {logs.length === 0 ? (
+            <span className="text-muted-foreground text-center">
+              No output yet. Start the server to see logs.
+            </span>
+          ) : (
+            logs.map((log) => <LogLine event={log} key={log.id} />)
+          )}
+          <div ref={bottomRef} />
+        </div>
+        {/* </ScrollArea> */}
 
         <div className="flex items-center gap-2 border-t p-3">
           <ArrowRight className="text-primary" />
