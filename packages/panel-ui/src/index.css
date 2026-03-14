@@ -127,3 +127,7 @@
     @apply font-sans;
     }
 }
+
+code.ansi-item > span > a:hover {
+  text-decoration: underline;
+}

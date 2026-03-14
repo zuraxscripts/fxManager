@@ -11,7 +11,7 @@ import type { ConsoleOutputEvent } from '@fxmanager/types';
 function LogLine({ event }: { event: ConsoleOutputEvent }) {
   return (
     <div className="font-mono text-sm leading-tight whitespace-pre-wrap">
-      <Ansi className="ansi-item">
+      <Ansi linkify className="ansi-item">
         {event.line}
       </Ansi>
     </div>
