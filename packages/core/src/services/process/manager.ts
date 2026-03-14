@@ -4,7 +4,6 @@ import { repo } from '@fxmanager/database';
 import { loadConfig } from '../../config';
 import type { ServerState, ServerStatus, ConsoleOutputEvent } from '@fxmanager/types';
 import { LogBuffer } from './consoleBuffer';
-import { parseAnsiToSegments } from '../../common/utils';
 
 export class ProcessManager extends EventEmitter implements IProcessManager {
   private proc: ReturnType<typeof Bun.spawn> | null = null;
@@ -66,12 +65,15 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
       throw new Error('Server is not running');
     }
 
+    console.log('[core - pm] stopping');
+
     this.setState('stopping');
     if (this.restartTimer) clearTimeout(this.restartTimer);
 
     this.proc.kill();
     await this.proc.exited;
     this.setState('stopped');
+    console.log('[core - pm] process stopped');
     repo.audit.log({ adminId, action: 'server.stop' });
   }
 
@@ -154,7 +156,6 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
         const event: ConsoleOutputEvent = {
           id: this.outputIdx,
           line: value,
-          segments: parseAnsiToSegments(value),
           source,
           ts: Date.now(),
         };
