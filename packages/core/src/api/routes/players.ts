@@ -25,7 +25,8 @@ export const playerRoutes = (gh: GameManager) =>
     .post(
       '/join',
       ({ body }) => {
-        return gh.playerJoin(body);
+        gh.playerJoin(body);
+        return { ack: true };
       },
       {
         body: t.Object({
@@ -39,7 +40,8 @@ export const playerRoutes = (gh: GameManager) =>
     .post(
       '/drop',
       ({ body }) => {
-        return gh.playerDrop(body.serverId);
+        gh.playerDrop(body.serverId);
+        return { ack: true };
       },
       {
         body: t.Object({
