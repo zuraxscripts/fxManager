@@ -1,6 +1,7 @@
 import { join } from 'path';
 import { existsSync, readFileSync } from 'fs';
 import { openingMessage } from '../common/fancy_stuff';
+import { isDev } from '../common/utils';
 
 await openingMessage();
 
@@ -9,10 +10,9 @@ Ideally I shouldn't need to do this, but in the development environment it's not
 from the project root and looking in packages/core
 */
 
-const envPath =
-  process.env.NODE_ENV === 'production'
-    ? join(process.cwd(), '.env')
-    : join(process.cwd(), '../..', '.env');
+const envPath = isDev
+  ? join(process.cwd(), '.env')
+  : join(process.cwd(), '../..', '.env');
 
 if (existsSync(envPath)) {
   const lines = readFileSync(envPath, 'utf-8').split('\n');
