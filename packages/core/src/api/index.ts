@@ -1,11 +1,11 @@
 import Elysia from 'elysia';
 import { cors } from '@elysiajs/cors';
 import { resourceAuth } from './middleware/auth';
-import type { GameHandler } from '../services/game/handler';
+import type { GameManager } from '../services/game/manager';
 import { playerRoutes } from './routes/players';
 
 interface CoreAPIStartParams {
-  gm: GameHandler;
+  gm: GameManager;
   port?: number;
 }
 
