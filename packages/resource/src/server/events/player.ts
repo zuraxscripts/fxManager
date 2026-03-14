@@ -2,16 +2,28 @@ import type { DeferralCheckResponse, PlayerIdentifiers } from '@fxmanager/types'
 import { DeferralsDeferObj, DeferralsKickFunc } from '@common/types';
 import { QueryManager } from '../utils/query';
 
+function getIdentifiers(src: string): Partial<PlayerIdentifiers> {
+  const raw: PlayerIdentifiers = {
+    license: GetPlayerIdentifierByType(src, 'license'),
+    steam: GetPlayerIdentifierByType(src, 'steam'),
+    discord: GetPlayerIdentifierByType(src, 'discord'),
+    fivem: GetPlayerIdentifierByType(src, 'fivem'),
+  };
+
+  // Create a new object containing only truthy values
+  return Object.fromEntries(
+    Object.entries(raw).filter(([_, value]) => value != null && value !== ''),
+  );
+}
+
 on(
   'playerConnecting',
   async (playerName: string, setKickReason: DeferralsKickFunc, deferrals: DeferralsDeferObj) => {
     const src = source;
-    const identifiers = {
-      license: GetPlayerIdentifierByType(`${src}`, 'license'),
-      steam: GetPlayerIdentifierByType(`${src}`, 'steam'),
-      discord: GetPlayerIdentifierByType(`${src}`, 'discord'),
-      fivem: GetPlayerIdentifierByType(`${src}`, 'stefivemam'),
-    } satisfies PlayerIdentifiers;
+    const identifiers = getIdentifiers(`${src}`);
+
+    // Sanity check
+    if (typeof identifiers.license !== 'string') return deferrals.done('No license found.');
 
     const apiChecks = await QueryManager<DeferralCheckResponse>({
       endpoint: '/api/players/deferrals',
@@ -58,12 +70,11 @@ on(
 on('playerJoining', () => {
   const src = source;
   const name = GetPlayerName(`${src}`);
-  const identifiers = {
-    license: GetPlayerIdentifierByType(`${src}`, 'license'),
-    steam: GetPlayerIdentifierByType(`${src}`, 'steam'),
-    discord: GetPlayerIdentifierByType(`${src}`, 'discord'),
-    fivem: GetPlayerIdentifierByType(`${src}`, 'stefivemam'),
-  } satisfies PlayerIdentifiers;
+  // guarateed to have a license
+  const identifiers = getIdentifiers(`${src}`) as PlayerIdentifiers;
+
+  // Sanity check
+  if (typeof identifiers.license !== 'string') return DropPlayer(`${src}`, 'No license found.');
 
   const body = {
     name,
@@ -71,17 +82,22 @@ on('playerJoining', () => {
     serverId: src,
   } satisfies { name: string; identifiers: PlayerIdentifiers; serverId: number };
 
-  QueryManager({
+  QueryManager<{ ack: true }>({
     endpoint: '/api/players/join',
     method: 'POST',
     body,
+  }).catch((err) => {
+    console.error(`[API Error] Failed to process join for ${name} (${src}):`, err.message);
   });
 });
 
 on('playerDropped', () => {
-  QueryManager({
+  const src = source;
+  QueryManager<{ ack: true }>({
     endpoint: '/api/players/drop',
     method: 'POST',
-    body: { serverId: source },
+    body: { serverId: src },
+  }).catch((err) => {
+    console.error(`[API Error] Failed to process drop for ID ${src}:`, err.message);
   });
 });
