@@ -1,5 +1,8 @@
 import { LogSegment } from '@fxmanager/types';
 import { colorIdToHex } from './data';
+import { join } from 'node:path';
+
+export const isDev = process.env.NODE_ENV === 'development';
 
 export function getHexColourFromAnsi(index: number): string {
   return colorIdToHex[index] ?? '#ffffff';
