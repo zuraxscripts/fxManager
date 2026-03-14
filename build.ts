@@ -8,7 +8,7 @@
  *     fxmanager-linux          ← Linux binary
  *     fxmanager-windows.exe    ← Windows binary
  *     public/                  ← React SPA
- *     resource/                ← FiveM resource
+ *     resource/                ← FiveM/RedM resource
  */
 
 import { Build, type PluginBuilder } from 'bun';

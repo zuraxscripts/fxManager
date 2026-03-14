@@ -35,7 +35,7 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
       '+add_convar_permission', 'fxManager', 'read', 'api-port',
     ];
 
-    console.log(`[core] Starting FiveM: ${config.executable} ${args.join(' ')}`);
+    console.log(`[core] Starting fxServer: ${config.executable} ${args.join(' ')}`);
 
     try {
       this.proc = Bun.spawn([config.executable, ...args], {
@@ -72,7 +72,7 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
 
     this.proc.kill();
     await this.proc.exited;
-    this.setState('stopped');
+    this.setState('stopped', { pid: undefined, startedAt: undefined });
     console.log('[core - pm] process stopped');
     repo.audit.log({ adminId, action: 'server.stop' });
   }
@@ -173,7 +173,7 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
     const crashed = code !== 143 && code !== 0 && code !== null && this.state.status !== 'stopping';
 
     if (crashed) {
-      console.warn(`[core] FiveM process exited with code ${code}`);
+      console.warn(`[core] fxServer process exited with code ${code}`);
       this.setState('crashed', { lastCrashAt: new Date() });
 
       if (config.autoRestart && this.state.restarts < config.maxRestarts) {
@@ -188,7 +188,7 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
         this.setState('stopped');
       }
     } else {
-      console.log('[core] FiveM process exited');
+      console.log('[core] fxServer process exited');
       this.setState('stopped');
     }
 

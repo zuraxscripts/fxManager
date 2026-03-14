@@ -7,16 +7,16 @@ Single binary deployment - no runtime dependencies required on the target machin
 
 ## Stack
 
-| Layer         | Tech                            | Location            |
-|---------------|---------------------------------|---------------------|
-| Runtime       | Bun (compiled into binary)      |                     |
-| Monorepo      | Turbo + Bun Workspaces          |                     |
-| Linting       | Biome (lint + format + imports) |                     |
-| Process Mgr   |                                 | `packages/core`     |
-| Web Server    | ElysiaJS                        | `packages/panel`    |
-| Frontend      | React + Vite SPA                | `packages/panel-ui` |
-| Database      | SQLite + Drizzle ORM            | `packages/database` |
-| FiveM Bridge  | Lua resource                    | `packages/resource` |
+| Layer             | Tech                            | Location            |
+|-------------------|---------------------------------|---------------------|
+| Runtime           | Bun (compiled into binary)      |                     |
+| Monorepo          | Turbo + Bun Workspaces          |                     |
+| Linting           | Biome (lint + format + imports) |                     |
+| Process Manager   | Bun                             | `packages/core`     |
+| Web Server        | ElysiaJS                        | `packages/panel`    |
+| Frontend          | React + Vite SPA                | `packages/panel-ui` |
+| Database          | SQLite + Drizzle ORM            | `packages/database` |
+| FiveM/RedM Bridge | Lua resource                    | `packages/resource` |
 
 ---
 
@@ -146,6 +146,6 @@ The panel will be available at `http://your-server-ip:4000`.
 | Variable           | Default           | Description                       |
 |--------------------|-------------------|-----------------------------------|
 | `PANEL_PORT`       | `4000`            | Web panel port                    |
-| `FIVEM_EXECUTABLE` | `./FXServer`      | Path to FXServer binary           |
-| `FIVEM_DATA_PATH`  | `./server-data`   | Path to server-data folder        |
-| `FIVEM_CFG`        | `server.cfg`      | Config file name inside data path |
+| `FXSERVER_EXECUTABLE` | `./FXServer`      | Path to FXServer binary           |
+| `FXSERVER_DATA_PATH`  | `./server-data`   | Path to server-data folder        |
+| `FXSERVER_CFG`        | `server.cfg`      | Config file name inside data path |

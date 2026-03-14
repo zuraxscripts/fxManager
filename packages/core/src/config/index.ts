@@ -4,9 +4,9 @@ import { getVersion } from '../common/utils';
 
 const DEFAULTS: ServerConfig = {
   version: await getVersion(),
-  executable: process.env.FIVEM_EXECUTABLE ?? './FXServer',
-  serverDataPath: process.env.FIVEM_DATA_PATH ?? './server-data',
-  configFile: process.env.FIVEM_CFG ?? 'server.cfg',
+  executable: process.env.FXSERVER_EXECUTABLE ?? './FXServer',
+  serverDataPath: process.env.FXSERVER_DATA_PATH ?? './server-data',
+  configFile: process.env.FXSERVER_CFG ?? 'server.cfg',
   autoRestart: true,
   maxRestarts: 5,
   restartDelayMs: 5000,
