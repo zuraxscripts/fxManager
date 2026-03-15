@@ -18,3 +18,23 @@ export function formatUptime(startedAt: Date | string | number): string {
 
   return formatDuration(diff);
 }
+
+export function formatDate(date: Date | string | null | undefined): string {
+  if (!date) return '—';
+  return new Intl.DateTimeFormat('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(date));
+}
+
+export function initials(name: string): string {
+  return name
+    .split(' ')
+    .map((w) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
