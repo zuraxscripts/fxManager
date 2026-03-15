@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, ShieldBan, Search, ArrowUpDown, ArrowDown, ArrowUp } from 'lucide-react';
+import { Users, Search, ArrowUpDown, ArrowDown, ArrowUp, Eye } from 'lucide-react';
 import type { PaginatedResponse, Player } from '@fxmanager/types';
 import {
   Table,
@@ -25,6 +25,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { formatDuration } from '@/lib/utils';
 import PageSizeSelector from '@/components/page-size-selector';
 import PageSelector from '@/components/page-selector';
+import { Link } from 'react-router-dom';
 
 type SortBy = 'lastSeen' | 'firstSeen' | 'playtime';
 type SortOrder = 'asc' | 'desc';
@@ -114,11 +115,11 @@ export default function Players() {
         </Button>
       </div>
 
-      <Card className="bg-card/50 pb-0">
+      <Card className="bg-card/50 py-0">
         <Table>
-          <TableHeader>
+          <TableHeader className='bg-card'>
             <TableRow>
-              <TableHead>Name</TableHead>
+              <TableHead className='pl-4'>Name</TableHead>
 
               <TableHead className="cursor-pointer select-none">
                 <div className="flex items-center gap-1">
@@ -162,7 +163,7 @@ export default function Players() {
                 </div>
               </TableHead>
 
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className='w-60' />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -181,7 +182,7 @@ export default function Players() {
             ) : (
               players.map((p) => (
                 <TableRow key={p.id}>
-                  <TableCell className="font-medium">
+                  <TableCell className="font-medium pl-4">
                     {p.name}
                     {p.isStaff && (
                       <Badge variant="link" className="ml-2 text-xs">
@@ -198,13 +199,16 @@ export default function Players() {
                   <TableCell className="text-sm text-muted-foreground">
                     {formatDuration(p.playtime)}
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className=" flex justify-center">
                     <Button
                       size="sm"
-                      variant="ghost"
-                      className="h-7 text-destructive hover:text-destructive"
+                      variant="outline"
+                      className="h-7 w-40"
+                      asChild
                     >
-                      <ShieldBan className="mr-1.5 h-3.5 w-3.5" /> Ban
+                      <Link to={`/players/${p.id}`}>
+                        <Eye className="mr-1.5 h-3.5 w-3.5" /> View Profile
+                      </Link>
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -213,7 +217,7 @@ export default function Players() {
           </TableBody>
         </Table>
 
-        <div className="flex items-center justify-between px-4 py-4 border-t border-border">
+        <div className="flex items-center justify-between px-4 py-4 border-t border-border bg-card">
           <PageSizeSelector
             pageSize={pageSize}
             setPageSize={setPageSize}
