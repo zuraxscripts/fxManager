@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, ShieldBan, Search, ArrowUpDown } from 'lucide-react';
+import { Users, ShieldBan, Search, ArrowUpDown, ArrowDown, ArrowUp } from 'lucide-react';
 import type { Player } from '@fxmanager/types';
 import {
   Table, TableBody, TableCell, TableHead,
@@ -77,8 +77,9 @@ export default function Players() {
           </SelectContent>
         </Select>
 
-        <Button variant="outline" size="icon" onClick={toggleSortOrder} title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}>
-          <ArrowUpDown className="h-4 w-4" />
+        <Button variant="outline" onClick={toggleSortOrder} className="w-40 justify-between">
+          <span>{sortOrder === 'asc' ? 'Ascending' : 'Descending'}</span>
+          <ArrowUpDown className='h-4 w-4' />
         </Button>
       </div>
 
@@ -87,9 +88,42 @@ export default function Players() {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>First seen</TableHead>
-              <TableHead>Last seen</TableHead>
-              <TableHead>Playtime</TableHead>
+              
+              <TableHead 
+                className="cursor-pointer select-none"
+              >
+                <div className="flex items-center gap-1">
+                  <span>First seen</span>
+                  <div className="w-4 h-4 flex-shrink-0 text-accent"> 
+                    {sortBy === 'firstSeen' && (
+                      sortOrder === 'asc' ? <ArrowUp className='w-4 h-4' /> : <ArrowDown className='w-4 h-4' />
+                    )}
+                  </div>
+                </div>
+              </TableHead>
+
+              <TableHead>
+                <div className="flex items-center gap-1">
+                  <span>Last seen</span>
+                  <div className="w-4 h-4 flex-shrink-0 text-accent">
+                    {sortBy === 'lastSeen' && (
+                      sortOrder === 'asc' ? <ArrowUp className='w-4 h-4' /> : <ArrowDown className='w-4 h-4' />
+                    )}
+                  </div>
+                </div>
+              </TableHead>
+
+              <TableHead>
+                <div className="flex items-center gap-1">
+                  <span>Playtime</span>
+                  <div className="w-4 h-4 flex-shrink-0 text-accent">
+                    {sortBy === 'playtime' && (
+                      sortOrder === 'asc' ? <ArrowUp className='w-4 h-4' /> : <ArrowDown className='w-4 h-4' />
+                    )}
+                  </div>
+                </div>
+              </TableHead>
+
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
