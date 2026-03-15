@@ -1,4 +1,4 @@
-import { eq, desc, and, inArray, isNull, or, gt, sql } from 'drizzle-orm';
+import { eq, desc, and, inArray, isNull, or, gt, sql, asc, like } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { adminUsers, bans, players, playerIdentifiers } from '../schema';
 import type * as schema from '../schema';
@@ -165,24 +165,53 @@ export function createPlayersRepository(db: DB) {
       return { ...player, isStaff, identifiers };
     },
 
-    list(page = 1, pageSize = 50): Omit<Player, 'identifiers'>[] {
-      const rows = db
+    list(
+      page = 1,
+      pageSize = 20,
+      options?: {
+        search?: string;
+        sortBy?: 'playtime' | 'lastSeen' | 'firstSeen';
+        sortOrder?: 'asc' | 'desc';
+      },
+    ): Omit<Player, 'identifiers'>[] {
+      const { search, sortBy = 'lastSeen', sortOrder = 'desc' } = options ?? {};
+
+      const sortCol = {
+        playtime: players.playtime,
+        lastSeen: players.lastSeen,
+        firstSeen: players.firstSeen,
+      }[sortBy];
+
+      const orderFn = sortOrder === 'asc' ? asc : desc;
+
+      const query = db
         .select({
           id: players.id,
           name: players.name,
           playtime: players.playtime,
           lastSeen: players.lastSeen,
           firstSeen: players.firstSeen,
-          isStaff: sql<boolean>`CASE WHEN ${adminUsers.playerId} IS NOT NULL THEN 1 ELSE 0 END`,
+          isStaff: sql<1|0>`CASE WHEN ${adminUsers.playerId} IS NOT NULL THEN 1 ELSE 0 END`,
         })
         .from(players)
         .leftJoin(adminUsers, eq(players.id, adminUsers.playerId))
-        .orderBy(desc(players.lastSeen))
+        .$dynamic();
+
+      if (search) {
+        query
+          .leftJoin(playerIdentifiers, eq(playerIdentifiers.playerId, players.id))
+          .where(
+            or(like(players.name, `%${search}%`), like(playerIdentifiers.value, `%${search}%`)),
+          );
+      }
+
+      const response = query
+        .orderBy(orderFn(sortCol))
         .limit(pageSize)
         .offset((page - 1) * pageSize)
         .all();
 
-      return rows;
+      return response.map((row) => ({ ...row, isStaff: row.isStaff === 1 }));
     },
   };
 }
