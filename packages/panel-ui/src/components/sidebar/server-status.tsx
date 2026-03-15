@@ -77,7 +77,7 @@ export function ServerStatusCard() {
           </div>
           <div className="flex flex-row justify-between">
             <p>Uptime</p>
-            <p>{serverState?.startedAt ? formatUptime(serverState.startedAt, false) : 'N/A'}</p>
+            <p>{serverState?.startedAt ? formatUptime(serverState.startedAt) : 'N/A'}</p>
           </div>
           <div className="flex flex-row justify-between">
             <p>Players:</p>

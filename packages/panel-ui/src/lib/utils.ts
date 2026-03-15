@@ -5,13 +5,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatUptime(startedAt: Date | string, seconds: boolean = false): string {
-  const diff = Math.floor((Date.now() - new Date(startedAt).getTime()) / 1000);
-  const h = Math.floor(diff / 3600);
-  const m = Math.floor((diff % 3600) / 60);
+export function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${minutes}m`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
+}
 
-  if (!seconds) return `${h}h ${m}m`;
-
-  const s = diff % 60;
-  return `${h}h ${m}m ${s}s`;
+export function formatUptime(startedAt: Date | string | number): string {
+  const initialDate = startedAt instanceof Date ? startedAt : new Date(startedAt);
+  const diff = Math.floor((Date.now() - initialDate.getTime()) / 1000);
+  
+  return formatDuration(diff);
 }

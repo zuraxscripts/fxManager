@@ -25,7 +25,7 @@ export default function Dashboard() {
     { label: 'Restarts', value: serverState?.restarts ?? 0, icon: RotateCcw },
     {
       label: 'Uptime',
-      value: serverState?.startedAt ? formatUptime(serverState.startedAt, false) : '—',
+      value: serverState?.startedAt ? formatUptime(serverState.startedAt) : '—',
       icon: Clock,
     },
   ];
