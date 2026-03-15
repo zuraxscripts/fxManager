@@ -4,9 +4,8 @@ import {
   integer,
   index,
   unique,
-  AnySQLiteColumn,
 } from 'drizzle-orm/sqlite-core';
-import { sql } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 
 // ─── Players ──────────────────────────────────────────────────────────────────
 
@@ -168,3 +167,60 @@ export const apiTokens = sqliteTable(
   },
   (t) => [index('tokens_token_idx').on(t.token)],
 );
+
+// ─── Relations ────────────────────────────────────────────────────────────────
+
+export const playersRelations = relations(players, ({ many, one }) => ({
+  identifiers: many(playerIdentifiers),
+  bans: many(bans),
+  warns: many(warns),
+  kicks: many(kicks),
+  notes: many(playerNotes),
+  reports: many(reports),
+  adminProfile: one(adminUsers, {
+    fields: [players.id],
+    references: [adminUsers.playerId],
+  }),
+}));
+
+export const playerIdentifiersRelations = relations(playerIdentifiers, ({ one }) => ({
+  player: one(players, {
+    fields: [playerIdentifiers.playerId],
+    references: [players.id],
+  }),
+}));
+
+export const bansRelations = relations(bans, ({ one }) => ({
+  player: one(players, {
+    fields: [bans.playerId],
+    references: [players.id],
+  }),
+}));
+
+export const warnsRelations = relations(warns, ({ one }) => ({
+  player: one(players, {
+    fields: [warns.playerId],
+    references: [players.id],
+  }),
+}));
+
+export const kicksRelations = relations(kicks, ({ one }) => ({
+  player: one(players, {
+    fields: [kicks.playerId],
+    references: [players.id],
+  }),
+}));
+
+export const playerNotesRelations = relations(playerNotes, ({ one }) => ({
+  player: one(players, {
+    fields: [playerNotes.playerId],
+    references: [players.id],
+  }),
+}));
+
+export const reportsRelations = relations(reports, ({ one }) => ({
+  player: one(players, {
+    fields: [reports.reporterId],
+    references: [players.id],
+  }),
+}));
