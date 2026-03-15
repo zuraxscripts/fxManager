@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, Search, ArrowUpDown, ArrowDown, ArrowUp, Eye } from 'lucide-react';
+import { Users, Search, ArrowUpDown, Eye } from 'lucide-react';
 import type { PaginatedResponse, Player } from '@fxmanager/types';
 import {
   Table,
@@ -26,6 +26,7 @@ import { formatDuration } from '@/lib/utils';
 import PageSizeSelector from '@/components/page-size-selector';
 import PageSelector from '@/components/page-selector';
 import { Link } from 'react-router-dom';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type SortBy = 'lastSeen' | 'firstSeen' | 'playtime';
 type SortOrder = 'asc' | 'desc';
@@ -115,122 +116,74 @@ export default function Players() {
         </Button>
       </div>
 
+      {/* ToDo:
+        find a solution for mobile display as this fucks up, options:
+        * Dynamically display columns on mobile (only show active filter)
+        * Don't show extra columns
+
+      */}
       <Card className="bg-card/50 py-0">
-        <Table>
-          <TableHeader className='bg-card'>
-            <TableRow>
-              <TableHead className='pl-4'>Name</TableHead>
-
-              <TableHead className="cursor-pointer select-none">
-                <div className="flex items-center gap-1">
-                  <span>First seen</span>
-                  <div className="w-4 h-4 flex-shrink-0 text-accent">
-                    {sortBy === 'firstSeen' &&
-                      (sortOrder === 'asc' ? (
-                        <ArrowUp className="w-4 h-4" />
-                      ) : (
-                        <ArrowDown className="w-4 h-4" />
-                      ))}
-                  </div>
-                </div>
-              </TableHead>
-
-              <TableHead>
-                <div className="flex items-center gap-1">
-                  <span>Last seen</span>
-                  <div className="w-4 h-4 flex-shrink-0 text-accent">
-                    {sortBy === 'lastSeen' &&
-                      (sortOrder === 'asc' ? (
-                        <ArrowUp className="w-4 h-4" />
-                      ) : (
-                        <ArrowDown className="w-4 h-4" />
-                      ))}
-                  </div>
-                </div>
-              </TableHead>
-
-              <TableHead>
-                <div className="flex items-center gap-1">
-                  <span>Playtime</span>
-                  <div className="w-4 h-4 flex-shrink-0 text-accent">
-                    {sortBy === 'playtime' &&
-                      (sortOrder === 'asc' ? (
-                        <ArrowUp className="w-4 h-4" />
-                      ) : (
-                        <ArrowDown className="w-4 h-4" />
-                      ))}
-                  </div>
-                </div>
-              </TableHead>
-
-              <TableHead className='w-60' />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  Loading...
-                </TableCell>
+        <div className="overflow-hidden rounded-t-lg">
+          <Table className="table-fixed w-full">
+            <TableHeader className="bg-card block w-full">
+              <TableRow className="flex w-full">
+                <TableHead className="pl-4 flex-1 flex items-center">Name</TableHead>
+                <TableHead className="flex-1 flex items-center">First seen</TableHead>
+                <TableHead className="flex-1 flex items-center">Last seen</TableHead>
+                <TableHead className="flex-1 flex items-center">Playtime</TableHead>
+                <TableHead className="w-60 flex items-center" />
               </TableRow>
-            ) : players.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  {search ? `No players matching "${search}"` : 'No players found'}
-                </TableCell>
-              </TableRow>
-            ) : (
-              players.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="font-medium pl-4">
-                    {p.name}
-                    {p.isStaff && (
-                      <Badge variant="link" className="ml-2 text-xs">
-                        Staff
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {new Date(p.firstSeen).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {new Date(p.lastSeen).toLocaleString()}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {formatDuration(p.playtime)}
-                  </TableCell>
-                  <TableCell className=" flex justify-center">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-7 w-40"
-                      asChild
-                    >
-                      <Link to={`/players/${p.id}`}>
-                        <Eye className="mr-1.5 h-3.5 w-3.5" /> View Profile
-                      </Link>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody className="block w-full">
+              <ScrollArea className="h-[65vh]">
+                {loading ? (
+                  <TableRow className="flex w-full">
+                    <TableCell colSpan={5} className="flex-1 text-center text-muted-foreground">
+                      Loading...
+                    </TableCell>
+                  </TableRow>
+                ) : players.length === 0 ? (
+                  <TableRow className="flex w-full">
+                    <TableCell colSpan={5} className="flex-1 text-center text-muted-foreground">
+                      {search ? `No players matching "${search}"` : 'No players found'}
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  players.map((p) => (
+                    <TableRow key={p.id} className="flex w-full items-center">
+                      <TableCell className="font-medium pl-4 flex-1 truncate">
+                        {p.name}
+                        {p.isStaff && (
+                          <Badge variant="link" className="ml-2 text-xs">Staff</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground flex-1">
+                        {new Date(p.firstSeen).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground flex-1">
+                        {new Date(p.lastSeen).toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground flex-1">
+                        {formatDuration(p.playtime)}
+                      </TableCell>
+                      <TableCell className="w-60 flex justify-center">
+                        <Button size="sm" variant="outline" className="h-7 w-40" asChild>
+                          <Link to={`/players/${p.id}`}>
+                            <Eye className="mr-1.5 h-3.5 w-3.5" /> View Profile
+                          </Link>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </ScrollArea>
+            </TableBody>
+          </Table>
+        </div>
 
         <div className="flex items-center justify-between px-4 py-4 border-t border-border bg-card">
-          <PageSizeSelector
-            pageSize={pageSize}
-            setPageSize={setPageSize}
-            label="Players per page"
-          />
-
-          <PageSelector
-            page={page}
-            pageSize={pageSize}
-            setPage={setPage}
-            loading={loading}
-            total={total}
-          />
+          <PageSizeSelector pageSize={pageSize} setPageSize={setPageSize} label="Players per page" />
+          <PageSelector page={page} pageSize={pageSize} setPage={setPage} loading={loading} total={total} />
         </div>
       </Card>
     </div>
