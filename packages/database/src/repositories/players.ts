@@ -1,8 +1,23 @@
 import { eq, desc, and, inArray, isNull, or, gt, sql, asc, like } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
-import { adminUsers, bans, players, playerIdentifiers } from '../schema';
+import {
+  adminUsers,
+  bans,
+  players,
+  playerIdentifiers,
+  warns,
+  kicks,
+  reports,
+  playerNotes,
+} from '../schema';
 import type * as schema from '../schema';
-import type { Ban, PaginatedResponse, Player, PlayerIdentifiers } from '@fxmanager/types';
+import type {
+  Ban,
+  PaginatedResponse,
+  Player,
+  PlayerIdentifiers,
+  PlayerProfile,
+} from '@fxmanager/types';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
@@ -143,26 +158,41 @@ export function createPlayersRepository(db: DB) {
       db.update(players).set({ lastSeen: now, playtime }).where(eq(players.id, playerId));
     },
 
-    findById(id: number): Player | null {
-      const player = db.select().from(players).where(eq(players.id, id)).get();
+    async findById(id: number): Promise<PlayerProfile | null> {
+      const result = await db.query.players.findFirst({
+        where: eq(players.id, id),
+        with: {
+          identifiers: true,
+          adminProfile: {
+            columns: {
+              passwordHash: false,
+            },
+          },
+          bans: true,
+          warns: true,
+          kicks: true,
+          notes: true,
+          reports: true,
+        },
+      });
 
-      if (!player) return null;
+      if (!result) return null;
 
-      const identifierRows = db
-        .select()
-        .from(playerIdentifiers)
-        .where(eq(playerIdentifiers.playerId, id))
-        .all();
-
-      const identifiers = identifierRows.reduce((acc, curr) => {
+      const identifiers = result.identifiers.reduce((acc, curr) => {
         acc[curr.type as keyof PlayerIdentifiers] = curr.value;
-
         return acc;
       }, {} as PlayerIdentifiers);
 
-      const isStaff = this.isStaff(player.id);
-
-      return { ...player, isStaff, identifiers };
+      return {
+        ...result,
+        isStaff: !!result.adminProfile,
+        identifiers,
+        punishments: {
+          bans: result.bans,
+          warns: result.warns,
+          kicks: result.kicks,
+        },
+      };
     },
 
     list(
