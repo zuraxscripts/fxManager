@@ -1,6 +1,6 @@
-import { ArrowLeft, ArrowRight } from "lucide-react";
-import { Button } from "./ui/button";
-import type { Dispatch, SetStateAction } from "react";
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { Button } from './ui/button';
+import type { Dispatch, SetStateAction } from 'react';
 
 interface PageSelectorProps {
   total: number;
@@ -10,14 +10,13 @@ interface PageSelectorProps {
   setPage: Dispatch<SetStateAction<number>>;
 }
 
-export default function PageSelector({ 
-  loading, 
-  pageSize, 
-  page, 
-  total, 
-  setPage 
+export default function PageSelector({
+  loading,
+  pageSize,
+  page,
+  total,
+  setPage,
 }: PageSelectorProps) {
-  
   const totalPages = Math.ceil(total / pageSize) || 1;
 
   return (

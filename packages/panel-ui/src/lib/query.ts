@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 const HOSTNAME = import.meta.env.DEV ? 'localhost:4000' : window.location.host;
 const IS_SECURE = window.location.protocol === 'https:';
 
-export async function QueryService(
+export async function QueryService<T>(
   {
     endpoint,
     method,
@@ -17,7 +17,7 @@ export async function QueryService(
     headers?: Record<string, string>;
   },
   showError: boolean = false,
-) {
+): Promise<T> {
   const protocol = IS_SECURE ? 'https' : 'http';
   const url = `${protocol}://${HOSTNAME}${endpoint}`;
 
@@ -47,7 +47,7 @@ export async function QueryService(
       );
     }
 
-    return await response.json();
+    return (await response.json()) as T;
   } catch (err) {
     if (showError || import.meta.env.DEV) console.error('QueryService Error:', err);
     throw err;

@@ -48,7 +48,7 @@ export default function Players() {
       sortBy,
       sortOrder,
       page: page.toString(),
-      pageSize: pageSize.toString()
+      pageSize: pageSize.toString(),
     });
 
     if (debouncedSearch) params.set('search', debouncedSearch);
@@ -65,7 +65,9 @@ export default function Players() {
       setTotal(newTotal);
     });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [debouncedSearch, sortBy, sortOrder, page, pageSize]);
 
   useEffect(() => {
@@ -108,7 +110,7 @@ export default function Players() {
 
         <Button variant="outline" onClick={toggleSortOrder} className="w-40 justify-between">
           <span>{sortOrder === 'asc' ? 'Ascending' : 'Descending'}</span>
-          <ArrowUpDown className='h-4 w-4' />
+          <ArrowUpDown className="h-4 w-4" />
         </Button>
       </div>
 
@@ -212,9 +214,19 @@ export default function Players() {
         </Table>
 
         <div className="flex items-center justify-between px-4 py-4 border-t border-border">
-          <PageSizeSelector pageSize={pageSize} setPageSize={setPageSize} label='Players per page' />
+          <PageSizeSelector
+            pageSize={pageSize}
+            setPageSize={setPageSize}
+            label="Players per page"
+          />
 
-          <PageSelector page={page} pageSize={pageSize} setPage={setPage} loading={loading} total={total} />
+          <PageSelector
+            page={page}
+            pageSize={pageSize}
+            setPage={setPage}
+            loading={loading}
+            total={total}
+          />
         </div>
       </Card>
     </div>

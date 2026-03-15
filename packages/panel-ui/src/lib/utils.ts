@@ -15,6 +15,6 @@ export function formatDuration(minutes: number): string {
 export function formatUptime(startedAt: Date | string | number): string {
   const initialDate = startedAt instanceof Date ? startedAt : new Date(startedAt);
   const diff = Math.floor((Date.now() - initialDate.getTime()) / 1000);
-  
+
   return formatDuration(diff);
 }
