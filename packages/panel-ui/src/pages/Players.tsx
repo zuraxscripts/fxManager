@@ -55,6 +55,11 @@ export default function Players() {
 
     if (debouncedSearch) params.set('search', debouncedSearch);
 
+    /* ToDo:
+      * Consider storing params in localstorage so the user coming back has the same settings
+      * Useful if looking through profiles to avoid reiterating a search over and over
+    */
+
     QueryService<PaginatedResponse<Omit<Player, 'identifiers'>>>({
       endpoint: `/players?${params.toString()}`,
       method: 'GET',
