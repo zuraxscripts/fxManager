@@ -17,7 +17,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { QueryService } from '@/lib/query';
-import type { ApiResponse, Player } from '@fxmanager/types';
+import type { ApiResponse, BanForm, KickForm, NoteForm, Player, WarnForm } from '@fxmanager/types';
 import { computeExpiry, formatDate, initials } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -25,27 +25,12 @@ import { toast } from 'sonner';
 
 export type ActionTab = 'warn' | 'kick' | 'ban' | 'note';
 
-export interface PlayerActionSheetProps {
+interface PlayerActionDialogProps {
   player: Pick<Player, 'id' | 'name' | 'isStaff'> | null;
   open: boolean;
   defaultTab?: ActionTab;
   onClose: () => void;
   onSuccess?: (action: ActionTab, playerId: number) => void;
-}
-
-interface WarnForm {
-  reason: string;
-}
-interface KickForm {
-  reason: string;
-}
-interface BanForm {
-  reason: string;
-  duration: string;
-  unit: 'hours' | 'days' | 'weeks' | 'permanent';
-}
-interface NoteForm {
-  content: string;
 }
 
 // region action tabs
@@ -310,7 +295,7 @@ export function PlayerActionDialog({
   defaultTab = 'warn',
   onClose,
   onSuccess,
-}: PlayerActionSheetProps) {
+}: PlayerActionDialogProps) {
   const [tab, setTab] = useState<ActionTab>(defaultTab);
 
   if (!player) return null;

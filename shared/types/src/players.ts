@@ -29,3 +29,24 @@ export interface PlayerProfile extends Player {
   reports: (typeof reports.$inferSelect)[];
   notes: (typeof playerNotes.$inferSelect)[];
 }
+
+// region player actions
+// body type for http requests
+
+export interface WarnForm {
+  reason: string;
+}
+
+export interface KickForm {
+  reason: string;
+}
+
+export interface BanForm {
+  reason: string;
+  duration: string;
+  unit: 'hours' | 'days' | 'weeks' | 'permanent';
+}
+
+export interface NoteForm {
+  content: string;
+}
