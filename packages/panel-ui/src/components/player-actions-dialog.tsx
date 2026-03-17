@@ -151,6 +151,19 @@ function BanTab({
 
   const handleSubmit = async () => {
     if (!form.reason.trim()) return;
+
+    if (!form.reason.trim()) return;
+
+    if (form.reason.trim().length < 10) {
+      toast.error('Reason must be at least 10 characters.');
+      return;
+    }
+
+    if (!isPermanent && !form.duration) {
+      toast.error('Please specify a duration or set to permanent.');
+      return;
+    }
+
     setLoading(true);
     try {
       const payload = {
@@ -164,7 +177,22 @@ function BanTab({
         method: 'POST',
         body: payload,
       });
-      if (res.success) onSuccess();
+
+      if (res.success) {
+        toast.success(
+          isPermanent
+            ? 'Player has been permanently banned.'
+            : `Player banned until ${formatDate(
+                computeExpiry(Number(form.duration), form.unit as 'hours' | 'days' | 'weeks'),
+              )}.`,
+        );
+        onSuccess();
+      } else {
+        toast.error(res.error ?? 'Failed to issue ban.');
+      }
+    } catch (err) {
+      console.error('An error occured:', err);
+      toast.error('An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
