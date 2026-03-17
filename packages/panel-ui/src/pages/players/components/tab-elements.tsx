@@ -154,6 +154,7 @@ export function ReportsTab({ reports }: { reports: PlayerProfile['reports'] }) {
 
 export function NotesTab({ notes }: { notes: PlayerProfile['notes'] }) {
   if (!notes.length) return <EmptyState icon={StickyNote} message="No notes added" />;
+
   return (
     <div className="space-y-3">
       {notes.map((note) => (
@@ -161,8 +162,8 @@ export function NotesTab({ notes }: { notes: PlayerProfile['notes'] }) {
           <CardContent className="pt-4 pb-4">
             <p className="text-sm">{note.content}</p>
             <p className="text-xs text-muted-foreground mt-2">
-              Added by <span className="font-medium">{note.addedBy}</span> ·{' '}
-              {formatDate(note.createdAt)}
+              Added by <span className="font-medium">{note.issuer}</span> ·{' '}
+              {formatDate(note.issuedAt)}
             </p>
           </CardContent>
         </Card>
