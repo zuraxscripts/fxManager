@@ -99,16 +99,16 @@ export function KicksTab({ kicks }: { kicks: PlayerProfile['punishments']['kicks
         <TableRow>
           <TableHead>Reason</TableHead>
           <TableHead>Issued by</TableHead>
-          <TableHead>Created</TableHead>
+          <TableHead>Issued at</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {kicks.map((kick) => (
           <TableRow key={kick.id}>
             <TableCell className="max-w-[300px] truncate">{kick.reason}</TableCell>
-            <TableCell>{kick.issuedBy ?? 'System'}</TableCell>
+            <TableCell>{kick.issuer ?? 'System'}</TableCell>
             <TableCell className="text-muted-foreground text-xs">
-              {formatDate(kick.createdAt)}
+              {formatDate(kick.issuedAt)}
             </TableCell>
           </TableRow>
         ))}
