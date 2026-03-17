@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, Ban, ExternalLink, Hammer, StickyNote, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -320,11 +320,15 @@ function NoteTab({
 export function PlayerActionDialog({
   player,
   open,
-  defaultTab = 'warn',
+  defaultTab = 'ban',
   onClose,
   onSuccess,
 }: PlayerActionDialogProps) {
   const [tab, setTab] = useState<ActionTab>(defaultTab);
+
+  useEffect(() => {
+    setTab(defaultTab);
+  }, [defaultTab]);
 
   if (!player) return null;
 
@@ -363,7 +367,7 @@ export function PlayerActionDialog({
           className="flex flex-col flex-1 min-h-0"
         >
           <TabsList className="w-full justify-start flex-wrap rounded-none pb-0" variant="line">
-            {(['warn', 'kick', 'ban', 'note'] as const).map((value) => {
+            {(['ban', 'kick', 'warn', 'note'] as const).map((value) => {
               const icons = { warn: AlertTriangle, kick: Hammer, ban: Ban, note: StickyNote };
               const labels = { warn: 'Warn', kick: 'Kick', ban: 'Ban', note: 'Note' };
               const Icon = icons[value];
