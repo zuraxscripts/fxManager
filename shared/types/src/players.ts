@@ -1,5 +1,7 @@
 import { adminUsers, bans, kicks, playerNotes, reports, warns } from '@fxmanager/database';
 
+export type AdminSelect = Omit<typeof adminUsers.$inferSelect, 'passwordHash'>;
+
 export interface PlayerIdentifiers {
   license: string;
   fivem?: string;
