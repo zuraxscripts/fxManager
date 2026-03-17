@@ -329,5 +329,14 @@ export function createPlayersRepository(db: DB) {
 
       return true;
     },
+
+    async addKick(playerId: number, reason: string, adminId: number) {
+      await db.insert(kicks).values({
+        playerId,
+        reason,
+        issuer: adminId,
+        issuedAt: new Date(),
+      });
+    }
   };
 }
