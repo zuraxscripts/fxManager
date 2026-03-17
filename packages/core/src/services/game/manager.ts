@@ -1,24 +1,35 @@
 import { repo } from '@fxmanager/database';
 import type {
+  ApiResponse,
   BanDataCard,
   DeferralCheckResponse,
+  GameEventPayload,
   IGameManager,
   IProcessManager,
   OnlinePlayer,
   PlayerIdentifiers,
 } from '@fxmanager/types';
+import { loadConfig } from '../../config';
 
 export class GameManager implements IGameManager {
   private pm: IProcessManager;
   private playerlist: OnlinePlayer[] = [];
+  private apiToken: string;
 
   constructor(pm: IProcessManager) {
     this.pm = pm;
+
+    const { resourceApiToken } = loadConfig();
+    this.apiToken = resourceApiToken;
   }
 
   // region player handling
   getPlayerList() {
     return this.playerlist;
+  }
+
+  getPlayer(id: number) {
+    return this.playerlist.find((p) => p.id === id);
   }
 
   playerDeferralChecks(identifiers: PlayerIdentifiers): DeferralCheckResponse {
@@ -93,4 +104,54 @@ export class GameManager implements IGameManager {
       data: { serverId: player.serverId },
     });
   }
+
+  // region act on players
+
+  async dropPlayer(serverId: number, reason: string): Promise<ApiResponse> {
+    try {
+      const response = await fetch('http://localhost:30120', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'drop',
+          data: {
+            serverId,
+            reason,
+          },
+        }),
+        headers: {
+          Application: 'json/application',
+          'x-resource-token': this.apiToken,
+        },
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: `Server responded with ${response.status}: ${response.statusText}`,
+        };
+      }
+
+      const result = (await response.json()) as ApiResponse;
+
+      if (result.success) {
+        return {
+          success: true,
+          data: null,
+        };
+      }
+
+      return {
+        success: false,
+        error: result.error ?? 'Unable to fulfill drop request',
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: (err as Error).message,
+      };
+    }
+  }
+
+  // region private methods
+  private async handlePanelEvent(payload: GameEventPayload) {}
 }

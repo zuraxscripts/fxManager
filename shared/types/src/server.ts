@@ -2,6 +2,7 @@ import type { EventEmitter } from 'events';
 import type { ConsoleOutputEvent } from './socket';
 import type { DeferralCheckResponse, GameEventPayload, OnlinePlayer } from './game-api';
 import { PlayerIdentifiers } from './players';
+import { ApiResponse } from './api';
 
 export type ServerStatus = 'stopped' | 'starting' | 'running' | 'stopping' | 'crashed';
 
@@ -45,7 +46,10 @@ export interface PlayerJoinPayload {
 
 export interface IGameManager {
   getPlayerList(): OnlinePlayer[];
+  getPlayer(id: number): OnlinePlayer | undefined;
   playerDeferralChecks(identifiers: PlayerIdentifiers): DeferralCheckResponse;
   playerJoin(payload: PlayerJoinPayload): Promise<void>;
   playerDrop(serverId: number): Promise<void>;
+
+  dropPlayer(serverId: number, reason: string): Promise<ApiResponse>;
 }
