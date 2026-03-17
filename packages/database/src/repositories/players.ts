@@ -306,7 +306,18 @@ export function createPlayersRepository(db: DB) {
         )
         .get();
 
-      if (activeBan && activeBan.expiresAt === null) return false;
+      if (activeBan) {
+        // no adding new ban if perma-banned
+        if (activeBan.expiresAt === null) return false;
+
+        // what's the point in adding a ban shorter then the active one
+        if (expiresAt !== null && activeBan.expiresAt >= expiresAt) return false;
+
+        // shorten the active one, only have 1 active ban at a time
+        await db.update(bans)
+          .set({ expiresAt: now })
+          .where(eq(bans.id, activeBan.id));
+      }
 
       await db.insert(bans).values({
         playerId,
