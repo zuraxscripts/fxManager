@@ -34,7 +34,7 @@ import {
   WarnsTab,
 } from './components/tab-elements';
 import { usePlayerAction } from '@/hooks/use-player-actions';
-import { PlayerActionDialog } from '@/components/player-actions-dialog';
+import { PlayerActionDialog, type ActionTab } from '@/components/player-actions-dialog';
 
 function LoadingSkeleton() {
   return (
@@ -64,7 +64,8 @@ function LoadingSkeleton() {
 
 export default function PlayerView() {
   const params = useParams<{ playerId: string }>();
-  const { dialogOpen, dialogPlayer, dialogTab, openAction, closeAction } = usePlayerAction();
+  const { dialogOpen, dialogPlayer, openAction, closeAction } = usePlayerAction();
+  const [actionTab, setActionTab] = useState<ActionTab>('warn');
   const [playerData, setPlayerData] = useState<PlayerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,6 +91,12 @@ export default function PlayerView() {
       })
       .finally(() => setLoading(false));
   }, [params.playerId]);
+
+  function handleTabChange(tab: string) {
+    if (tab === 'report') return;
+
+    setActionTab(tab as ActionTab);
+  }
 
   if (loading) return <LoadingSkeleton />;
 
@@ -192,9 +199,9 @@ export default function PlayerView() {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="bans">
+        <Tabs defaultValue="ban" onValueChange={handleTabChange}>
           <TabsList className="w-full justify-start flex-wrap h-auto">
-            <TabsTrigger value="bans" className="gap-1.5">
+            <TabsTrigger value="ban" className="gap-1.5">
               <Ban className="h-3.5 w-3.5" />
               Bans
               {punishments.bans.length > 0 && (
@@ -203,16 +210,7 @@ export default function PlayerView() {
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="warns" className="gap-1.5">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Warns
-              {punishments.warns.length > 0 && (
-                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs h-4">
-                  {punishments.warns.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="kicks" className="gap-1.5">
+            <TabsTrigger value="kick" className="gap-1.5">
               <Hammer className="h-3.5 w-3.5" />
               Kicks
               {punishments.kicks.length > 0 && (
@@ -221,7 +219,16 @@ export default function PlayerView() {
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="reports" className="gap-1.5">
+            <TabsTrigger value="warn" className="gap-1.5">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              Warns
+              {punishments.warns.length > 0 && (
+                <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-xs h-4">
+                  {punishments.warns.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="report" className="gap-1.5">
               <Flag className="h-3.5 w-3.5" />
               Reports
               {playerData.reports.length > 0 && (
@@ -230,7 +237,7 @@ export default function PlayerView() {
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="notes" className="gap-1.5">
+            <TabsTrigger value="note" className="gap-1.5">
               <StickyNote className="h-3.5 w-3.5" />
               Notes
               {playerData.notes.length > 0 && (
@@ -241,7 +248,7 @@ export default function PlayerView() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="bans" className="mt-4">
+          <TabsContent value="ban" className="mt-4">
             <Card>
               <CardContent className="p-0 overflow-auto">
                 <BansTab bans={punishments.bans} />
@@ -249,7 +256,7 @@ export default function PlayerView() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="warns" className="mt-4">
+          <TabsContent value="warn" className="mt-4">
             <Card>
               <CardContent className="p-0 overflow-auto">
                 <WarnsTab warns={punishments.warns} />
@@ -257,7 +264,7 @@ export default function PlayerView() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="kicks" className="mt-4">
+          <TabsContent value="kick" className="mt-4">
             <Card>
               <CardContent className="p-0 overflow-auto">
                 <KicksTab kicks={punishments.kicks} />
@@ -265,7 +272,7 @@ export default function PlayerView() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="reports" className="mt-4">
+          <TabsContent value="report" className="mt-4">
             <Card>
               <CardContent className="p-0 overflow-auto">
                 <ReportsTab reports={playerData.reports} />
@@ -273,7 +280,7 @@ export default function PlayerView() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="notes" className="mt-4">
+          <TabsContent value="note" className="mt-4">
             <Card>
               <CardContent className="p-0 overflow-auto">
                 <NotesTab notes={playerData.notes} />
@@ -288,7 +295,7 @@ export default function PlayerView() {
       <PlayerActionDialog
         player={dialogPlayer}
         open={dialogOpen}
-        defaultTab={dialogTab}
+        defaultTab={actionTab}
         onClose={closeAction}
         onSuccess={() => {
           QueryService<ApiResponse<PlayerProfile>>({
