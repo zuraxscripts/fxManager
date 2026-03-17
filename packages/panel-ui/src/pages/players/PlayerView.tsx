@@ -20,7 +20,7 @@ import {
   StickyNote,
   User,
 } from 'lucide-react';
-import { formatDate, formatDuration, initials } from '@/lib/utils';
+import { copyToClipboard, formatDate, formatDuration, initials } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/stat-card';
@@ -178,8 +178,13 @@ export default function PlayerView() {
             <div className="flex flex-wrap gap-2">
               {Object.entries(playerData.identifiers).map(([key, value]) =>
                 value ? (
-                  <Badge key={key} variant="outline" className="font-mono text-xs">
-                    {key}: {value}
+                  <Badge
+                    key={key}
+                    variant="outline"
+                    className="font-mono text-xs cursor-pointer"
+                    onClick={() => copyToClipboard(value)}
+                  >
+                    {value}
                   </Badge>
                 ) : null,
               )}
