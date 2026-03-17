@@ -83,13 +83,8 @@ export const playerRoutes = (gm: IGameManager) =>
               ? new Date(body.expiresAt).toLocaleString()
               : 'Permanent';
 
-            const reason = [
-              'You have been banned from the server.',
-              `> Reason: ${body.reason}`,
-              `> Expires: ${expiryDate}`,
-              '',
-              'Appeal at: yourdiscord.gg/invite',
-            ].join('\n');
+            // Doesn't the drop modal show new lines ?
+            const reason = `You have been banned from the server. Reason: ${body.reason}`;
 
             await gm.dropPlayer(onlinePlayer.serverId, reason);
           }
@@ -135,9 +130,8 @@ export const playerRoutes = (gm: IGameManager) =>
         try {
           await repo.players.addKick(playerId, body.reason, admin.id);
 
-          const reason = ['You have been kicked from the server.', `> Reason: ${body.reason}`].join(
-            '\n',
-          );
+          // Doesn't the drop modal show new lines ?
+          const reason = `You have been kicked from the server. Reason: ${body.reason}`;
 
           await gm.dropPlayer(onlinePlayer.serverId, reason);
 
