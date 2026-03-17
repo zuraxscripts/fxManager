@@ -3,7 +3,7 @@ import { cors } from '@elysiajs/cors';
 import { staticPlugin } from '@elysiajs/static';
 import { join, dirname } from 'path';
 import { existsSync } from 'fs';
-import type { IProcessManager } from '@fxmanager/types';
+import type { IGameManager, IProcessManager } from '@fxmanager/types';
 import { serverRoutes } from './routes/server';
 import { playerRoutes } from './routes/players';
 import { wsRoutes } from './ws';
@@ -23,10 +23,11 @@ function resolvePublicDir(): string {
 
 interface PanelStartParams {
   pm: IProcessManager;
+  gm: IGameManager;
   port?: number;
 }
 
-export function startPanel({ pm, port = 4000 }: PanelStartParams) {
+export function startPanel({ pm, gm, port = 4000 }: PanelStartParams) {
   const app = new Elysia()
     .use(cors())
 

@@ -26,6 +26,7 @@ startAPI({
 startPanel({
   port: webServerPort,
   pm: processManager,
+  gm: gameManager,
 });
 
 checkVersion(version);
