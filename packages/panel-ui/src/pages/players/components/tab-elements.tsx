@@ -14,11 +14,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export function BansTab({ bans }: { bans: PlayerProfile['punishments']['bans'] }) {
   if (!bans.length) return <EmptyState icon={Ban} message="No bans on record" />;
+
+  const now = new Date();
+
+  function BanStatus({ ban }: { ban: PlayerProfile['punishments']['bans'][0] }) {
+    const variant =
+      !ban.expiresAt || ban.expiresAt > now ? 'destructive' : ban.revokedAt ? 'success' : 'outline';
+
+    const label =
+      !ban.expiresAt || ban.expiresAt > now ? 'Active' : ban.revokedAt ? 'Revoked' : 'Expired';
+
+    return <Badge variant={variant}>{label}</Badge>;
+  }
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead>Reason</TableHead>
+          <TableHead>Status</TableHead>
           <TableHead>Issued by</TableHead>
           <TableHead>Expires</TableHead>
           <TableHead>Created</TableHead>
@@ -28,7 +42,10 @@ export function BansTab({ bans }: { bans: PlayerProfile['punishments']['bans'] }
         {bans.map((ban) => (
           <TableRow key={ban.id}>
             <TableCell className="max-w-[240px] truncate">{ban.reason}</TableCell>
-            <TableCell>{ban.issuedBy ?? 'System'}</TableCell>
+            <TableCell>
+              <BanStatus ban={ban} />
+            </TableCell>
+            <TableCell>{ban.bannedBy ?? 'System'}</TableCell>
             <TableCell>
               {ban.expiresAt ? (
                 formatDate(ban.expiresAt)
