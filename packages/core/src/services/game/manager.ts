@@ -109,14 +109,11 @@ export class GameManager implements IGameManager {
 
   async dropPlayer(serverId: number, reason: string): Promise<ApiResponse> {
     try {
-      const response = await fetch('http://localhost:30120', {
+      const response = await fetch('http://localhost:30120/fxManager/drop', {
         method: 'POST',
         body: JSON.stringify({
-          action: 'drop',
-          data: {
-            serverId,
-            reason,
-          },
+          serverId,
+          reason,
         }),
         headers: {
           Application: 'json/application',
