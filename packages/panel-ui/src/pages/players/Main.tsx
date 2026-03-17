@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Users, Search, ArrowUpDown, Eye, ShieldAlert } from 'lucide-react';
+import { Users, Search, ArrowUpDown, ShieldAlert } from 'lucide-react';
 import type { PaginatedResponse, Player } from '@fxmanager/types';
 import {
   Table,
@@ -25,7 +25,7 @@ import { useDebounce } from '@/hooks/use-debounce';
 import { formatDuration } from '@/lib/utils';
 import PageSizeSelector from '@/components/page-size-selector';
 import PageSelector from '@/components/page-selector';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { usePlayerAction } from '@/hooks/use-player-actions';
 import { PlayerActionDialog } from '@/components/player-actions-dialog';
@@ -35,6 +35,7 @@ type SortBy = 'lastSeen' | 'firstSeen' | 'playtime';
 type SortOrder = 'asc' | 'desc';
 
 export default function Players() {
+  const navigate = useNavigate();
   const [players, setPlayers] = useState<Omit<Player, 'identifiers'>[]>([]);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
@@ -154,7 +155,11 @@ export default function Players() {
                   </TableRow>
                 ) : (
                   players.map((p) => (
-                    <TableRow key={p.id} className="flex w-full items-center">
+                    <TableRow
+                      key={p.id}
+                      className="flex w-full items-center"
+                      onClick={() => navigate(`/players/${p.id}`)}
+                    >
                       <TableCell className="font-medium pl-4 flex-1 truncate">
                         {p.name}
                         {p.isStaff && (
@@ -173,15 +178,10 @@ export default function Players() {
                         {formatDuration(p.playtime)}
                       </TableCell>
                       <TableCell className="w-70 flex justify-around">
-                        <Button size="sm" variant="outline" className="h-7 w-30" asChild>
-                          <Link to={`/players/${p.id}`}>
-                            <Eye className="mr-1.5 h-3.5 w-3.5" /> View Profile
-                          </Link>
-                        </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-7 w-20"
+                          className="h-7 w-30"
                           onClick={() => openAction(p)}
                         >
                           <ShieldAlert className="mr-1.5 h-3.5 w-3.5" /> Actions
