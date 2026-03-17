@@ -107,11 +107,7 @@ export const playerRoutes = new Elysia({ prefix: '/players' })
       const playerId = parseInt(params.playerId);
 
       try {
-        await repo.players.addKick(
-          playerId,
-          body.reason,
-          admin.id,
-        );
+        await repo.players.addKick(playerId, body.reason, admin.id);
 
         return {
           success: true,
@@ -125,6 +121,30 @@ export const playerRoutes = new Elysia({ prefix: '/players' })
     {
       body: t.Object({
         reason: t.String({ minLength: 10 }),
+      }),
+    },
+  )
+
+  .post(
+    '/:playerId/warn',
+    async ({ params, body, admin }): Promise<ApiResponse> => {
+      const playerId = parseInt(params.playerId);
+
+      try {
+        await repo.players.addWarn(playerId, body.reason, admin.id);
+
+        return {
+          success: true,
+          data: null,
+        };
+      } catch (err) {
+        console.error('An error occured when warning a player', { playerId, admin, body });
+        return { success: false, error: 'An unkown error occured' };
+      }
+    },
+    {
+      body: t.Object({
+        reason: t.String(),
       }),
     },
   );
