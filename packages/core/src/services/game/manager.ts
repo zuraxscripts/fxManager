@@ -2,12 +2,13 @@ import { repo } from '@fxmanager/database';
 import type {
   BanDataCard,
   DeferralCheckResponse,
+  IGameManager,
   IProcessManager,
   OnlinePlayer,
   PlayerIdentifiers,
 } from '@fxmanager/types';
 
-export class GameManager {
+export class GameManager implements IGameManager {
   private pm: IProcessManager;
   private playerlist: OnlinePlayer[] = [];
 

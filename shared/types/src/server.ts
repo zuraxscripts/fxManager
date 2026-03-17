@@ -1,6 +1,7 @@
 import type { EventEmitter } from 'events';
 import type { ConsoleOutputEvent } from './socket';
-import type { GameEventPayload } from './game-api';
+import type { DeferralCheckResponse, GameEventPayload, OnlinePlayer } from './game-api';
+import { PlayerIdentifiers } from './players';
 
 export type ServerStatus = 'stopped' | 'starting' | 'running' | 'stopping' | 'crashed';
 
@@ -34,4 +35,17 @@ export interface IProcessManager extends EventEmitter {
   sendCommand(command: string): void;
   getConsoleContent(): ConsoleOutputEvent[];
   handleGameEvent(payload: GameEventPayload): void;
+}
+
+export interface PlayerJoinPayload {
+  name: string;
+  identifiers: PlayerIdentifiers;
+  serverId: number;
+}
+
+export interface IGameManager {
+  getPlayerList(): OnlinePlayer[];
+  playerDeferralChecks(identifiers: PlayerIdentifiers): DeferralCheckResponse;
+  playerJoin(payload: PlayerJoinPayload): Promise<void>;
+  playerDrop(serverId: number): Promise<void>;
 }
