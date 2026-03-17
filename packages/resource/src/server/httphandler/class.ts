@@ -1,4 +1,13 @@
-import { HttpRequest, HttpResponse, RawRequest, RawResponse, Route, RouteHandler } from '../types';
+import { z, ZodType } from 'zod';
+import {
+  HttpRequest,
+  HttpResponse,
+  RawRequest,
+  RawResponse,
+  Route,
+  RouteHandler,
+  RouteOptions,
+} from '../types';
 
 export class HttpServer {
   private routes: Route[] = [];
@@ -16,42 +25,125 @@ export class HttpServer {
 
   // region routing
 
-  get(path: string, handler: RouteHandler): this {
-    return this.addRoute('GET', path, handler);
+  public get(path: string, handler: RouteHandler<unknown>): this;
+  public get<TSchema extends ZodType>(
+    path: string,
+    options: RouteOptions<TSchema>,
+    handler: RouteHandler<z.infer<TSchema>>,
+  ): this;
+  public get<TSchema extends ZodType>(
+    path: string,
+    optionsOrHandler: RouteOptions<TSchema> | RouteHandler<unknown>,
+    handler?: RouteHandler<z.infer<TSchema>>,
+  ): this {
+    return this.addRoute('GET', path, optionsOrHandler, handler);
   }
 
-  post(path: string, handler: RouteHandler): this {
-    return this.addRoute('POST', path, handler);
+  public post(path: string, handler: RouteHandler<unknown>): this;
+  public post<TSchema extends ZodType>(
+    path: string,
+    options: RouteOptions<TSchema>,
+    handler: RouteHandler<z.infer<TSchema>>,
+  ): this;
+  public post<TSchema extends ZodType>(
+    path: string,
+    optionsOrHandler: RouteOptions<TSchema> | RouteHandler<unknown>,
+    handler?: RouteHandler<z.infer<TSchema>>,
+  ): this {
+    return this.addRoute('POST', path, optionsOrHandler, handler);
   }
 
-  put(path: string, handler: RouteHandler): this {
-    return this.addRoute('PUT', path, handler);
+  public put(path: string, handler: RouteHandler<unknown>): this;
+  public put<TSchema extends ZodType>(
+    path: string,
+    options: RouteOptions<TSchema>,
+    handler: RouteHandler<z.infer<TSchema>>,
+  ): this;
+  public put<TSchema extends ZodType>(
+    path: string,
+    optionsOrHandler: RouteOptions<TSchema> | RouteHandler<unknown>,
+    handler?: RouteHandler<z.infer<TSchema>>,
+  ): this {
+    return this.addRoute('PUT', path, optionsOrHandler, handler);
   }
 
-  delete(path: string, handler: RouteHandler): this {
-    return this.addRoute('DELETE', path, handler);
+  public delete(path: string, handler: RouteHandler<unknown>): this;
+  public delete<TSchema extends ZodType>(
+    path: string,
+    options: RouteOptions<TSchema>,
+    handler: RouteHandler<z.infer<TSchema>>,
+  ): this;
+  public delete<TSchema extends ZodType>(
+    path: string,
+    optionsOrHandler: RouteOptions<TSchema> | RouteHandler<unknown>,
+    handler?: RouteHandler<z.infer<TSchema>>,
+  ): this {
+    return this.addRoute('DELETE', path, optionsOrHandler, handler);
   }
 
-  patch(path: string, handler: RouteHandler): this {
-    return this.addRoute('PATCH', path, handler);
+  public patch(path: string, handler: RouteHandler<unknown>): this;
+  public patch<TSchema extends ZodType>(
+    path: string,
+    options: RouteOptions<TSchema>,
+    handler: RouteHandler<z.infer<TSchema>>,
+  ): this;
+  public patch<TSchema extends ZodType>(
+    path: string,
+    optionsOrHandler: RouteOptions<TSchema> | RouteHandler<unknown>,
+    handler?: RouteHandler<z.infer<TSchema>>,
+  ): this {
+    return this.addRoute('PATCH', path, optionsOrHandler, handler);
   }
 
-  private addRoute(method: string, path: string, handler: RouteHandler): this {
-    this.routes.push({ method: method.toUpperCase(), path, handler });
+  private addRoute<TSchema extends ZodType>(
+    method: string,
+    path: string,
+    optionsOrHandler: RouteOptions<TSchema> | RouteHandler<unknown>,
+    handler?: RouteHandler<z.infer<TSchema>>,
+  ): this {
+    if (typeof optionsOrHandler === 'function') {
+      this.routes.push({
+        method: method.toUpperCase(),
+        path,
+        schema: null,
+        handler: optionsOrHandler,
+      });
+    } else {
+      this.routes.push({
+        method: method.toUpperCase(),
+        path,
+        schema: optionsOrHandler.schema,
+        handler: handler as RouteHandler<unknown>,
+      });
+    }
+
     return this;
   }
 
-  // region core
+  // region core handler
 
   private async handleRequest(rawReq: RawRequest, rawRes: RawResponse): Promise<void> {
-    const body = await this.readBody(rawReq);
+    const rawBody = await this.readBody(rawReq);
 
-    const req: HttpRequest = {
+    // Parse JSON body once; keep null for empty bodies
+    let parsedBody: unknown = null;
+    if (rawBody) {
+      try {
+        parsedBody = JSON.parse(rawBody);
+      } catch {
+        return this.sendResponse(rawRes, {
+          status: 400,
+          body: { success: false, error: 'Malformed JSON body' },
+        });
+      }
+    }
+
+    const req: HttpRequest<unknown> = {
       address: rawReq.address,
       headers: rawReq.headers,
       method: rawReq.method.toUpperCase(),
       path: rawReq.path,
-      body,
+      body: parsedBody,
     };
 
     // token validation
@@ -68,9 +160,29 @@ export class HttpServer {
     if (!route) {
       return this.sendResponse(rawRes, {
         status: 404,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ success: false, error: 'Not Found' }),
+        body: { success: false, error: 'Not Found' },
       });
+    }
+
+    // Schema validation
+    if (route.schema) {
+      const result = route.schema.safeParse(parsedBody);
+
+      if (!result.success) {
+        const details = result.error.issues
+          .map((issue) => `   - [${issue.path.join('.')}] ${issue.message}`)
+          .join('\n');
+        return this.sendResponse(rawRes, {
+          status: 422,
+          body: {
+            success: false,
+            error: 'Validation failed',
+            details,
+          },
+        });
+      }
+
+      req.body = result.data;
     }
 
     try {
@@ -85,6 +197,8 @@ export class HttpServer {
       });
     }
   }
+
+  // region helpers
 
   private readBody(rawReq: RawRequest): Promise<string | null> {
     return new Promise((resolve) => {
@@ -101,20 +215,27 @@ export class HttpServer {
     });
   }
 
-  private validateToken(req: HttpRequest): boolean {
+  private validateToken(req: HttpRequest<unknown>): boolean {
     const provided = req.headers[this.tokenHeader] ?? req.headers[this.tokenHeader.toLowerCase()];
     return provided === this.token;
   }
 
-  private matchRoute(req: HttpRequest): Route | undefined {
+  private matchRoute(req: HttpRequest<unknown>): Route | undefined {
     return this.routes.find((r) => r.method === req.method && r.path === req.path);
   }
 
   private sendResponse(rawRes: RawResponse, res: HttpResponse): void {
+    const body =
+      res.body === undefined
+        ? undefined
+        : typeof res.body === 'string'
+          ? res.body
+          : JSON.stringify(res.body);
+
     rawRes.writeHead(res.status, {
-      'Content-Type': 'application/json',
+      'Content-Type': typeof res.body === 'string' ? 'text/plain' : 'application/json',
       ...res.headers,
     });
-    rawRes.send(res.body);
+    rawRes.send(body);
   }
 }

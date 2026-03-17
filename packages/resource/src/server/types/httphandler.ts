@@ -1,3 +1,5 @@
+import { ZodType } from 'zod';
+
 export type RawRequest = {
   address: string;
   headers: Record<string, string>;
@@ -14,24 +16,29 @@ export type RawResponse = {
   send(data?: string): void;
 };
 
-export type HttpRequest = {
+export type HttpRequest<TBody = unknown> = {
   address: string;
   headers: Record<string, string>;
   method: string;
   path: string;
-  body: string | null;
+  body: TBody;
 };
 
 export type HttpResponse = {
   status: number;
-  headers: Record<string, string | string[]>;
-  body?: string;
+  headers?: Record<string, string | string[]>;
+  body?: string | object;
 };
 
-export type RouteHandler = (req: HttpRequest) => Promise<HttpResponse> | HttpResponse;
+export type RouteHandler<TBody> = (req: HttpRequest<TBody>) => Promise<HttpResponse> | HttpResponse;
 
 export type Route = {
   method: string;
   path: string;
-  handler: RouteHandler;
+  schema: ZodType | null;
+  handler: RouteHandler<unknown>;
+};
+
+export type RouteOptions<TSchema extends ZodType> = {
+  schema: TSchema;
 };
