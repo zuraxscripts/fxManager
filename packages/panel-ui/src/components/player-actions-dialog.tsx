@@ -96,14 +96,27 @@ function KickTab({
 
   const handleSubmit = async () => {
     if (!form.reason.trim()) return;
+
+    if (form.reason.trim().length < 10) {
+      toast.error('Reason must be at least 10 characters.');
+      return;
+    }
+
     setLoading(true);
+    
     try {
       const res = await QueryService<ApiResponse>({
         endpoint: `/players/${playerId}/kick`,
         method: 'POST',
         body: form,
       });
-      if (res.success) onSuccess();
+
+      if (res.success) {
+        toast.success('Player has been kicked from the server.');
+        onSuccess();
+      } else {
+        toast.error(res.error ?? 'Failed to kick player.');
+      }
     } finally {
       setLoading(false);
     }
