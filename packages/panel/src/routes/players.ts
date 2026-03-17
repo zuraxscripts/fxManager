@@ -1,150 +1,186 @@
 import Elysia, { t } from 'elysia';
 import { repo } from '@fxmanager/database';
 import { sessionAuth } from '../middleware/session-auth';
-import { ApiResponse, PlayerProfile } from '@fxmanager/types';
+import { ApiResponse, IGameManager, PlayerProfile } from '@fxmanager/types';
 
-export const playerRoutes = new Elysia({ prefix: '/players' })
+export const playerRoutes = (gm: IGameManager) =>
+  new Elysia({ prefix: '/players' })
+    .use(sessionAuth)
 
-  .use(sessionAuth)
+    .get(
+      '/',
+      ({ query }) => {
+        const page = Number(query.page ?? 1);
+        const pageSize = Number(query.pageSize ?? 50);
+        return repo.players.list(page, pageSize, {
+          search: query.search,
+          sortBy: query.sortBy as any,
+          sortOrder: query.sortOrder as any,
+        });
+      },
+      {
+        query: t.Object({
+          page: t.Optional(t.String()),
+          pageSize: t.Optional(t.String()),
+          search: t.Optional(t.String()),
+          sortBy: t.Optional(
+            t.Union([t.Literal('playtime'), t.Literal('lastSeen'), t.Literal('firstSeen')]),
+          ),
+          sortOrder: t.Optional(t.Union([t.Literal('asc'), t.Literal('desc')])),
+        }),
+      },
+    )
 
-  .get(
-    '/',
-    ({ query }) => {
-      const page = Number(query.page ?? 1);
-      const pageSize = Number(query.pageSize ?? 50);
-      return repo.players.list(page, pageSize, {
-        search: query.search,
-        sortBy: query.sortBy as any,
-        sortOrder: query.sortOrder as any,
-      });
-    },
-    {
-      query: t.Object({
-        page: t.Optional(t.String()),
-        pageSize: t.Optional(t.String()),
-        search: t.Optional(t.String()),
-        sortBy: t.Optional(
-          t.Union([t.Literal('playtime'), t.Literal('lastSeen'), t.Literal('firstSeen')]),
-        ),
-        sortOrder: t.Optional(t.Union([t.Literal('asc'), t.Literal('desc')])),
-      }),
-    },
-  )
-
-  .get('/:playerId', async ({ params }): Promise<ApiResponse<PlayerProfile>> => {
-    const playerId = parseInt(params.playerId);
-    const profile = await repo.players.findById(playerId);
-
-    if (!profile) return { success: false, error: `Player id ${playerId} does not exist.` };
-
-    return { success: true, data: profile };
-  })
-
-  .post(
-    '/:playerId/notes',
-    async ({ params, body, admin }): Promise<ApiResponse> => {
+    .get('/:playerId', async ({ params }): Promise<ApiResponse<PlayerProfile>> => {
       const playerId = parseInt(params.playerId);
+      const profile = await repo.players.findById(playerId);
 
-      try {
-        await repo.players.updatePlayerNotes(playerId, admin.id, body.content);
+      if (!profile) return { success: false, error: `Player id ${playerId} does not exist.` };
 
-        return { success: true, data: null };
-      } catch (err) {
-        if ((err as Error).message === 'content_too_short') {
-          return { success: false, error: 'Content is too short' };
+      return { success: true, data: profile };
+    })
+
+    .post(
+      '/:playerId/notes',
+      async ({ params, body, admin }): Promise<ApiResponse> => {
+        const playerId = parseInt(params.playerId);
+
+        try {
+          await repo.players.updatePlayerNotes(playerId, admin.id, body.content);
+
+          return { success: true, data: null };
+        } catch (err) {
+          if ((err as Error).message === 'content_too_short') {
+            return { success: false, error: 'Content is too short' };
+          }
+          console.error('An error occured when updating a player notes', { playerId, admin, body });
+          return { success: false, error: 'An unkown error occured' };
         }
-        console.error('An error occured when updating a player notes', { playerId, admin, body });
-        return { success: false, error: 'An unkown error occured' };
-      }
-    },
-    {
-      body: t.Object({
-        content: t.String(),
-      }),
-    },
-  )
+      },
+      {
+        body: t.Object({
+          content: t.String(),
+        }),
+      },
+    )
 
-  .post(
-    '/:playerId/ban',
-    async ({ params, body, admin }): Promise<ApiResponse> => {
-      const playerId = parseInt(params.playerId);
+    .post(
+      '/:playerId/ban',
+      async ({ params, body, admin }): Promise<ApiResponse> => {
+        const playerId = parseInt(params.playerId);
 
-      try {
-        const result = await repo.players.addBan(
-          playerId,
-          body.expiresAt,
-          body.reason,
-          admin.username,
-        );
+        try {
+          const result = await repo.players.addBan(
+            playerId,
+            body.expiresAt,
+            body.reason,
+            admin.username,
+          );
 
-        if (result) {
+          const onlinePlayer = gm.getPlayer(playerId);
+          if (onlinePlayer) {
+            const expiryDate = body.expiresAt
+              ? new Date(body.expiresAt).toLocaleString()
+              : 'Permanent';
+
+            const reason = [
+              'You have been banned from the server.',
+              `> Reason: ${body.reason}`,
+              `> Expires: ${expiryDate}`,
+              '',
+              'Appeal at: yourdiscord.gg/invite',
+            ].join('\n');
+
+            await gm.dropPlayer(onlinePlayer.serverId, reason);
+          }
+
+          if (result) {
+            return {
+              success: true,
+              data: null,
+            };
+          } else {
+            return {
+              success: false,
+              error: 'Player is already banned',
+            };
+          }
+        } catch (err) {
+          console.error('An error occured when adding a ban to player', { playerId, admin, body });
+          return { success: false, error: 'An unkown error occured' };
+        }
+      },
+      {
+        body: t.Object({
+          reason: t.String({ minLength: 10 }),
+          expiresAt: t.Nullable(t.Date()),
+        }),
+      },
+    )
+
+    .post(
+      '/:playerId/kick',
+      async ({ params, body, admin }): Promise<ApiResponse> => {
+        const playerId = parseInt(params.playerId);
+
+        const onlinePlayer = gm.getPlayer(playerId);
+
+        if (!onlinePlayer) {
+          return {
+            success: false,
+            error: 'Player is not online',
+          };
+        }
+
+        try {
+          await repo.players.addKick(playerId, body.reason, admin.id);
+
+          const reason = ['You have been kicked from the server.', `> Reason: ${body.reason}`].join(
+            '\n',
+          );
+
+          await gm.dropPlayer(onlinePlayer.serverId, reason);
+
           return {
             success: true,
             data: null,
           };
-        } else {
-          return {
-            success: false,
-            error: 'Player is already banned',
-          };
+        } catch (err) {
+          console.error('An error occured when kicking a player', { playerId, admin, body });
+          return { success: false, error: 'An unkown error occured' };
         }
-      } catch (err) {
-        console.error('An error occured when adding a ban to player', { playerId, admin, body });
-        return { success: false, error: 'An unkown error occured' };
-      }
-    },
-    {
-      body: t.Object({
-        reason: t.String({ minLength: 10 }),
-        expiresAt: t.Nullable(t.Date()),
-      }),
-    },
-  )
+      },
+      {
+        body: t.Object({
+          reason: t.String({ minLength: 10 }),
+        }),
+      },
+    )
 
-  .post(
-    '/:playerId/kick',
-    async ({ params, body, admin }): Promise<ApiResponse> => {
-      const playerId = parseInt(params.playerId);
+    .post(
+      '/:playerId/warn',
+      async ({ params, body, admin }): Promise<ApiResponse> => {
+        const playerId = parseInt(params.playerId);
 
-      try {
-        await repo.players.addKick(playerId, body.reason, admin.id);
+        try {
+          await repo.players.addWarn(playerId, body.reason, admin.id);
 
-        return {
-          success: true,
-          data: null,
-        };
-      } catch (err) {
-        console.error('An error occured when kicking a player', { playerId, admin, body });
-        return { success: false, error: 'An unkown error occured' };
-      }
-    },
-    {
-      body: t.Object({
-        reason: t.String({ minLength: 10 }),
-      }),
-    },
-  )
+          // ToDo: warn player in game
+          // - needs to be able to be done offline so on connection he receives it
+          // await gm.warnPlayer(playerId, body.reason)
 
-  .post(
-    '/:playerId/warn',
-    async ({ params, body, admin }): Promise<ApiResponse> => {
-      const playerId = parseInt(params.playerId);
-
-      try {
-        await repo.players.addWarn(playerId, body.reason, admin.id);
-
-        return {
-          success: true,
-          data: null,
-        };
-      } catch (err) {
-        console.error('An error occured when warning a player', { playerId, admin, body });
-        return { success: false, error: 'An unkown error occured' };
-      }
-    },
-    {
-      body: t.Object({
-        reason: t.String(),
-      }),
-    },
-  );
+          return {
+            success: true,
+            data: null,
+          };
+        } catch (err) {
+          console.error('An error occured when warning a player', { playerId, admin, body });
+          return { success: false, error: 'An unkown error occured' };
+        }
+      },
+      {
+        body: t.Object({
+          reason: t.String(),
+        }),
+      },
+    );

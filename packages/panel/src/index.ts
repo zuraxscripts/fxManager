@@ -33,7 +33,7 @@ export function startPanel({ pm, gm, port = 4000 }: PanelStartParams) {
 
     // ── API ──────────────────────────────────────────────────────────────────
     .use(serverRoutes(pm))
-    .use(playerRoutes)
+    .use(playerRoutes(gm))
     .use(authRoutes)
     .use(wsRoutes(pm))
     .get('/api/health', () => ({ ok: true, ts: Date.now() }));
