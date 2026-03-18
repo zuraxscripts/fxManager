@@ -2,7 +2,7 @@
 name: ❓ Support Request
 about: Need help using the project?
 title: '[SUPPORT] '
-labels: question
+labels: support
 assignees: ''
 ---
 
