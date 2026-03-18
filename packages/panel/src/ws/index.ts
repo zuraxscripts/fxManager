@@ -4,8 +4,8 @@ import type { ServerState, ConsoleOutputEvent } from '@fxmanager/types';
 import { sessionAuth } from '../middleware/session-auth';
 
 /* ToDo:
-  * Consider a refactor, notably to store data client side (i.e. online player list / console output)
-*/
+ * Consider a refactor, notably to store data client side (i.e. online player list / console output)
+ */
 
 type SocketData = { _subs: Map<ChannelName, () => void> };
 

@@ -14,7 +14,7 @@ export const UserPermissions = {
   VIEW_REPORT: 1 << 8, // 256
   SEND_REPORT: 1 << 9, // 512
   CLOSE_REPORT: 1 << 10, // 1024
-  
+
   SERVER_ACTIONS: 1 << 11, // 2048 - start/stop/restart
   CONSOLE_ACCESS: 1 << 12, // 4096 - view & execute console commands
 

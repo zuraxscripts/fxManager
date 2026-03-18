@@ -9,8 +9,8 @@ import type {
 import { usePanelWS } from './use-websocket';
 
 /* ToDo:
-  * Consider a refactor, notably to store data client side (i.e. online player list / console output)
-*/
+ * Consider a refactor, notably to store data client side (i.e. online player list / console output)
+ */
 
 // region server status
 
@@ -69,7 +69,7 @@ export function usePlayerlistSocket() {
 // region report
 
 interface ReportState {
-  status: ReportStatus | null
+  status: ReportStatus | null;
   messages: ReportMessage[];
 }
 

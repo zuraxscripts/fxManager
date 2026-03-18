@@ -148,7 +148,12 @@ export default function PlayerView() {
           <p className="text-xs text-muted-foreground">Player #{playerData.id}</p>
         </div>
 
-        <Button variant="outline" size="icon" title="Open Actions" onClick={() => openAction(playerData)}>
+        <Button
+          variant="outline"
+          size="icon"
+          title="Open Actions"
+          onClick={() => openAction(playerData)}
+        >
           <Gavel className="h-4 w-4" />
         </Button>
       </div>

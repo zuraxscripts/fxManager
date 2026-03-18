@@ -1,6 +1,6 @@
 // consider altering to inferred types ?
 
-export type ReportStatus = 'open' | 'inprogress' | 'resolved'
+export type ReportStatus = 'open' | 'inprogress' | 'resolved';
 
 export interface ReportRecap {
   id: number;

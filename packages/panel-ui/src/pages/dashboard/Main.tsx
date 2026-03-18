@@ -18,10 +18,10 @@ import { useServerStateSocket } from '@/hooks/use-ws-channels';
 import { PageHeader } from '@/components/page-header';
 
 /* ToDo:
-  * Consider adding wider details on process health
-    * Displayed as graphs
-  * Display connected staff counter  
-*/
+ * Consider adding wider details on process health
+ * Displayed as graphs
+ * Display connected staff counter
+ */
 
 export default function Dashboard() {
   const {
