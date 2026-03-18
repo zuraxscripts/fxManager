@@ -3,8 +3,8 @@ import type {
   ConsoleOutputEvent,
   Player,
   WSEnvelope,
-  ReportState,
   ReportMessage,
+  ReportStatus,
 } from '@fxmanager/types';
 import { usePanelWS } from './use-websocket';
 
@@ -63,6 +63,11 @@ export function usePlayerlistSocket() {
 }
 
 // region report
+
+interface ReportState {
+  status: ReportStatus | null
+  messages: ReportMessage[];
+}
 
 function reportReducer(state: ReportState, env: WSEnvelope): ReportState {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
