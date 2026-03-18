@@ -225,13 +225,15 @@ export function createPlayersRepository(db: DB) {
       if (search) {
         countQuery
           .leftJoin(playerIdentifiers, eq(playerIdentifiers.playerId, players.id))
-          .where(filters);
+          .where(filters)
+          .groupBy(players.id);
+        console.log('added groupby on players.id')
       }
 
       const totalResult = countQuery.get();
       const total = totalResult?.count ?? 0;
 
-      const query = db
+      let query = db
         .select({
           id: players.id,
           name: players.name,
@@ -245,9 +247,10 @@ export function createPlayersRepository(db: DB) {
         .$dynamic();
 
       if (search) {
-        query
+        query = query
           .leftJoin(playerIdentifiers, eq(playerIdentifiers.playerId, players.id))
-          .where(filters);
+          .where(filters)
+          .groupBy(players.id);
       }
 
       const response = query
