@@ -1,6 +1,7 @@
 import Elysia, { t } from 'elysia';
 import { repo } from '@fxmanager/database';
-import { ApiResponse, IGameManager, PlayerProfile } from '@fxmanager/types';
+import { ApiResponse, IGameManager, PlayerProfile, UserPermissions } from '@fxmanager/types';
+import { PermissionManager } from '@fxmanager/utils';
 import { sessionAuth } from '../../middleware/session-auth';
 
 export const playerRoutes = (gm: IGameManager) =>
@@ -69,6 +70,13 @@ export const playerRoutes = (gm: IGameManager) =>
       async ({ params, body, admin }): Promise<ApiResponse> => {
         const playerId = parseInt(params.playerId);
 
+        if (!PermissionManager.has(admin.permissions, UserPermissions.BAN)) {
+          return {
+            success: false,
+            error: 'Not authorized',
+          };
+        }
+
         try {
           const result = await repo.players.addBan(
             playerId,
@@ -118,6 +126,13 @@ export const playerRoutes = (gm: IGameManager) =>
       async ({ params, body, admin }): Promise<ApiResponse> => {
         const playerId = parseInt(params.playerId);
 
+        if (!PermissionManager.has(admin.permissions, UserPermissions.KICK)) {
+          return {
+            success: false,
+            error: 'Not authorized',
+          };
+        }
+
         const onlinePlayer = gm.getPlayer(playerId);
 
         if (!onlinePlayer) {
@@ -155,6 +170,13 @@ export const playerRoutes = (gm: IGameManager) =>
       '/:playerId/warn',
       async ({ params, body, admin }): Promise<ApiResponse> => {
         const playerId = parseInt(params.playerId);
+
+        if (!PermissionManager.has(admin.permissions, UserPermissions.WARN)) {
+          return {
+            success: false,
+            error: 'Not authorized',
+          };
+        }
 
         try {
           await repo.players.addWarn(playerId, body.reason, admin.id);
