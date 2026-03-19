@@ -15,7 +15,7 @@ export async function QueryManager<T>(
   },
   showError: boolean = false,
 ): Promise<T> {
-  const url = `http://${HOSTNAME}${endpoint}`;
+  const url = `http://${HOSTNAME}/internal${endpoint}`;
 
   try {
     const response = await fetch(url, {
