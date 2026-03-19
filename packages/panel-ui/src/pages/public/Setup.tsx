@@ -6,6 +6,12 @@ import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Separator } from '@/components/ui/separator';
 
+/* ToDo: 
+  * Expand setup process, includes work on the server endpoint
+  * Include to define existing fxserver executable & server data as well
+    as a system to download artifacts & install base server data 
+*/
+
 export default function SetupPage() {
   const { setup } = useAuth();
   const [formData, setData] = useState<{ username: string; password: string }>({
