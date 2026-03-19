@@ -2,7 +2,7 @@ import { AuthContext } from '@/hooks/use-auth';
 import { QueryService } from '@/lib/query';
 import type { AuthUser } from '@/types/auth';
 import type { Settings } from '@/types/settings';
-import type { ApiError } from '@fxmanager/types';
+import type { ApiError, ApiResponse } from '@fxmanager/types';
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -18,10 +18,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function init() {
       try {
-        const status = await QueryService({ endpoint: '/auth/status', method: 'GET' });
+        const status = await QueryService<{ configured: boolean }>({
+          endpoint: '/auth/status',
+          method: 'GET',
+        });
         setSettings((prev) => ({ ...prev, isSetup: status.configured }));
 
-        const me = await QueryService({ endpoint: '/auth/me', method: 'GET' });
+        const me = await QueryService<AuthUser>({ endpoint: '/auth/me', method: 'GET' });
         setUser(me);
       } catch (err) {
         const status = (err as ApiError).status;
@@ -45,7 +48,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         body: { username, password },
       });
-      const me = await QueryService({ endpoint: '/auth/me', method: 'GET' });
+      const me = await QueryService<AuthUser>({ endpoint: '/auth/me', method: 'GET' });
       setUser(me);
       navigate('/dashboard');
     },
@@ -64,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (username: string, password: string) => {
       if (settings.isSetup) return;
 
-      const response = await QueryService({
+      const response = await QueryService<ApiResponse<AuthUser>>({
         endpoint: '/auth/setup',
         method: 'POST',
         body: { username, password },
@@ -75,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      setUser({ username: response.username, id: response.id });
+      setUser(response.data);
       setSettings((prev) => ({ ...prev, isSetup: true }));
       navigate('/dashboard');
     },
