@@ -17,9 +17,9 @@ Single binary deployment - no runtime dependencies required on the target machin
 | Monorepo          | Turbo + Bun Workspaces          |                     |
 | Linting           | Biome (lint + format + imports) |                     |
 | Process Manager   | Bun                             | `packages/core`     |
-| Web Server        | ElysiaJS                        | `packages/panel`    |
+| Web Server        | ElysiaJS                        | `packages/core`     |
 | Frontend          | React + Vite SPA                | `packages/panel-ui` |
-| Database          | SQLite + Drizzle ORM            | `packages/database` |
+| Database          | Bun SQLite + Drizzle ORM        | `packages/database` |
 | FiveM/RedM Bridge | Lua resource                    | `packages/resource` |
 
 ---
@@ -29,7 +29,7 @@ Single binary deployment - no runtime dependencies required on the target machin
 ```
 packages/
   core/       - Process manager: spawns & supervises FiveM/RedM
-  panel/      - ElysiaJS API
+              - Webserver: ElysiaJS API for the panel & game resource communication
   panel-ui/   - React SPA
   database/   - Drizzle schema, migrations, repositories
   resource/   - Drop-in FiveM/RedM Lua resource
@@ -46,15 +46,8 @@ shared/
 # Install dependencies
 bun install
 
-# Start everything
+# Start system
 bun dev
-```
-
-Or run packages individually:
-
-```bash
-bun dev:core    # process manager only
-bun dev:panel   # panel server + vite client
 ```
 
 The React dev server runs on `:5173` and proxies API/WS calls to Elysia on `:4000`.
@@ -137,19 +130,16 @@ The panel will be available at `http://your-server-ip:4000`.
 
 ### 2. Install the resource
 
-1. Copy `dist/resource/` into your server's `resources/` folder as `fxmanager`
-2. Edit `resources/fxmanager/config.lua`:
-   - Set `Config.PanelUrl` to your panel address
-   - Set `Config.ApiToken` to a token generated from the panel Settings page
-3. Add `ensure fxmanager` to your `server.cfg`
+1. Copy `dist/resource/` into your server's `resources/` folder as `fxManager`
+2. **IMPORTANT** Add `ensure fxManager` to your `server.cfg`
 
 ---
 
 ## Environment Variables
 
-| Variable           | Default           | Description                       |
-|--------------------|-------------------|-----------------------------------|
-| `PANEL_PORT`       | `4000`            | Web panel port                    |
+| Variable              | Default           | Description                       |
+|-----------------------|-------------------|-----------------------------------|
+| `PANEL_PORT`          | `4000`            | Web panel port                    |
 | `FXSERVER_EXECUTABLE` | `./FXServer`      | Path to FXServer binary           |
 | `FXSERVER_DATA_PATH`  | `./server-data`   | Path to server-data folder        |
 | `FXSERVER_CFG`        | `server.cfg`      | Config file name inside data path |
