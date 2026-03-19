@@ -19,7 +19,7 @@ export async function QueryService<T>(
   showError: boolean = false,
 ): Promise<T> {
   const protocol = IS_SECURE ? 'https' : 'http';
-  const url = `${protocol}://${HOSTNAME}${endpoint}`;
+  const url = `${protocol}://${HOSTNAME}/api${endpoint}`;
 
   try {
     const response = await fetch(url, {
