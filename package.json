@@ -9,8 +9,6 @@
   ],
   "scripts": {
     "dev": "NODE_ENV=development turbo run dev --parallel",
-    "dev:core": "NODE_ENV=development turbo run dev --filter=@fxmanager/core",
-    "dev:panel": "NODE_ENV=development turbo run dev:isolated --filter=@fxmanager/panel-ui --filter=@fxmanager/panel",
     "build": "turbo run build && bun run build.ts",
     "lint": "biome lint .",
     "format": "biome format --write .",

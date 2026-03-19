@@ -4,20 +4,12 @@ import { staticPlugin } from '@elysiajs/static';
 import { join, dirname } from 'path';
 import { existsSync } from 'fs';
 import type { IGameManager, IProcessManager } from '@fxmanager/types';
-import { serverRoutes } from './routes/server';
-import { playerRoutes } from './routes/players';
 import { wsRoutes } from './ws';
-import { authRoutes } from './routes/auth';
+import { isDev } from '../common/utils';
+import { authRoutes, playerRoutes, serverRoutes } from './routes/panel';
+import { playerApiRoutes } from './routes/api';
 
-const isDev = process.env.NODE_ENV !== 'production';
-
-// Resolve public dir relative to the running binary in production,
-// or relative to the source file in dev.
 function resolvePublicDir(): string {
-  if (isDev) {
-    return join(import.meta.dir, '../client/dist');
-  }
-  // process.execPath is the compiled binary's absolute path at runtime
   return join(dirname(process.execPath), 'public');
 }
 
@@ -30,13 +22,16 @@ interface PanelStartParams {
 export function startPanel({ pm, gm, port = 4000 }: PanelStartParams) {
   const app = new Elysia()
     .use(cors())
+    .get('/api/health', () => ({ ok: true, ts: Date.now() }))
 
-    // ── API ──────────────────────────────────────────────────────────────────
+    // apî routes
+    .use(playerApiRoutes(gm))
+
+    // panel routes
     .use(serverRoutes(pm))
     .use(playerRoutes(gm))
     .use(authRoutes)
-    .use(wsRoutes(pm))
-    .get('/api/health', () => ({ ok: true, ts: Date.now() }));
+    .use(wsRoutes(pm));
 
   if (isDev) {
     console.log('[panel] Dev mode — Vite client on http://localhost:5173');

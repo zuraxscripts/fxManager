@@ -1,5 +1,6 @@
+import { IGameManager } from '@fxmanager/types';
 import Elysia, { t } from 'elysia';
-import type { GameManager } from '../../services/game/manager';
+import { resourceAuth } from '../../middleware/auth';
 
 const playerIdentifiers = t.Object({
   license: t.String(),
@@ -8,12 +9,16 @@ const playerIdentifiers = t.Object({
   steam: t.Optional(t.String()),
 });
 
-export const playerRoutes = (gh: GameManager) =>
+export const playerApiRoutes = (gm: IGameManager) =>
   new Elysia({ prefix: '/api/players' })
+    .use(resourceAuth)
+
+    .get('/', () => ({ success: true }))
+
     .post(
       '/deferrals',
       ({ body }) => {
-        return gh.playerDeferralChecks(body.identifiers);
+        return gm.playerDeferralChecks(body.identifiers);
       },
       {
         body: t.Object({
@@ -25,7 +30,7 @@ export const playerRoutes = (gh: GameManager) =>
     .post(
       '/join',
       ({ body }) => {
-        gh.playerJoin(body);
+        gm.playerJoin(body);
         return { ack: true };
       },
       {
@@ -40,7 +45,7 @@ export const playerRoutes = (gh: GameManager) =>
     .post(
       '/drop',
       ({ body }) => {
-        gh.playerDrop(body.serverId);
+        gm.playerDrop(body.serverId);
         return { ack: true };
       },
       {

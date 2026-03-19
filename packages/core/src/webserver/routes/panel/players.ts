@@ -1,7 +1,7 @@
 import Elysia, { t } from 'elysia';
 import { repo } from '@fxmanager/database';
-import { sessionAuth } from '../middleware/session-auth';
 import { ApiResponse, IGameManager, PlayerProfile } from '@fxmanager/types';
+import { sessionAuth } from '../../middleware/session-auth';
 
 export const playerRoutes = (gm: IGameManager) =>
   new Elysia({ prefix: '/players' })

@@ -10,18 +10,12 @@ import { GameManager } from './services/game/manager';
 import { closureMessage } from './common/fancy_stuff';
 import { checkVersion } from './common/version_check';
 
-const { webServerPort, internalPort, version } = loadConfig();
+const { webServerPort, version } = loadConfig();
 const processManager = new ProcessManager();
 const gameManager = new GameManager(processManager);
 
 // initialize API and Panel dynamically
-const { startPanel } = await import('../../panel/src/index');
-const { startAPI } = await import('./api');
-
-startAPI({
-  port: internalPort,
-  gm: gameManager,
-});
+const { startPanel } = await import('./webserver');
 
 startPanel({
   port: webServerPort,

@@ -1,7 +1,7 @@
 import Elysia, { t } from 'elysia';
 import type { IProcessManager } from '@fxmanager/types';
 import { repo } from '@fxmanager/database';
-import { sessionAuth } from '../middleware/session-auth';
+import { sessionAuth } from '../../middleware/session-auth';
 
 export const serverRoutes = (pm: IProcessManager) =>
   new Elysia({ prefix: '/server' })
