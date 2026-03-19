@@ -4,6 +4,7 @@ import type { Settings } from './settings';
 export interface AuthUser {
   id: number;
   username: string;
+  permissions: number;
 }
 
 export interface AuthContextValue {

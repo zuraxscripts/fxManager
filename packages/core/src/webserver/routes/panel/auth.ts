@@ -33,7 +33,14 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
 
       cookie[COOKIE_NAME].set({ value: session!.id, ...COOKIE_OPTS });
 
-      return { success: true, username: user!.username, id: user!.id };
+      return {
+        success: true,
+        data: {
+          username: user!.username,
+          id: user!.id,
+          permissions: user!.permissions,
+        },
+      };
     },
     {
       body: t.Object({
@@ -76,5 +83,9 @@ export const authRoutes = new Elysia({ prefix: '/auth' })
     const result = repo.auth.validateSession(sessionId);
     if (!result) return status(401, { error: 'Session expired' });
 
-    return { username: result.user.username, id: result.user.id };
+    return {
+      username: result.user.username,
+      id: result.user.id,
+      permissions: result.user.permissions,
+    };
   });
