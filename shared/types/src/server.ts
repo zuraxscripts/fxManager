@@ -24,7 +24,6 @@ export interface ServerConfig {
   maxRestarts: number;
   restartDelayMs: number;
   webServerPort: number;
-  internalPort: number;
   resourceApiToken: string;
 }
 

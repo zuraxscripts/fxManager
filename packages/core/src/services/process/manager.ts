@@ -29,7 +29,7 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
       '+exec', config.configFile,
       '+set', 'onesync', 'on',
       '+set', 'resource-api-token', config.resourceApiToken,
-      '+set', 'api-port', `${config.internalPort}`,
+      '+set', 'api-port', `${config.webServerPort}`,
       // Check if this actually works, would be neat to be able to hide it in console or have it read only
       '+add_convar_permission', 'fxManager', 'read', 'resource-api-token',
       '+add_convar_permission', 'fxManager', 'read', 'api-port',
@@ -104,6 +104,9 @@ export class ProcessManager extends EventEmitter implements IProcessManager {
       this.setState(this.state.status, {
         playerCount: Math.max(0, this.state.playerCount + change),
       });
+
+      this.emit('players', payload);
+      return;
     }
     this.emit('game', payload);
   }
