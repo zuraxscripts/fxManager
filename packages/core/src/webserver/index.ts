@@ -6,7 +6,7 @@ import { existsSync } from 'fs';
 import type { IGameManager, IProcessManager } from '@fxmanager/types';
 import { wsRoutes } from './ws';
 import { isDev } from '../common/utils';
-import { authRoutes, playerRoutes, serverRoutes } from './routes/panel';
+import { authRoutes, gameRoutes, playerRoutes, serverRoutes } from './routes/panel';
 import { playerApiRoutes } from './routes/api';
 import { resourceAuth } from './middleware/auth';
 
@@ -34,9 +34,10 @@ export function startPanel({ pm, gm, port = 4000 }: PanelStartParams) {
     // panel routes
     .group('/api', (app) =>
       app
+        .use(authRoutes)
         .use(serverRoutes(pm))
         .use(playerRoutes(gm))
-        .use(authRoutes)
+        .use(gameRoutes(gm))
         .use(wsRoutes(pm)),
     );
 
