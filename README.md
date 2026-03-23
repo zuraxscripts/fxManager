@@ -1,44 +1,10 @@
-# fxManager
+# NexusWrap — FiveM/RedM Server Wrapper
 
-A self-contained, cross-platform admin panel for FiveM & RedM servers.  
-Single binary deployment - no runtime dependencies required on the target machine.
+A self-contained server wrapper for FiveM/RedM with a web-based admin panel.
 
-> [!WARNING]
-> This project is still in intensive development, it is **not** to be considered stable until a `v1.0.0+` release.
-> If this repository is public, it's for transparency, feedback and open source contributions to help it achieve this milestone.
+## Requirements
 
----
-
-## Stack
-
-| Layer             | Tech                            | Location            |
-|-------------------|---------------------------------|---------------------|
-| Runtime           | Bun (compiled into binary)      |                     |
-| Monorepo          | Turbo + Bun Workspaces          |                     |
-| Linting           | Biome (lint + format + imports) |                     |
-| Process Manager   | Bun                             | `packages/core`     |
-| Web Server        | ElysiaJS                        | `packages/core`     |
-| Frontend          | React + Vite SPA                | `packages/panel-ui` |
-| Database          | Bun SQLite + Drizzle ORM        | `packages/database` |
-| FiveM/RedM Bridge | Lua resource                    | `packages/resource` |
-
----
-
-## Project Structure
-
-```
-packages/
-  core/       - Process manager: spawns & supervises FiveM/RedM
-              - Webserver: ElysiaJS API for the panel & game resource communication
-  panel-ui/   - React SPA
-  database/   - Drizzle schema, migrations, repositories
-  resource/   - Drop-in FiveM/RedM Lua resource
-shared/
-  types/      - Shared TypeScript types
-  utils/      - Shared helper functions
-```
-
----
+- [Bun](https://bun.sh) >= 1.1.0
 
 ## Development
 
@@ -46,100 +12,82 @@ shared/
 # Install dependencies
 bun install
 
-# Start system
-bun dev
+# Start the dev server (hot-reload via bun)
+bun run dev
 ```
 
-The React dev server runs on `:5173` and proxies API/WS calls to Elysia on `:4000`.
+Then open http://localhost:3000 — you'll be greeted by the first-run setup wizard.
 
----
-
-## Code Quality
+## Production Build
 
 ```bash
-bun check        # lint + format + fix (recommended during dev)
-bun lint         # lint only
-bun format       # format only
-bun typecheck    # tsc --noEmit across all packages (via Turbo)
-bun db:studio    # open Drizzle Studio to browse the database (optional)
+# 1. Build the React client bundle
+bun run build:client
+
+# 2. Compile server + embedded assets into a single binary
+bun run build:server
+
+# Run the binary
+./dist/fivem-wrapper
 ```
 
-### Adding a migration
+The binary is fully self-contained and includes all static assets.
 
-Edit `packages/database/src/migrations/index.ts` and append to the array:
-
-```ts
-{
-  version: 2,
-  description: 'Add player notes',
-  up: [
-    'ALTER TABLE players ADD COLUMN notes TEXT',
-  ],
-},
-```
-
-Migrations run automatically on next startup. No CLI commands needed.
-
-Biome handles everything ESLint + Prettier would - faster, single config at the root.
-
----
-
-## Building
-
-```bash
-# Build for both platforms
-bun run build.ts
-
-# Build for a specific platform
-bun run build.ts --target=linux
-bun run build.ts --target=windows
-```
-
-Turbo caches build outputs - subsequent builds only rebuild what changed.
-
-Output in `dist/`:
+## Project Structure
 
 ```
-dist/
-  fxmanager-linux          ← Linux binary
-  fxmanager-windows.exe    ← Windows binary
-  public/                  ← UI assets - must stay next to the binary
-  resource/                ← Drop into your server's resources/ folder
+src/
+├── server/
+│   ├── index.ts              # Bun.serve() entrypoint (HTTP + WS)
+│   ├── routes/
+│   │   ├── api.ts            # REST API (stats, console, players, audit)
+│   │   ├── auth.ts           # Login / logout / session check
+│   │   ├── setup.ts          # First-run setup endpoints
+│   │   └── shell.ts          # HTML shell renderer (SSR)
+│   ├── ws/
+│   │   └── bus.ts            # WebSocket pub/sub event bus + console buffer
+│   ├── process/
+│   │   └── manager.ts        # Bun.spawn() game process + stream piping
+│   ├── db/
+│   │   ├── index.ts          # DB singleton + config helpers
+│   │   ├── schema.ts         # Drizzle ORM schema
+│   │   ├── migrate.ts        # Internal migration runner
+│   │   └── migrations/
+│   │       └── 0001_init.sql # Initial schema migration
+│   └── middleware/
+│       ├── auth.ts           # Session auth middleware
+│       └── setupGuard.ts     # Redirects to /setup before first-run
+└── client/
+    ├── entry.tsx             # React root mount
+    ├── App.tsx               # Route state machine (setup → login → dashboard)
+    └── pages/
+        ├── SetupPage.tsx     # 3-step first-run wizard
+        ├── LoginPage.tsx     # Admin login form
+        └── DashboardPage.tsx # Main panel (overview, console, players, audit)
 ```
 
-> ⚠️ The `public/` folder must remain in the same directory as the binary when deploying. The server resolves it relative to its own location at runtime.
+## WebSocket Event Topics
 
----
+| Topic           | Direction     | Payload                             |
+|-----------------|---------------|-------------------------------------|
+| `console`       | Server → Client | `{ line, source, ts }`            |
+| `player:join`   | Server → Client | player snapshot                   |
+| `player:leave`  | Server → Client | player snapshot                   |
+| `server:status` | Server → Client | `{ status }`                      |
+| `audit`         | Server → Client | audit log entry                   |
 
-## Deployment
+## Configuration
 
-### 1. Run the binary
+All config is stored in `data.db` (SQLite) after setup. Key entries:
 
-```
-your-deploy-folder/
-  fxmanager-linux      (or fxmanager-windows.exe)
-  public/
-  .env
-```
-
-```bash
-./fxmanager-linux    # or fxmanager-windows.exe
-```
-
-The panel will be available at `http://your-server-ip:4000`.
-
-### 2. Install the resource
-
-1. Copy `dist/resource/` into your server's `resources/` folder as `fxManager`
-2. **IMPORTANT** Add `ensure fxManager` to your `server.cfg`
-
----
+| Key               | Description                         |
+|-------------------|-------------------------------------|
+| `setup_complete`  | Set to `"1"` after setup wizard     |
+| `server_name`     | Display name for the server         |
+| `server_path`     | Path to FXServer executable         |
 
 ## Environment Variables
 
-| Variable              | Default           | Description                       |
-|-----------------------|-------------------|-----------------------------------|
-| `PANEL_PORT`          | `4000`            | Web panel port                    |
-| `FXSERVER_EXECUTABLE` | `./FXServer`      | Path to FXServer binary           |
-| `FXSERVER_DATA_PATH`  | `./server-data`   | Path to server-data folder        |
-| `FXSERVER_CFG`        | `server.cfg`      | Config file name inside data path |
+| Variable | Default | Description          |
+|----------|---------|----------------------|
+| `PORT`   | `3000`  | HTTP server port     |

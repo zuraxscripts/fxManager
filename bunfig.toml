@@ -1,0 +1,5 @@
+[install]
+exact = false
+
+[build]
+target = "bun"

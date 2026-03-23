@@ -1,107 +1,52 @@
 #!/usr/bin/env bun
 /**
- * Build script — produces distributable binaries for Windows and Linux
- * Usage: bun run build.ts [--target windows|linux|all]
+ * build.ts — Two-phase build script
  *
- * Output structure:
- *   dist/
- *     fxmanager-linux          ← Linux binary
- *     fxmanager-windows.exe    ← Windows binary
- *     public/                  ← React SPA
- *     resource/                ← FiveM/RedM resource
+ * Phase 1: Bundle the React client into public/dist/
+ * Phase 2: Compile the Bun server into a self-contained binary
+ *          with all assets embedded via --asset-dir
  */
 
-import { Build, type PluginBuilder } from 'bun';
-import { mkdirSync, cpSync } from 'fs';
-import { join } from 'path';
-import { version } from './package.json' with { type: 'json' };
+import { $ } from "bun";
+import { mkdir } from "fs/promises";
 
-const args = process.argv.slice(2);
-const targetArg = args.find((a) => a.startsWith('--target='))?.split('=')[1] ?? 'all';
+console.log("╔══════════════════════════════╗");
+console.log("║   NexusWrap Build Pipeline   ║");
+console.log("╚══════════════════════════════╝\n");
 
-const DIST = join(import.meta.dir, 'dist');
-const ENTRY = join(import.meta.dir, 'packages/core/src/index.ts');
-const CLIENT_DIST = join(import.meta.dir, 'packages/panel-ui/dist');
-const RESOURCE_DIST = join(import.meta.dir, 'packages/resource');
+// ── Phase 1: Client bundle ────────────────────────────────────────────────────
+console.log("▶ Phase 1 — Building React client…");
 
-const targets: Record<string, Build.CompileTarget> = {
-  windows: 'bun-windows-x64',
-  linux: 'bun-linux-x64',
-} as const;
+await mkdir("public/dist", { recursive: true });
 
-mkdirSync(DIST, { recursive: true });
-
-console.log('📦 Compiling binaries...');
-
-const toBuild =
-  targetArg === 'all'
-    ? Object.entries(targets)
-    : [[targetArg, targets[targetArg as keyof typeof targets]]];
-
-const stripDevLabels = {
-  name: 'strip-dev-labels',
-  setup(build: PluginBuilder) {
-    build.onLoad({ filter: /\.(ts|tsx)$/ }, async (args: any) => {
-      const text = await Bun.file(args.path).text();
-      return {
-        contents: text.replaceAll(/^\s*DEV:.*$/gm, ''),
-        loader: 'ts',
-      };
-    });
+const clientBuild = await Bun.build({
+  entrypoints: ["src/client/entry.tsx"],
+  outdir: "public/dist",
+  minify: true,
+  target: "browser",
+  naming: "[name].js",
+  define: {
+    "process.env.NODE_ENV": '"production"',
   },
-};
-
-for (const [name, target] of toBuild) {
-  const ext = name === 'windows' ? '.exe' : '';
-  const filename = `fxmanager-${name}`;
-
-  console.log(`  → ${name}: ${filename}${ext}`);
-
-  const buildSettings = {
-    entrypoints: [ENTRY],
-    outdir: DIST,
-    compile: {
-      target: target as Build.CompileTarget,
-      outfile: join(DIST, `${filename}${ext}`),
-    },
-    define: {
-      'process.env.NODE_ENV': JSON.stringify('production'),
-      'process.env.VERSION': JSON.stringify(version),
-    },
-    plugins: [stripDevLabels],
-  };
-
-  await Bun.build(buildSettings);
-}
-
-console.log('🌐 Copying panel-ui assets...');
-
-const publicOut = join(DIST, 'public');
-mkdirSync(publicOut, { recursive: true });
-cpSync(CLIENT_DIST, publicOut, { recursive: true });
-
-console.log('📁 Copying FiveM resource...');
-
-const filesToCopy = ['dist', 'locales', 'static', 'fxmanifest.lua'];
-
-const resourceOut = join(DIST, 'resource');
-mkdirSync(publicOut, { recursive: true });
-filesToCopy.forEach((file) => {
-  const src = join(RESOURCE_DIST, file);
-  console.log('src', src);
-  const dest = join(resourceOut, file);
-
-  cpSync(src, dest, { recursive: true });
 });
 
-console.log(`
-✅ Build complete!
+if (!clientBuild.success) {
+  console.error("❌ Client build failed:");
+  for (const log of clientBuild.logs) console.error(log);
+  process.exit(1);
+}
 
-  dist/
-  ├── fxmanager-linux          ← Linux binary
-  ├── fxmanager-windows.exe    ← Windows binary
-  ├── public/                  ← React SPA
-  └── resource/                ← Fivem Resource
+console.log(`  ✓ Client bundle written to public/dist/\n`);
 
-⚠️  The public/ folder must remain next to the binary when deploying.
-`);
+// ── Phase 2: Server binary ────────────────────────────────────────────────────
+console.log("▶ Phase 2 — Compiling server binary…");
+
+await mkdir("dist", { recursive: true });
+
+await $`bun build src/server/index.ts \
+  --compile \
+  --outfile dist/fivem-wrapper \
+  --asset-dir public`;
+
+console.log("  ✓ Binary written to dist/fivem-wrapper\n");
+console.log("✅ Build complete. Run: ./dist/fivem-wrapper");

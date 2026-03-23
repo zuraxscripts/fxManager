@@ -3,19 +3,10 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
+    "jsx": "react-jsx",
     "strict": true,
     "skipLibCheck": true,
-    "esModuleInterop": true,
-    "jsx": "react-jsx",
-    "noEmit": true,
-    "baseUrl": ".",
-    "paths": {
-      "@fxmanager/types":    ["./shared/types/src/index.ts"],
-      "@fxmanager/database": ["./packages/database/src/index.ts"],
-      "@fxmanager/core":     ["./packages/core/src/index.ts"],
-      "@fxmanager/core/*":   ["./packages/core/*"],
-      "@fxmanager/panel":    ["./packages/panel/src/index.ts"]
-    }
+    "types": ["bun-types"]
   },
-  "exclude": ["node_modules", "**/node_modules", "dist", "**/dist", "**/client/dist"]
+  "include": ["src/**/*"]
 }

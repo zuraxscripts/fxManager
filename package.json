@@ -2,26 +2,22 @@
   "name": "fxmanager",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "bun@1.2.0",
-  "workspaces": [
-    "packages/*",
-    "shared/*"
-  ],
   "scripts": {
-    "dev": "NODE_ENV=development turbo run dev --parallel",
-    "build": "turbo run build && bun run build.ts",
-    "lint": "biome lint .",
-    "format": "biome format --write .",
-    "check": "biome check --write .",
-    "typecheck": "turbo run typecheck",
-    "db:studio": "drizzle-kit studio"
+    "dev": "bun run src/server/index.ts",
+    "build:client": "bun build src/client/entry.tsx --outdir public/dist --minify",
+    "build:server": "bun build src/server/index.ts --compile --outfile dist/fxmanager --asset-dir public",
+    "build": "bun run build:client && bun run build:server"
+  },
+  "dependencies": {
+    "hono": "^4.4.0",
+    "drizzle-orm": "^0.31.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^1.9.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
     "@types/bun": "latest",
-    "@types/node": "^25.3.5",
-    "drizzle-kit": "^0.31.0",
-    "turbo": "^2.5.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.4.0"
   }
 }
