@@ -49,7 +49,13 @@ export async function QueryManager<T>(
     if (showError) {
       console.error('QueryService Error:', err);
     } else {
-      DEV: console.error('QueryService Error:', err);
+      DEV: console.error('QueryService Error:', err, 'data:', {
+        endpoint,
+        method,
+        body,
+        headers,
+        url,
+      });
     }
 
     throw err;
