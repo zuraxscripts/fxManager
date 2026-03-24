@@ -2,6 +2,9 @@ import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
 import path from 'path';
 import { isProduction } from './common/utils';
+import { applyMigrations } from '@fxmanager/database';
+
+applyMigrations();
 
 const fastify = Fastify({ logger: !isProduction });
 
