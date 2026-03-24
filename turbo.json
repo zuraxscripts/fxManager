@@ -9,10 +9,12 @@
       "outputs": ["dist/**"]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "cache": true,
+      "inputs": ["src/**/*.ts", "src/**/*.tsx", "biome.json"]
     },
     "format": {
-      "dependsOn": ["^format"]
+      "cache": true,
+      "inputs": ["src/**/*.ts", "src/**/*.tsx", "biome.json"]
     },
     "typecheck": {
       "dependsOn": ["^typecheck"]

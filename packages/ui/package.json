@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "lint": "eslint",
+		"lint": "biome check .",
+		"format": "biome format --write .",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
