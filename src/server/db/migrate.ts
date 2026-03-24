@@ -1,10 +1,5 @@
 import type { Database } from "bun:sqlite";
-import { readdir, readFile } from "fs/promises";
-import { join } from "path";
-
-/* ToDo:
-  * Alter migrations from .sql files to ts files with individual queries 
-*/
+import migrations from "./migrations";
 
 export async function runMigrations(db: Database): Promise<void> {
   // Ensure migrations tracking table exists
@@ -16,11 +11,6 @@ export async function runMigrations(db: Database): Promise<void> {
     )
   `);
 
-  const migrationsDir = join(import.meta.dir, "migrations");
-  const files = (await readdir(migrationsDir))
-    .filter((f) => f.endsWith(".sql"))
-    .sort();
-
   const applied = new Set(
     db
       .query<{ filename: string }, []>("SELECT filename FROM _migrations")
@@ -28,20 +18,20 @@ export async function runMigrations(db: Database): Promise<void> {
       .map((r) => r.filename)
   );
 
-  for (const file of files) {
-    if (applied.has(file)) continue;
-
-    const sql = await readFile(join(migrationsDir, file), "utf-8");
+  for (const migration of migrations) {
+    if (applied.has(migration.name)) continue;
 
     // Run in a transaction
     db.transaction(() => {
-      db.run(sql);
+      migration.queries.forEach(sql => {
+        db.run(sql);
+      });
       db.run(
         "INSERT INTO _migrations (filename, applied_at) VALUES (?, ?)",
-        [file, Date.now()]
+        [migration.name, Date.now()]
       );
     })();
 
-    console.log(`[migrations] Applied: ${file}`);
+    console.log(`[migrations] Applied: ${migration.name}`);
   }
 }
