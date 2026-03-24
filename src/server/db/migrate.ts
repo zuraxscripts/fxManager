@@ -2,6 +2,10 @@ import type { Database } from "bun:sqlite";
 import { readdir, readFile } from "fs/promises";
 import { join } from "path";
 
+/* ToDo:
+  * Alter migrations from .sql files to ts files with individual queries 
+*/
+
 export async function runMigrations(db: Database): Promise<void> {
   // Ensure migrations tracking table exists
   db.run(`
