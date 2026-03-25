@@ -8,6 +8,7 @@
     "start": "bun src/index.ts"
   },
   "devDependencies": {
+    "@fxmanager/shared": "workspace:*",
     "@types/bun": "latest",
     "@types/node": "^25.5.0"
   },

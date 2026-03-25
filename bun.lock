@@ -20,6 +20,7 @@
         "fastify": "^5.8.4",
       },
       "devDependencies": {
+        "@fxmanager/shared": "workspace:*",
         "@types/bun": "latest",
         "@types/node": "^25.5.0",
       },
