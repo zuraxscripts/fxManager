@@ -1,3 +1,1 @@
-export interface JustAnInterface {
-	foo: 'bar';
-}
+export * from './types';
