@@ -4,6 +4,8 @@ import path from 'path';
 import { isProduction } from './common/utils';
 import { applyMigrations } from '@fxmanager/database';
 import { checkVersion } from './common/version_check';
+import apiRoutes from './routes/api';
+import internalRoutes from './routes/internal';
 
 applyMigrations();
 // hardcode for the time being
@@ -30,6 +32,9 @@ if (isProduction) {
 fastify.get('/api/health', async () => {
   return { status: 'ok' };
 });
+
+fastify.register(apiRoutes, { prefix: '/api' });
+fastify.register(internalRoutes, { prefix: '/internal' });
 
 const start = async () => {
   try {
