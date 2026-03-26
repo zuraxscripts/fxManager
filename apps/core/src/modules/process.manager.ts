@@ -45,6 +45,8 @@ export class ProcessManager extends EventEmitter {
 
       this.pipeOutput(this.proc.stdout as ReadableStream<Uint8Array<ArrayBuffer>>, 'stdout');
       this.pipeOutput(this.proc.stderr as ReadableStream<Uint8Array<ArrayBuffer>>, 'stderr');
+
+      // this.proc.exited.then((code) => this.onExit(code));
 			
 			return true;
 		} catch (err) {
@@ -144,4 +146,7 @@ export class ProcessManager extends EventEmitter {
       console.error(`Stream error:`, err);
     }
   }
+
+	/* ToDo: implement onExit checks to clean up */
+  private async onExit(code: number | null) {}
 }
