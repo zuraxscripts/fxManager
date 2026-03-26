@@ -6,6 +6,8 @@ import { type ProcessState, type ServerState } from "@fxmanager/shared/types";
 export class ProcessManager extends EventEmitter {
   private state: ServerState = { status: 'stopped', startedAt: null };
 	private proc: ReturnType<typeof Bun.spawn> | null = null;
+	/* ToDo: implement log buffer */
+	private logs: any[] = [];
 
 	constructor() {
 		super();
@@ -28,6 +30,8 @@ export class ProcessManager extends EventEmitter {
 
 		console.log(`[core] Starting fxServer`);
 
+		console.log({ executable: config.executable, cwd: config.serverDataPath, args });
+
     try {
       this.proc = Bun.spawn([config.executable, ...args], {
         cwd: config.serverDataPath,
@@ -38,6 +42,9 @@ export class ProcessManager extends EventEmitter {
       });
 
     	this.setState('running');
+
+      this.pipeOutput(this.proc.stdout as ReadableStream<Uint8Array<ArrayBuffer>>, 'stdout');
+      this.pipeOutput(this.proc.stderr as ReadableStream<Uint8Array<ArrayBuffer>>, 'stderr');
 			
 			return true;
 		} catch (err) {
@@ -66,6 +73,11 @@ export class ProcessManager extends EventEmitter {
     await this.start();
   }
 
+	// testing code ? or improve
+	// getLogs() {
+	// 	return this.logs;
+	// }
+
 	// region private methods
 	private setState(status: ProcessState) {
 		const startedAt = status === 'starting'
@@ -79,4 +91,57 @@ export class ProcessManager extends EventEmitter {
 		this.state = newState;
 		this.emit(EventNames.SERVERSTATUS, newState);
 	}
+
+	private createLineBreakTransformer() {
+    let buffer = '';
+    return new TransformStream<string, string>({
+      transform(chunk, controller) {
+        buffer += chunk;
+        const lines = buffer.split(/\r?\n/);
+        buffer = lines.pop() || '';
+        for (const line of lines) controller.enqueue(line);
+      },
+      flush(controller) {
+        if (buffer) controller.enqueue(buffer);
+      },
+    });
+  }
+
+	/* ToDo: consider logging outputs to a logs directory ? */
+	private async pipeOutput(
+    stream: ReadableStream<Uint8Array> | undefined,
+    source: 'stdout' | 'stderr',
+  ) {
+    if (!stream) return;
+
+		// ToDo: check for better approach, ts error on TextDecoderStream()
+    const lineStream = stream
+      .pipeThrough(new TextDecoderStream())
+      .pipeThrough(this.createLineBreakTransformer());
+
+    const reader = lineStream.getReader();
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        // skip the fxserver empty prompt
+        if (value.trim() === 'cfx>') continue;
+
+        const event = {
+          line: value,
+          source,
+          ts: Date.now(),
+        };
+
+				console.log(value);
+
+        this.logs.push(event);
+        this.emit('console', event);
+      }
+    } catch (err) {
+      console.error(`Stream error:`, err);
+    }
+  }
 }
