@@ -14,7 +14,7 @@ node_modules
 coverage
 
 # Database files
-data
+data/*.db*
 
 # Turbo
 .turbo
