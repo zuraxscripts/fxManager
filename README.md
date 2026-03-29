@@ -8,6 +8,7 @@ Each app/package will have it's own more detailled structure in it's README.
 fxManager/
 ├── apps/
 │   ├── core/          # Process Manager & Webserver
+│   ├── resource/      # FxServer resource to connect to panel
 │   └── webpanel/      # React SPA served by the webserver
 ├── packages/
 │   ├── database/      # Drizzle schema & Migration handler
@@ -21,3 +22,5 @@ fxManager/
 ## Development
 
 ## Errrh anything else ?
+
+![dumb monke](image.png)
