@@ -23,4 +23,4 @@ fxManager/
 
 ## Errrh anything else ?
 
-![dumb monke](image.png)
+![dumb monke](.github/image.png)
