@@ -28,7 +28,7 @@ import type {
 	Player,
 	PlayerIdentifiers,
 	PlayerProfile,
-} from '@fxmanager/types';
+} from '@fxmanager/shared';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
