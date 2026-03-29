@@ -1,15 +1,12 @@
 # core
 
-To install dependencies:
+## WebServer
 
-```bash
-bun install
-```
+### Endpoint Groups
 
-To run:
+All endpoints are placed in one of two groups, these define what they're used for as well as security for them.
 
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.3.2. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
+| Prefix        | |
+|---------------|-----------------------------------------|
+| `/api/*`      | Endpoints used for the webpanel         |
+| `/internal/*` | Endpoints used by the fxserver resource |
