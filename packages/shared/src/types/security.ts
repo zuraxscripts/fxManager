@@ -1,6 +1,6 @@
 import type { UserPermissions } from '../constants';
 
-export type UserPermissions =
+export type UserPermissionsType =
 	(typeof UserPermissions)[keyof typeof UserPermissions];
 
 export type AuditAction =
