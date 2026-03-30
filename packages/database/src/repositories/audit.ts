@@ -1,7 +1,7 @@
 import { desc } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { auditLog } from '../schema';
-import type { AuditAction } from '@fxmanager/shared';
+import type { AuditAction } from '@fxmanager/shared/types';
 import type * as schema from '../schema';
 
 type DB = BunSQLiteDatabase<typeof schema>;
