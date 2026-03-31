@@ -5,29 +5,42 @@ import { ProtectedRoute } from './components/protected-route';
 import NotFound from './pages/NotFound';
 
 export function App() {
-
-  const layoutRoutes = routes.filter((r) => r.layout !== false && r.auth !== false);
-  const standaloneRoutes = routes.filter((r) => r.layout === false || r.auth === false);
+	const layoutRoutes = routes.filter(
+		(r) => r.layout !== false && r.auth !== false,
+	);
+	const standaloneRoutes = routes.filter(
+		(r) => r.layout === false || r.auth === false,
+	);
 
 	return (
-    <Routes>
-      <Route path="/" element={<Navigate to={false ? '/dashboard' : '/login'} replace />} />
+		<Routes>
+			<Route
+				path="/"
+				element={<Navigate to={false ? '/dashboard' : '/login'} replace />}
+			/>
 
-      {standaloneRoutes.map(({ path, element, auth }) => (
-        <Route key={path} path={path} element={<ProtectedRoute element={element} auth={auth} />} />
-      ))}
+			{standaloneRoutes.map(({ path, element, auth }) => (
+				<Route
+					key={path}
+					path={path}
+					element={<ProtectedRoute element={element} auth={auth} />}
+				/>
+			))}
 
-      <Route element={<AppLayout />}>
-        {layoutRoutes.map(({ path, element, auth }) => (
-          <Route
-            key={path}
-            path={path}
-            element={<ProtectedRoute element={element} auth={auth} />}
-          />
-        ))}
-      </Route>
+			<Route element={<AppLayout />}>
+				{layoutRoutes.map(({ path, element, auth }) => (
+					<Route
+						key={path}
+						path={path}
+						element={<ProtectedRoute element={element} auth={auth} />}
+					/>
+				))}
+			</Route>
 
-      <Route path="*" element={<ProtectedRoute element={NotFound} auth={false} />} />
-    </Routes>
-  );
+			<Route
+				path="*"
+				element={<ProtectedRoute element={NotFound} auth={false} />}
+			/>
+		</Routes>
+	);
 }

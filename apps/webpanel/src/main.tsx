@@ -10,7 +10,9 @@ import { TooltipProvider } from '@fxmanager/ui/components/tooltip';
 import { AuthProvider } from './context/AuthContext.tsx';
 
 declare global {
-  interface Window { __SETUP_REQUIRED__?: boolean; }
+	interface Window {
+		__SETUP_REQUIRED__?: boolean;
+	}
 }
 
 createRoot(document.getElementById('root')!).render(
@@ -18,14 +20,13 @@ createRoot(document.getElementById('root')!).render(
 		<BrowserRouter>
 			<ThemeProvider>
 				<TooltipProvider>
-					{window.__SETUP_REQUIRED__
-						? <SetupApp />
-						: (
-							<AuthProvider>
-								<App />
-							</AuthProvider>
-						)
-					}
+					{window.__SETUP_REQUIRED__ ? (
+						<SetupApp />
+					) : (
+						<AuthProvider>
+							<App />
+						</AuthProvider>
+					)}
 				</TooltipProvider>
 			</ThemeProvider>
 		</BrowserRouter>
