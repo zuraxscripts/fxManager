@@ -1,7 +1,6 @@
 import { AuthContext } from '@/hooks/use-auth';
 import { QueryService } from '@/lib/query';
 import type { AuthUser } from '@/types/auth';
-import type { Settings } from '@/types/settings';
 import type { ApiResponse, ApiError, UserPermissionsType } from "@fxmanager/shared/types";
 import { PermissionManager } from "@fxmanager/shared/utils";
 import { useState, useEffect, useCallback } from 'react';
@@ -11,20 +10,11 @@ import { toast } from 'sonner';
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [settings, setSettings] = useState<Settings>({
-    isSetup: false,
-  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function init() {
       try {
-        const status = await QueryService<{ configured: boolean }>({
-          endpoint: '/auth/status',
-          method: 'GET',
-        });
-        setSettings((prev) => ({ ...prev, isSetup: status.configured }));
-
         const me = await QueryService<AuthUser>({ endpoint: '/auth/me', method: 'GET' });
         setUser(me);
       } catch (err) {
@@ -66,8 +56,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setup = useCallback(
     async (username: string, password: string) => {
-      if (settings.isSetup) return;
-
       const response = await QueryService<ApiResponse<AuthUser>>({
         endpoint: '/auth/setup',
         method: 'POST',
@@ -80,10 +68,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setUser(response.data);
-      setSettings((prev) => ({ ...prev, isSetup: true }));
       navigate('/dashboard');
     },
-    [navigate, settings],
+    [navigate],
   );
 
   const hasPermission = useCallback(
@@ -98,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <AuthContext.Provider value={{ settings, user, loading, login, logout, setup, hasPermission }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, setup, hasPermission }}>
       {children}
     </AuthContext.Provider>
   );
