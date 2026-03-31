@@ -7,13 +7,20 @@ import { checkVersion } from './common/version_check';
 import apiRoutes from './routes/api';
 import internalRoutes from './routes/internal';
 import { readFileSync } from 'fs';
+import { loadConfig } from './common/config';
+import fastifyCookie from '@fastify/cookie';
 
 applyMigrations();
 // hardcode for the time being
 // checkVersion(isProduction ? process.env.VERSION as string : 'dev-build');
 checkVersion('dev-build');
 
+const config = loadConfig();
 const fastify = Fastify({ logger: !isProduction });
+
+fastify.register(fastifyCookie, {
+  secret: config.cookieSecret,
+});
 
 if (isProduction) {
   const distPath = path.join(process.cwd(), './assets');
@@ -56,6 +63,24 @@ fastify.get('/api/health', async () => {
 
 fastify.register(apiRoutes, { prefix: '/api' });
 fastify.register(internalRoutes, { prefix: '/internal' });
+
+// import { ProcessManager } from './modules/process.manager';
+
+// testing code
+// const pm = new ProcessManager();
+
+// fastify.get('/start', () => {
+// 	return pm.start();
+// });
+
+// fastify.get('/stop', () => {
+// 	return pm.stop();
+// });
+
+// fastify.get('/console', () => {
+// 	const logs = pm.getLogs()
+// 	return { count: logs.length, logs };
+// });
 
 const start = async () => {
   try {
