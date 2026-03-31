@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify"
 import type { RouteModule } from "../../types";
-import { isFxManagerSetup, isProduction } from "../../common/utils";
+import { COOKIE_NAME, isFxManagerSetup, isProduction } from "../../common/utils";
 import { repo } from "@fxmanager/database";
 import { UserPermissions } from "@fxmanager/shared/constants";
 import { Type, type Static } from '@sinclair/typebox';
@@ -34,7 +34,7 @@ const AuthEndpoints: FastifyPluginAsync = async (fastify) => {
       const session = repo.auth.createSession(user!.id);
 
       return reply
-        .setCookie('session_id', session.id, {
+        .setCookie(COOKIE_NAME, session.id, {
           httpOnly: true,   					// not accessible from JS
           secure: isProduction,  			// HTTPS only in prod
           sameSite: 'lax',
