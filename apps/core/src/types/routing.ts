@@ -1,9 +1,16 @@
 import type { FastifyPluginAsync } from "fastify";
 import 'fastify';
+import type { ProcessManager } from "../modules/process.manager";
+import type { GameManager } from "../modules/game.manager";
+
+export interface Managers {
+	pm: ProcessManager;
+	gm: GameManager;
+}
 
 export interface RouteModule {
-	prefix: string;
-	handler: FastifyPluginAsync;
+  prefix: string;
+  handler: FastifyPluginAsync<Managers>;
 }
 
 declare module 'fastify' {

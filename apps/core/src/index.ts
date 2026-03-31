@@ -9,6 +9,8 @@ import internalRoutes from './routes/internal';
 import { readFileSync } from 'fs';
 import { loadConfig } from './common/config';
 import fastifyCookie from '@fastify/cookie';
+import { ProcessManager } from './modules/process.manager';
+import { GameManager } from './modules/game.manager';
 
 applyMigrations();
 // hardcode for the time being
@@ -61,8 +63,11 @@ fastify.get('/api/health', async () => {
   return { status: 'ok' };
 });
 
-fastify.register(apiRoutes, { prefix: '/api' });
-fastify.register(internalRoutes, { prefix: '/internal' });
+const pm = new ProcessManager();
+const gm = new GameManager();
+
+fastify.register(apiRoutes, { prefix: '/api', pm, gm });
+fastify.register(internalRoutes, { prefix: '/internal', pm, gm  });
 
 // import { ProcessManager } from './modules/process.manager';
 
@@ -81,6 +86,10 @@ fastify.register(internalRoutes, { prefix: '/internal' });
 // 	const logs = pm.getLogs()
 // 	return { count: logs.length, logs };
 // });
+
+// fastify.ready(() => {
+// 	console.log(fastify.printRoutes())
+// })
 
 const start = async () => {
   try {

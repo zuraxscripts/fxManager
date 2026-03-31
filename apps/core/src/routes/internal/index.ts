@@ -1,7 +1,10 @@
-import type { FastifyPluginAsync } from "fastify";
+import type { RouteModule } from "../../types";
 
-const internalRoutes: FastifyPluginAsync = async (fastify) => {
-  // fastify.register(AuthModule.handler, { prefix: AuthModule.prefix });
+const internalRoutes: RouteModule['handler'] = async (fastify, options) => {
+	// fastify.register(AuthModule.handler, { 
+	// 	...options, 
+	// 	prefix: AuthModule.prefix 
+	// });
 };
 
 export default internalRoutes;
