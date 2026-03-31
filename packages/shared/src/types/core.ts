@@ -10,4 +10,5 @@ export interface CoreConfig {
 	restartDelayMs: number;
 	webServerPort: number;
 	resourceApiToken: string;
+	cookieSecret: string;
 }

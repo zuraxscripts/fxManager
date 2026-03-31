@@ -22,6 +22,7 @@ const DEFAULTS: CoreConfig = {
   webServerPort: process.env.PANEL_PORT ? Number(process.env.PANEL_PORT) : 4000,
   // used for fxserver resource -> process manager communications
   resourceApiToken: crypto.randomUUID(),
+	cookieSecret: process.env.COOKIE_SECRET ?? crypto.randomUUID(),
 };
 
 export function loadConfig(): CoreConfig {
