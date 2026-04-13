@@ -17,6 +17,7 @@
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
     "@fastify/static": "^9.0.0",
+    "@fastify/websocket": "^11.2.0",
     "@fxmanager/database": "workspace:*",
     "@fxmanager/shared": "workspace:*",
     "@sinclair/typebox": "^0.34.49",
