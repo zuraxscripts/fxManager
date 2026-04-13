@@ -6,7 +6,6 @@ import {
 } from '@fxmanager/ui/components/sidebar';
 import { Card, CardContent } from '@fxmanager/ui/components/card';
 import { Badge } from '@fxmanager/ui/components/badge';
-// import { useServerStateSocket } from '@/hooks/use-ws-channels';
 import { STATUS_VARIANT } from '@/static/server-state';
 import { formatUptime } from '@/lib/utils';
 import { Button } from '@fxmanager/ui/components/button';
@@ -22,6 +21,9 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from '@fxmanager/ui/components/tooltip';
+import { useWsChannel } from '@/hooks/use-ws-channel';
+import type { ProcessState, ServerState } from '@fxmanager/shared/types';
+import { HandleServerAction } from '@/lib/query';
 
 interface ActionButtonProps {
 	Icon: LucideIcon;
@@ -32,6 +34,7 @@ interface ActionButtonProps {
 }
 
 function ActionButton({
+	action,
 	Icon,
 	colour,
 	disabled = false,
@@ -45,7 +48,7 @@ function ActionButton({
 					variant="outline"
 					disabled={disabled}
 					onClick={() => {
-						/* HandleServerAction(action) */
+						HandleServerAction(action);
 					}}
 					className={`flex-1 border-${colour}/30 text-${colour} hover:bg-${colour}/10 disabled:opacity-40`}
 				>
@@ -62,17 +65,14 @@ function ActionButton({
 }
 
 export function ServerStatusCard() {
-	// const {
-	//   state: { serverState },
-	// } = useServerStateSocket();
-	const serverState = {
-		status: 'stopped',
-		startedAt: null,
-		playerCount: 0,
-	};
+	const serverState = useWsChannel<ServerState>(
+		'server_state',
+		'status_changed',
+		{ status: 'stopped', startedAt: null },
+	);
 	const { state, setOpen } = useSidebar();
 	const isCollapsed = state === 'collapsed';
-	const status = serverState?.status ?? 'stopped' /*  satisfies ServerStatus */;
+	const status = serverState?.status ?? ('stopped' satisfies ProcessState);
 	const isRunning = status === 'running';
 	const canStart = status === 'stopped' || status === 'crashed';
 
@@ -105,10 +105,6 @@ export function ServerStatusCard() {
 								? formatUptime(serverState.startedAt)
 								: 'N/A'}
 						</p>
-					</div>
-					<div className="flex flex-row justify-between">
-						<p>Players:</p>
-						<p>{serverState?.playerCount ?? 'N/A'}</p>
 					</div>
 					<div>
 						<p className="mb-2 text-sm font-medium">Actions</p>
