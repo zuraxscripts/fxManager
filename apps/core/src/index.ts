@@ -11,6 +11,7 @@ import { loadConfig } from './common/config';
 import fastifyCookie from '@fastify/cookie';
 import { ProcessManager } from './modules/process.manager';
 import { GameManager } from './modules/game.manager';
+import fastifyWebsocket from '@fastify/websocket';
 
 applyMigrations();
 // hardcode for the time being
@@ -23,6 +24,7 @@ const fastify = Fastify({ logger: !isProduction });
 fastify.register(fastifyCookie, {
   secret: config.cookieSecret,
 });
+fastify.register(fastifyWebsocket);
 
 if (isProduction) {
   const distPath = path.join(process.cwd(), './assets');
@@ -87,9 +89,9 @@ fastify.register(internalRoutes, { prefix: '/internal', pm, gm  });
 // 	return { count: logs.length, logs };
 // });
 
-// fastify.ready(() => {
-// 	console.log(fastify.printRoutes())
-// })
+fastify.ready(() => {
+	console.log(fastify.printRoutes())
+})
 
 const start = async () => {
   try {

@@ -1,5 +1,6 @@
 import AuthModule from "./auth";
 import ServerModule from "./server";
+import WsModule from "./sockets";
 import type { RouteModule } from "../../types";
 
 const apiRoutes: RouteModule['handler'] = async (fastify, options) => {
@@ -11,6 +12,11 @@ const apiRoutes: RouteModule['handler'] = async (fastify, options) => {
   fastify.register(ServerModule.handler, { 
     ...options, 
     prefix: ServerModule.prefix 
+  });
+  
+  fastify.register(WsModule.handler, { 
+    ...options, 
+    prefix: WsModule.prefix 
   });
 };
 
