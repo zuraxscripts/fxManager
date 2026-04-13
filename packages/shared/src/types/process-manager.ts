@@ -9,3 +9,9 @@ export interface ServerState {
 	status: ProcessState;
 	startedAt: Date | null;
 }
+
+export interface ProcessOutputLine {
+	line: string;
+	source: "stdout" | "stderr";
+	ts: number;
+}
