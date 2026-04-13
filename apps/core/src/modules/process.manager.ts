@@ -1,7 +1,8 @@
 import EventEmitter from "events";
 import { loadConfig } from "../common/config";
 import { EventNames } from "@fxmanager/shared/constants";
-import { type ProcessState, type ServerState } from "@fxmanager/shared/types";
+import { type ProcessOutputLine, type ProcessState, type ServerState } from "@fxmanager/shared/types";
+import { wsManager } from "./ws.manager";
 
 export class ProcessManager extends EventEmitter {
   private state: ServerState = { status: 'stopped', startedAt: null };
@@ -32,6 +33,18 @@ export class ProcessManager extends EventEmitter {
 
 		console.log({ executable: config.executable, cwd: config.serverDataPath, args });
 
+		wsManager.broadcast({
+			channel: 'console',
+			event: 'line',
+			data: {
+				line: '\x1b[1m\x1b[32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n' +
+							'\x1b[1m\x1b[32m  🚀 fxManager is starting your server...      \x1b[0m\n' +
+							'\x1b[1m\x1b[32m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n',
+				ts: Date.now(),
+				source: 'stdout',
+			} satisfies ProcessOutputLine,
+		});
+
     try {
       this.proc = Bun.spawn([config.executable, ...args], {
         cwd: config.serverDataPath,
@@ -60,6 +73,18 @@ export class ProcessManager extends EventEmitter {
 
 		console.log(`[core] Stopping fxServer`);
     this.setState('stopping');
+		wsManager.broadcast({
+			channel: 'console',
+			event: 'line',
+			data: {
+				line: '\n' +
+							'\x1b[1m\x1b[31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n' +
+							'\x1b[1m\x1b[33m  🛑 fxManager is stopping the server...       \x1b[0m\n' +
+							'\x1b[1m\x1b[31m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n',
+				ts: Date.now(),
+				source: 'stdout',
+			} satisfies ProcessOutputLine,
+		});
 
 		this.proc.kill();
     await this.proc.exited;
@@ -67,6 +92,17 @@ export class ProcessManager extends EventEmitter {
 
 		console.log(`[core] fxServer has stopped`);
     this.setState('stopped');
+		wsManager.broadcast({
+      channel: 'console',
+      event: 'line',
+      data: {
+        line: '\x1b[2m\x1b[37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n' +
+              '\x1b[2m\x1b[37m  ⚪ fxServer has successfully stopped.        \x1b[0m\n' +
+              '\x1b[2m\x1b[37m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m\n\n',
+        ts: Date.now(),
+        source: 'stdout',
+      } satisfies ProcessOutputLine,
+    });
 
 		return true;
 	}
@@ -95,6 +131,11 @@ export class ProcessManager extends EventEmitter {
 
 		this.state = newState;
 		this.emit(EventNames.SERVERSTATUS, newState);
+		wsManager.broadcast({
+			channel: 'server_state',
+			event: 'status_changed',
+			data: newState,
+		});
 	}
 
 	private createLineBreakTransformer() {
@@ -138,12 +179,17 @@ export class ProcessManager extends EventEmitter {
           line: value,
           source,
           ts: Date.now(),
-        };
+        } satisfies ProcessOutputLine;
 
 				console.log(value);
 
         this.logs.push(event);
         this.emit('console', event);
+				wsManager.broadcast({
+					channel: 'console',
+					event: 'line',
+					data: event,
+				});
       }
     } catch (err) {
       console.error(`Stream error:`, err);
