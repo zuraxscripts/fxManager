@@ -1,3 +1,5 @@
+import "./common/env";
+
 import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
 import path, { join } from 'path';

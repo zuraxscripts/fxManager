@@ -13,23 +13,23 @@ function getPlatform(): PlatformOS {
 
 const DEFAULTS: CoreConfig = {
 	platform: getPlatform(),
-  executable: './FXServer',
-  serverDataPath: './server-data',
-  configFile: 'server.cfg',
-  autoRestart: true,
-  maxRestarts: 5,
-  restartDelayMs: 5000,
-  webServerPort: process.env.PANEL_PORT ? Number(process.env.PANEL_PORT) : 4000,
-  // used for fxserver resource -> process manager communications
-  resourceApiToken: crypto.randomUUID(),
+	executable: process.env.FXSERVER_EXECUTABLE || './FXServer',
+	serverDataPath: process.env.FXSERVER_DATA_PATH || './server-data',
+	configFile: process.env.FXSERVER_CFG || 'server.cfg',
+	autoRestart: true,
+	maxRestarts: 5,
+	restartDelayMs: 5000,
+	webServerPort: process.env.PANEL_PORT ? Number(process.env.PANEL_PORT) : 4000,
+	// used for fxserver resource -> process manager communications
+	resourceApiToken: crypto.randomUUID(),
 	cookieSecret: process.env.COOKIE_SECRET ?? crypto.randomUUID(),
 };
 
 export function loadConfig(): CoreConfig {
-  const stored = repo.settings.get<Partial<CoreConfig>>('server.config');
-  return { ...DEFAULTS, ...stored };
+	const stored = repo.settings.get<Partial<CoreConfig>>('server.config');
+	return { ...DEFAULTS, ...stored };
 }
 
 export function saveConfig(config: Partial<CoreConfig>) {
-  repo.settings.set('server.config', config);
+	repo.settings.set('server.config', config);
 }
