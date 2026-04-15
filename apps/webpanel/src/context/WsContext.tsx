@@ -66,11 +66,11 @@ export function WSProvider({ children }: { children: ReactNode }) {
 	useEffect(() => {
 		if (loading || !user) {
 			if (socketRef.current) {
-        socketRef.current.close();
-        socketRef.current = null;
-        setConnected(false);
-      }
-      return;
+				socketRef.current.close();
+				socketRef.current = null;
+				setConnected(false);
+			}
+			return;
 		}
 		console.log('WSUrl', WSUrl());
 		const ws = new WebSocket(WSUrl());

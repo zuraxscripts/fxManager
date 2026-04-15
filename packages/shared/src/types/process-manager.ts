@@ -12,6 +12,6 @@ export interface ServerState {
 
 export interface ProcessOutputLine {
 	line: string;
-	source: "stdout" | "stderr";
+	source: 'stdout' | 'stderr';
 	ts: number;
 }
