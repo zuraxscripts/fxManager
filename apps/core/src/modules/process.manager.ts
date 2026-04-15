@@ -114,6 +114,16 @@ export class ProcessManager extends EventEmitter {
 		return true;
   }
 
+	sendCommand(command: string): void {
+    // other possible option ?
+    // if (this.state.status !== 'running' || !this.proc) throw new Error('Server stdin not available');
+    // this.proc.send(command + '\n');
+    const stdin = this.proc?.stdin;
+    if (!stdin || typeof stdin === 'number') throw new Error('Server stdin not available');
+    stdin.write(command + '\n');
+    stdin.flush();
+  }
+
 	// testing code ? or improve
 	// getLogs() {
 	// 	return this.logs;
