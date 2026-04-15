@@ -1,5 +1,5 @@
 import { useAuth } from '@/hooks/use-auth';
-import { WSContext } from '@/hooks/use-ws';
+import { WSContext } from '@/hooks/ws-channels/use-ws-core';
 import { WSUrl } from '@/lib/query';
 import type { MessageHandler } from '@/types/ws';
 import type { Channel, WSMessage } from '@fxmanager/shared/types';
