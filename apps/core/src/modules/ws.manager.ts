@@ -1,20 +1,23 @@
 import type { WebSocket } from '@fastify/websocket';
-import type { Channel, WSMessage } from '@fxmanager/shared/types';
+import type { Channel, WSClientMessage, WSMessage } from '@fxmanager/shared/types';
 
 interface Subscription {
   socket: WebSocket;
   channels: Set<Channel>;
 }
 
+type ServerHandler<T = unknown> = (clientId: string, event: string, data: T) => void;
+
 class WSManager {
   private clients = new Map<string, Subscription>();
+  private callbacks = new Map<string, Set<ServerHandler>>();
 
   add(id: string, socket: WebSocket) {
     this.clients.set(id, { socket, channels: new Set() });
 
-    socket.on('message', (raw) => {
+    socket.on('message', (raw: string) => {
       try {
-        const msg = JSON.parse(raw.toString());
+        const msg = JSON.parse(raw.toString()) as WSClientMessage;
         this.handleClientMessage(id, msg);
       } catch {}
     });
@@ -22,7 +25,7 @@ class WSManager {
     socket.on('close', () => this.remove(id));
   }
 
-  private handleClientMessage(id: string, msg: { type: string; channel: Channel }) {
+  private handleClientMessage(id: string, msg: WSClientMessage) {
     const sub = this.clients.get(id);
     if (!sub) return;
 
@@ -30,7 +33,17 @@ class WSManager {
       sub.channels.add(msg.channel);
     } else if (msg.type === 'unsubscribe') {
       sub.channels.delete(msg.channel);
-    }
+    } else if (msg.type === 'emit') {
+			this.triggerCallbacks(id, msg.channel!, msg.event!, msg.data);
+		}
+  }
+
+	private triggerCallbacks(clientId: string, channel: Channel, event: string, data: unknown) {
+    const exactKey = `${channel}:${event}`;
+    this.callbacks.get(exactKey)?.forEach((h) => h(clientId, event, data));
+
+    const wildcardKey = `${channel}:*`;
+    this.callbacks.get(wildcardKey)?.forEach((h) => h(clientId, event, data));
   }
 
   remove(id: string) {
@@ -51,6 +64,18 @@ class WSManager {
     if (sub?.socket.readyState === 1) {
       sub.socket.send(JSON.stringify(message));
     }
+  }
+
+	on<T>(channel: Channel, event: string, handler: ServerHandler<T>): () => void {
+    const key = `${channel}:${event}`;
+    if (!this.callbacks.has(key)) this.callbacks.set(key, new Set());
+    this.callbacks.get(key)!.add(handler as ServerHandler);
+
+    return () => this.callbacks.get(key)?.delete(handler as ServerHandler);
+  }
+
+  onChannel<T>(channel: Channel, handler: ServerHandler<T>): () => void {
+    return this.on(channel, '*', handler);
   }
 }
 
