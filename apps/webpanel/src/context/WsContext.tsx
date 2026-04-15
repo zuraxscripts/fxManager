@@ -98,8 +98,20 @@ export function WSProvider({ children }: { children: ReactNode }) {
 		return () => ws.close();
 	}, [user, loading]);
 
+	const emit = useCallback(<T,>(channel: Channel, event: string, data: T) => {
+		if (socketRef.current?.readyState === WebSocket.OPEN) {
+			socketRef.current.send(
+				JSON.stringify({ type: 'emit', channel, event, data }),
+			);
+		} else {
+			console.warn(
+				`[ws] Cannot emit — not connected (channel: ${channel}, event: ${event})`,
+			);
+		}
+	}, []);
+
 	return (
-		<WSContext.Provider value={{ subscribe, unsubscribe, on, connected }}>
+		<WSContext.Provider value={{ subscribe, unsubscribe, on, emit, connected }}>
 			{children}
 		</WSContext.Provider>
 	);

@@ -10,5 +10,6 @@ export interface WSContextValue {
 		event: string,
 		handler: MessageHandler<T>,
 	) => () => void;
+	emit: <T>(channel: Channel, event: string, data: T) => void;
 	connected: boolean;
 }
