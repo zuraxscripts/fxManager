@@ -1,4 +1,4 @@
-import { Spinner } from "@fxmanager/ui/components/spinner";
+import { Spinner } from '@fxmanager/ui/components/spinner';
 
 export function Loading({ message }: { message?: string }) {
 	return (
@@ -12,11 +12,9 @@ export function Loading({ message }: { message?: string }) {
 					<p className="text-md font-medium tracking-wide text-foreground">
 						Loading fxManager
 					</p>
-					<p className="text-sm text-muted-foreground">
-						{ message }
-					</p>
+					<p className="text-sm text-muted-foreground">{message}</p>
 				</div>
 			</div>
 		</div>
-	)
+	);
 }
