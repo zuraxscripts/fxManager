@@ -1,5 +1,5 @@
 import { PageHeader } from '@/components/page-header';
-import { useConsoleSocket } from '@/hooks/ws-channels';
+import { useConsoleSocket, useServerStateSocket } from '@/hooks/ws-channels';
 import type { ProcessOutputLine } from '@fxmanager/shared/types';
 import { Button } from '@fxmanager/ui/components/button';
 import { Card } from '@fxmanager/ui/components/card';
@@ -21,6 +21,9 @@ function LogLine({ event }: { event: ProcessOutputLine }) {
 
 export default function Console() {
 	const { lines, sendCommand } = useConsoleSocket({ maxLines: 200 });
+	const {
+		state: { status: serverStatus },
+	} = useServerStateSocket();
 
 	const viewportRef = useRef<HTMLDivElement>(null);
 	const [input, setInput] = useState('');
@@ -87,18 +90,19 @@ export default function Console() {
 						value={input}
 						onChange={(e) => setInput(e.target.value)}
 						onKeyDown={onKeyDown}
-						// disabled={serverState?.status !== 'running'}
-						// placeholder={
-						//   serverState?.status === 'running'
-						//     ? 'Enter server command...'
-						//     : 'Server not running...'
-						// }
+						disabled={serverStatus !== 'running'}
+						placeholder={
+							serverStatus === 'running'
+								? 'Enter server command...'
+								: 'Server not running...'
+						}
 						className="flex-1 border-0 bg-transparent font-mono text-sm shadow-none outline-none focus-visible:ring-0"
 					/>
 					<Button
 						size="icon"
 						variant="ghost"
 						onClick={submit}
+						disabled={serverStatus !== 'running'}
 						className="h-8 w-8 text-primary"
 					>
 						<SendHorizonal className="h-4 w-4" />
