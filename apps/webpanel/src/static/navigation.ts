@@ -8,7 +8,7 @@ export const NAV: NavItem[] = [
 		title: 'Dashboard',
 		items: [
 			{ url: '/dashboard/', title: 'Server Controls' },
-			{ url: '/dashboard/players', title: 'Player list' },
+			{ url: '/dashboard/players', title: 'Player List' },
 		],
 	},
 	{ url: '/console', icon: Terminal, title: 'Console' },
