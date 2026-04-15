@@ -1,5 +1,5 @@
 import { PageHeader } from '@/components/page-header';
-import { useWS } from '@/hooks/use-ws';
+import { useConsoleSocket } from '@/hooks/ws-channels';
 import type { ProcessOutputLine } from '@fxmanager/shared/types';
 import { Button } from '@fxmanager/ui/components/button';
 import { Card } from '@fxmanager/ui/components/card';
@@ -20,21 +20,7 @@ function LogLine({ event }: { event: ProcessOutputLine }) {
 }
 
 export default function Console() {
-	const { subscribe, unsubscribe, on, emit } = useWS();
-	const [lines, setLines] = useState<ProcessOutputLine[]>([]);
-
-	useEffect(() => {
-		subscribe('console');
-
-		const off = on<ProcessOutputLine>('console', 'line', (msg) => {
-			setLines((prev) => [...prev.slice(-499), msg.data]); // cap at 500 lines
-		});
-
-		return () => {
-			off();
-			unsubscribe('console');
-		};
-	}, []);
+	const { lines, sendCommand } = useConsoleSocket({ maxLines: 200 });
 
 	const viewportRef = useRef<HTMLDivElement>(null);
 	const [input, setInput] = useState('');
@@ -44,7 +30,7 @@ export default function Console() {
 	const submit = () => {
 		const cmd = input.trim();
 		if (!cmd) return;
-		emit('console', 'command', { command: cmd });
+		sendCommand(cmd);
 		setHistory((h) => [cmd, ...h].slice(0, 50));
 		setHistIdx(-1);
 		setInput('');
