@@ -73,27 +73,17 @@ const gm = new GameManager();
 fastify.register(apiRoutes, { prefix: '/api', pm, gm });
 fastify.register(internalRoutes, { prefix: '/internal', pm, gm  });
 
-// import { ProcessManager } from './modules/process.manager';
+if (!isProduction) {
+	fastify.get('/routemap', (_, reply) => {
+    const routes = fastify.printRoutes({ commonPrefix: true, includeMeta: ['preHandler'] });
+    
+    reply
+      .type('text/html; charset=utf-8')
+      .send(`<html><body><pre>${routes}</pre></body></html>`);
+  });
 
-// testing code
-// const pm = new ProcessManager();
-
-// fastify.get('/start', () => {
-// 	return pm.start();
-// });
-
-// fastify.get('/stop', () => {
-// 	return pm.stop();
-// });
-
-// fastify.get('/console', () => {
-// 	const logs = pm.getLogs()
-// 	return { count: logs.length, logs };
-// });
-
-fastify.ready(() => {
-	console.log(fastify.printRoutes())
-})
+  fastify.ready(() => console.log(`[dev] Route map: http://localhost:${3000}/routemap`));
+}
 
 const start = async () => {
   try {
