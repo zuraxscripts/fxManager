@@ -35,12 +35,10 @@ export function useConsoleSocket({
 		});
 
 		// Server dumps last N lines on subscribe via a 'history' event
-		const offHistory = on<ProcessOutputLine[]>('console', 'history', (msg) => {
+		const offInitial = on<ProcessOutputLine[]>('console', 'initial', (msg) => {
 			setLines((prev) => {
 				// Prepend history, dedup by timestamp, cap at maxLines
-				const merged = [...msg.data, ...prev]
-					.filter((v, i, arr) => arr.findIndex((x) => x.ts === v.ts) === i)
-					.slice(-maxLines);
+				const merged = [...msg.data, ...prev].slice(-maxLines);
 				cache.current = merged;
 				return merged;
 			});
@@ -48,7 +46,7 @@ export function useConsoleSocket({
 
 		return () => {
 			offLine();
-			offHistory();
+			offInitial();
 			unsubscribe('console');
 		};
 	}, [maxLines]);
