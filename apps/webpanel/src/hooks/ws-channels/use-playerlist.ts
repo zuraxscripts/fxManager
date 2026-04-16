@@ -1,27 +1,27 @@
 import { useEffect, useState } from 'react';
 import { useWSBase } from './use-ws-core';
-import type { Player } from '@fxmanager/shared/types';
+import type { OnlinePlayer } from '@fxmanager/shared/types';
 
 interface UsePlayerlistReturn {
-	players: Player[];
-	getPlayer: (id: number) => Player | undefined;
+	players: OnlinePlayer[];
+	getPlayer: (id: number) => OnlinePlayer | undefined;
 	count: number;
 }
 
 export function usePlayerlistSocket(): UsePlayerlistReturn {
 	const { subscribe, unsubscribe, on } = useWSBase();
-	const [players, setPlayers] = useState<Player[]>([]);
+	const [players, setPlayers] = useState<OnlinePlayer[]>([]);
 
 	useEffect(() => {
 		subscribe('playerlist');
 
 		// Full list sync (sent on subscribe + periodically)
-		const offSync = on<Player[]>('playerlist', 'sync', (msg) => {
+		const offSync = on<OnlinePlayer[]>('playerlist', 'sync', (msg) => {
 			setPlayers(msg.data);
 		});
 
 		// Incremental updates
-		const offJoin = on<Player>('playerlist', 'player_joined', (msg) => {
+		const offJoin = on<OnlinePlayer>('playerlist', 'player_joined', (msg) => {
 			setPlayers((prev) => [...prev, msg.data]);
 		});
 
@@ -29,7 +29,7 @@ export function usePlayerlistSocket(): UsePlayerlistReturn {
 			setPlayers((prev) => prev.filter((p) => p.id !== msg.data.id));
 		});
 
-		const offUpdate = on<Player>('playerlist', 'player_updated', (msg) => {
+		const offUpdate = on<OnlinePlayer>('playerlist', 'player_updated', (msg) => {
 			setPlayers((prev) =>
 				prev.map((p) => (p.id === msg.data.id ? { ...p, ...msg.data } : p)),
 			);
