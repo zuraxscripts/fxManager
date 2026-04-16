@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { WSContextValue } from '@/types/ws';
-import type { Channel, WSMessage } from '@fxmanager/shared/types';
+import type { Channel } from '@fxmanager/shared/types';
 
 export const WSContext = createContext<WSContextValue | null>(null);
 
@@ -17,11 +17,16 @@ export function useWsChannel<T>(channel: Channel, event: string, initial: T) {
 	useEffect(() => {
 		subscribe(channel);
 
-		const off = on<T>(channel, event, (msg: WSMessage<T>) => {
+		const offInitial = on<T>(channel, 'initial', (msg) => {
+			setState(msg.data);
+		});
+
+		const off = on<T>(channel, event, (msg) => {
 			setState(msg.data);
 		});
 
 		return () => {
+			offInitial();
 			off();
 			unsubscribe(channel);
 		};
