@@ -7,10 +7,12 @@ interface Subscription {
 }
 
 type ServerHandler<T = unknown> = (clientId: string, event: string, data: T) => void;
+type InitialDataProvider<T = unknown> = (clientId: string, channel: string) => Promise<T> | T;
 
 class WSManager {
   private clients = new Map<string, Subscription>();
   private callbacks = new Map<string, Set<ServerHandler>>();
+  private initialProviders = new Map<Channel, InitialDataProvider>();
 
   add(id: string, socket: WebSocket) {
     this.clients.set(id, { socket, channels: new Set() });
@@ -25,17 +27,44 @@ class WSManager {
     socket.on('close', () => this.remove(id));
   }
 
-  private handleClientMessage(id: string, msg: WSClientMessage) {
+	setInitialData<T>(channel: Channel, provider: InitialDataProvider<T>) {
+    this.initialProviders.set(channel, provider as InitialDataProvider);
+  }
+
+  private async handleClientMessage(id: string, msg: WSClientMessage) {
     const sub = this.clients.get(id);
     if (!sub) return;
 
     if (msg.type === 'subscribe') {
       sub.channels.add(msg.channel);
+      await this.sendInitialData(id, msg.channel);
     } else if (msg.type === 'unsubscribe') {
       sub.channels.delete(msg.channel);
     } else if (msg.type === 'emit') {
 			this.triggerCallbacks(id, msg.channel!, msg.event!, msg.data);
 		}
+  }
+
+	private async sendInitialData(clientId: string, channel: Channel) {
+    let provider = this.initialProviders.get(channel);
+
+		if (!provider) {
+			const prefix = channel.split(':')[0] + ':*';
+			provider = this.initialProviders.get(prefix as Channel);
+		}
+
+  	if (!provider) return;
+
+    try {
+      const data = await provider(clientId, channel);
+      this.send(clientId, {
+        channel,
+        event: 'initial',
+        data,
+      });
+    } catch (err) {
+      console.error(`[ws] Failed to send initial data for channel ${channel}:`, err);
+    }
   }
 
 	private triggerCallbacks(clientId: string, channel: Channel, event: string, data: unknown) {
