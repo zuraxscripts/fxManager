@@ -29,11 +29,15 @@ export function usePlayerlistSocket(): UsePlayerlistReturn {
 			setPlayers((prev) => prev.filter((p) => p.id !== msg.data.id));
 		});
 
-		const offUpdate = on<OnlinePlayer>('playerlist', 'player_updated', (msg) => {
-			setPlayers((prev) =>
-				prev.map((p) => (p.id === msg.data.id ? { ...p, ...msg.data } : p)),
-			);
-		});
+		const offUpdate = on<OnlinePlayer>(
+			'playerlist',
+			'player_updated',
+			(msg) => {
+				setPlayers((prev) =>
+					prev.map((p) => (p.id === msg.data.id ? { ...p, ...msg.data } : p)),
+				);
+			},
+		);
 
 		return () => {
 			offSync();

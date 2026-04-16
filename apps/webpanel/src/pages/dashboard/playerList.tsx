@@ -148,7 +148,8 @@ const COL_GRID = 'grid-cols-[3rem_1fr_1fr_1fr_1fr_1fr_8rem]';
 
 export default function PlayerListPage() {
 	const navigate = useNavigate();
-	const { dialogOpen, dialogPlayer, dialogTab, openAction, closeAction } = usePlayerAction();
+	const { dialogOpen, dialogPlayer, dialogTab, openAction, closeAction } =
+		usePlayerAction();
 	const { players } = usePlayerlistSocket();
 
 	const [loading, setLoading] = useState<boolean>(false);
@@ -299,11 +300,11 @@ export default function PlayerListPage() {
 			</Card>
 
 			<PlayerActionDialog
-        player={dialogPlayer}
-        open={dialogOpen}
-        defaultTab={dialogTab}
-        onClose={closeAction}
-      />
+				player={dialogPlayer}
+				open={dialogOpen}
+				defaultTab={dialogTab}
+				onClose={closeAction}
+			/>
 		</div>
 	);
 }
