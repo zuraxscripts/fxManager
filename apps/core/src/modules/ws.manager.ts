@@ -11,12 +11,14 @@ interface Subscription {
 }
 
 type ServerHandler<T = unknown> = (client: Subscription, event: string, data: T) => void;
-type InitialDataProvider<T = unknown> = (clientId: string, channel: string) => Promise<T> | T;
+type InitialDataProvider<T = unknown> = (clientId: string, channel: Channel) => Promise<T> | T;
+type CanConnectHandler = (admin: AuthedRequest['admin'], channel: Channel) => Promise<boolean> | boolean;
 
 class WSManager {
   private clients = new Map<string, Subscription>();
   private callbacks = new Map<string, Set<ServerHandler>>();
   private initialProviders = new Map<Channel, InitialDataProvider>();
+  private connectionChecks = new Map<Channel, CanConnectHandler>();
 
   add(id: string, socket: WebSocket, admin: AuthedRequest['admin']) {
     this.clients.set(id, { id, socket, channels: new Set(), admin });
@@ -35,17 +37,34 @@ class WSManager {
     this.initialProviders.set(channel, provider as InitialDataProvider);
   }
 
+	addCheck(channel: Channel, handler: CanConnectHandler) {
+		this.connectionChecks.set(channel, handler);
+	}
+
   private async handleClientMessage(id: string, msg: WSClientMessage) {
     const sub = this.clients.get(id);
     if (!sub) return;
 
+		const { channel, type } = msg;
+
     if (msg.type === 'subscribe') {
-      sub.channels.add(msg.channel);
-      await this.sendInitialData(id, msg.channel);
-    } else if (msg.type === 'unsubscribe') {
-      sub.channels.delete(msg.channel);
-    } else if (msg.type === 'emit') {
-			this.triggerCallbacks(sub, msg.channel, msg.event, msg.data);
+			let canConnectHandler = this.connectionChecks.get(msg.channel);
+
+			if (!canConnectHandler) {
+				const prefix = channel.split(':')[0] + ':*';
+				canConnectHandler = this.connectionChecks.get(prefix as Channel);
+			}
+
+			if (!canConnectHandler || !canConnectHandler(sub.admin, channel)) return;
+
+      sub.channels.add(channel);
+
+      await this.sendInitialData(id, channel);
+    } else if (type === 'unsubscribe') {
+      sub.channels.delete(channel);
+    } else if (type === 'emit') {
+			const { event, data } = msg;
+			this.triggerCallbacks(sub, channel, event, data);
 		}
   }
 
