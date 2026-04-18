@@ -1,4 +1,4 @@
-import type { FastifyPluginAsync } from "fastify";
+import type { FastifyPluginAsync, FastifyRequest } from "fastify";
 import 'fastify';
 import type { ProcessManager } from "../modules/process.manager";
 import type { GameManager } from "../modules/game.manager";
@@ -13,12 +13,18 @@ export interface RouteModule {
   handler: FastifyPluginAsync<Managers>;
 }
 
+type RequestAdmin = {
+	id: number;
+	username: string;
+	permissions: number;
+}
+
+export interface AuthedRequest extends FastifyRequest {
+	admin: RequestAdmin;
+}
+
 declare module 'fastify' {
   interface FastifyRequest {
-    admin?: {
-      id: number;
-      username: string;
-      permissions: number;
-    };
+    admin?: RequestAdmin;
   }
 }
