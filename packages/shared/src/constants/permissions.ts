@@ -16,9 +16,11 @@ export const UserPermissions = {
 	CLOSE_REPORT: 1 << 10, // 1024
 
 	SERVER_ACTIONS: 1 << 11, // 2048 - start/stop/restart
-	CONSOLE_ACCESS: 1 << 12, // 4096 - view & execute console commands
 
-	SETTINGS_ACCESS: 1 << 13, // 8192 - access & edit settings
+	CONSOLE_VIEW: 1 << 12, // 4096 - view console
+	CONSOLE_ACCESS: 1 << 13, // 4096 - execute console commands
+
+	SETTINGS_ACCESS: 1 << 14, // 8192 - access & edit settings
 
 	MASTER: 1 << 30, // (1,073,741,824)
 } as const;
