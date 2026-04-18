@@ -6,6 +6,10 @@ import { sessionAuth } from '../../middleware/auth';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
 
+wsManager.addCheck('console', (admin) => {
+	return PermissionManager.has(admin.permissions, UserPermissions.CONSOLE_ACCESS);
+});
+
 const wsEndpoints: RouteModule['handler'] = async (fastify, { pm }) => {
 	
 	fastify.addHook('preHandler', sessionAuth);
@@ -27,7 +31,9 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm }) => {
 		return pm.getLogs();
 	});
 
-	wsManager.on<{ command: string }>('console', 'command', ({ id }, event, { command }) => {
+	wsManager.on<{ command: string }>('console', 'command', ({ id, admin }, event, { command }) => {
+
+		if (!PermissionManager.has(admin.permissions, UserPermissions.CONSOLE_ACCESS)) return;
 
 		if (command.includes("resource-api-token") || command.includes("api-port")) {
 			wsManager.send<ProcessOutputLine>(id, {
