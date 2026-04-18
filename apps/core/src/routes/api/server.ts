@@ -1,5 +1,4 @@
-import type { FastifyPluginAsync } from "fastify"
-import type { RouteModule } from "../../types";
+import type { AuthedRequest, RouteModule } from "../../types";
 import { sessionAuth } from "../../middleware/auth";
 import { PermissionManager } from "@fxmanager/shared/utils";
 import { UserPermissions } from "@fxmanager/shared/constants";
@@ -7,12 +6,13 @@ import { UserPermissions } from "@fxmanager/shared/constants";
 const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	const { pm } = options;
 	
+	// enforces that admin key exists in request otherwise returns 401
   fastify.addHook('preHandler', sessionAuth);
 
 	fastify.post('/start', async (request, reply) => {
-		const { admin } = request;
+		const { admin } = request as AuthedRequest;
 
-		const allowed = PermissionManager.has(admin!.permissions, UserPermissions.SERVER_ACTIONS);
+		const allowed = PermissionManager.has(admin.permissions, UserPermissions.SERVER_ACTIONS);
 
 		if (!allowed) {
       return reply.code(403).send({ error: 'Not authorized' }); 
@@ -24,9 +24,9 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	});
 
 	fastify.post('/stop', async (request, reply) => {
-		const { admin } = request;
+		const { admin } = request as AuthedRequest;
 
-		const allowed = PermissionManager.has(admin!.permissions, UserPermissions.SERVER_ACTIONS);
+		const allowed = PermissionManager.has(admin.permissions, UserPermissions.SERVER_ACTIONS);
 
 		if (!allowed) {
       return reply.code(403).send({ error: 'Not authorized' }); 
@@ -38,9 +38,9 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	});
 
 	fastify.post('/restart', async (request, reply) => {
-		const { admin } = request;
+		const { admin } = request as AuthedRequest;
 
-		const allowed = PermissionManager.has(admin!.permissions, UserPermissions.SERVER_ACTIONS);
+		const allowed = PermissionManager.has(admin.permissions, UserPermissions.SERVER_ACTIONS);
 
 		if (!allowed) {
       return reply.code(403).send({ error: 'Not authorized' }); 
