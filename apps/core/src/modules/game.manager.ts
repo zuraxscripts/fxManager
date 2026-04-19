@@ -1,21 +1,21 @@
 import EventEmitter from "events";
 import { repo } from '@fxmanager/database';
 import { EventNames } from "@fxmanager/shared/constants";
-import { type ApiResponse, type BanDataCard, type DeferralCheckResponse, type OnlinePlayer, type PlayerIdentifiers } from "@fxmanager/shared/types";
+import { type ApiResponse, type BanDataCard, type DeferralCheckResponse, type OnlinePlayer, type PlayerIdentifiers, type PlayerUpdatePackage } from "@fxmanager/shared/types";
 import { loadConfig } from "../common/config";
+import { wsManager } from "./ws.manager";
 
-export class GameManager extends EventEmitter {
+export class GameManager {
   private playerlist: OnlinePlayer[] = [];
   private apiToken: string;
 
 	constructor () {
-		super();
-
     const { resourceApiToken } = loadConfig();
     this.apiToken = resourceApiToken;
   }
 
   // region player handling
+
   getPlayerList() {
     return this.playerlist;
   }
@@ -23,6 +23,8 @@ export class GameManager extends EventEmitter {
   getPlayer(id: number) {
     return this.playerlist.find((p) => p.id === id);
   }
+
+	// region receiving actions
 
   playerDeferralChecks(identifiers: PlayerIdentifiers): DeferralCheckResponse {
     const ban = repo.players.checkBanned(identifiers);
@@ -72,7 +74,11 @@ export class GameManager extends EventEmitter {
     } satisfies OnlinePlayer;
 
     this.playerlist.push(playerPayload);
-    this.emit(EventNames.PLAYERJOIN, playerPayload);
+    wsManager.broadcast<OnlinePlayer>({
+			channel: 'playerlist',
+			event: 'player_joined',
+			data: playerPayload,
+		});
   }
 
   async playerDrop(serverId: number) {
@@ -93,10 +99,14 @@ export class GameManager extends EventEmitter {
     const newPlaytime = player.playtime + sessionDuration;
 
     repo.players.updatePlaytime(player.id, newPlaytime);
-    this.emit(EventNames.PLAYERDROP, { serverId: player.serverId });
+    wsManager.broadcast<{ id :number }>({
+			channel: 'playerlist',
+			event: 'player_joined',
+			data: { id: serverId },
+		});
   }
 
-  // region act on players
+  // region emitting actions
 
   async dropPlayer(serverId: number, reason: string): Promise<ApiResponse> {
     try {
