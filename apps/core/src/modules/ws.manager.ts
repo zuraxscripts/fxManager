@@ -55,7 +55,7 @@ class WSManager {
 				canConnectHandler = this.connectionChecks.get(prefix as Channel);
 			}
 
-			if (!canConnectHandler || !canConnectHandler(sub.admin, channel)) return;
+			if (canConnectHandler && !canConnectHandler(sub.admin, channel)) return;
 
       sub.channels.add(channel);
 
