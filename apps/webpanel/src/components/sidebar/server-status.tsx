@@ -72,8 +72,6 @@ export function ServerStatusCard() {
 	const canStart =
 		serverState.status === 'stopped' || serverState.status === 'crashed';
 
-	console.log(serverState);
-
 	if (isCollapsed) {
 		return (
 			<div className="flex flex-col items-center">
