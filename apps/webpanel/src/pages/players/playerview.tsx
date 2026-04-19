@@ -51,7 +51,7 @@ import {
 	type ActionTab,
 } from '@/components/player-actions-dialog';
 import type { ApiError, ApiResponse } from '@fxmanager/shared/types';
-import type { PlayerProfile } from '@fxmanager/database';
+import type { PlayerProfile } from '@fxmanager/database/types';
 import { StatCard } from '@/components/stat-card';
 
 function LoadingSkeleton() {

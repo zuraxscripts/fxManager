@@ -22,7 +22,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@fxmanager/ui/components/card';
-import type { PlayerProfile } from '@fxmanager/database';
+import type { PlayerProfile } from '@fxmanager/database/types';
 
 export function BansTab({
 	bans,
