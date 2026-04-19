@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
 	Table,
 	TableBody,
@@ -145,6 +144,7 @@ function pingColor(ping?: number): string {
 // region main component
 
 const COL_GRID = 'grid-cols-[3rem_1fr_1fr_1fr_1fr_1fr_8rem]';
+const loading = false;
 
 export default function PlayerListPage() {
 	const navigate = useNavigate();
@@ -152,7 +152,7 @@ export default function PlayerListPage() {
 		usePlayerAction();
 	const { players } = usePlayerlistSocket();
 
-	const [loading, setLoading] = useState<boolean>(false);
+	// const [loading, setLoading] = useState<boolean>(false);
 
 	return (
 		<div className="flex h-[calc(100vh-5rem)] flex-col gap-4">
@@ -197,7 +197,7 @@ export default function PlayerListPage() {
 										</TableRow>
 									))
 								) : players.length === 0 ? (
-									<TableRow className="w-full">
+									<TableRow className="w-full hover:bg-transparent">
 										<TableCell className="text-center text-zinc-600 py-12 text-sm block w-full">
 											No players currently online.
 										</TableCell>
