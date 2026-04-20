@@ -2,7 +2,7 @@ import { randomUUID } from 'crypto';
 import { wsManager } from '../../modules/ws.manager';
 import type { AuthedRequest, RouteModule } from '../../types';
 import type { ServerState, ProcessOutputLine } from '@fxmanager/shared/types';
-import { sessionAuth } from '../../middleware/auth';
+import { sessionAuth } from '../../middleware/session';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
 

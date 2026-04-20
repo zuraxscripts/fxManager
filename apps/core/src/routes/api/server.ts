@@ -1,5 +1,5 @@
 import type { AuthedRequest, RouteModule } from "../../types";
-import { sessionAuth } from "../../middleware/auth";
+import { sessionAuth } from "../../middleware/session";
 import { PermissionManager } from "@fxmanager/shared/utils";
 import { UserPermissions } from "@fxmanager/shared/constants";
 
