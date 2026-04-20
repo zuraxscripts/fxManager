@@ -4,6 +4,7 @@ import {
 	PlayerIdentifiers,
 } from '@fxmanager/shared/types';
 import { QueryManager } from '../utils/query';
+import { playerManager } from '../monitoring';
 
 function getIdentifiers(src: string): Partial<PlayerIdentifiers> {
 	const raw: PlayerIdentifiers = {
@@ -85,6 +86,8 @@ on('playerJoining', () => {
 	if (typeof identifiers.license !== 'string')
 		return DropPlayer(`${src}`, 'No license found.');
 
+	playerManager.addPlayer(src);
+
 	const body = {
 		name,
 		identifiers,
@@ -109,6 +112,9 @@ on('playerJoining', () => {
 
 on('playerDropped', () => {
 	const src = source;
+
+	playerManager.removePlayer(src);
+
 	QueryManager<{ ack: true }>({
 		endpoint: '/players/drop',
 		method: 'POST',
