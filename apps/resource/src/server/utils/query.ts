@@ -13,9 +13,11 @@ export async function QueryManager<T>(
 		body?: unknown;
 		headers?: Record<string, string>;
 	},
+	external: boolean = false,
 	showError: boolean = false,
 ): Promise<T> {
-	const url = `http://${HOSTNAME}/internal${endpoint}`;
+	const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+	const url = `http://${HOSTNAME}${external ? '' : '/internal'}${cleanEndpoint}`;
 
 	try {
 		const options: RequestInit = {
@@ -31,7 +33,9 @@ export async function QueryManager<T>(
 			options.body = body ? JSON.stringify(body) : JSON.stringify({});
 		}
 
+		console.log('fetch req on', url, options.method);
 		const response = await fetch(url, options);
+		console.log('fetch req response', response);
 
 		if (!response.ok) {
 			let errorData: { message: string };
@@ -50,17 +54,7 @@ export async function QueryManager<T>(
 
 		return (await response.json()) as T;
 	} catch (err) {
-		if (showError) {
-			console.error('QueryService Error:', err);
-		} else {
-			DEV: console.error('QueryService Error:', err, 'data:', {
-				endpoint,
-				method,
-				body,
-				headers,
-				url,
-			});
-		}
+		console.error('QueryService Error:', err);
 
 		throw err;
 	}
