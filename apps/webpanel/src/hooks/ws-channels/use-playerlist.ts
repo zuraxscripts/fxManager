@@ -7,14 +7,14 @@ import type {
 
 interface UsePlayerlistReturn {
 	players: OnlinePlayer[];
-  loading: boolean;
+	loading: boolean;
 	getPlayer: (id: number) => OnlinePlayer | undefined;
 	count: number;
 }
 
 export function usePlayerlistSocket(): UsePlayerlistReturn {
 	const { subscribe, unsubscribe, on } = useWSBase();
-  const [loading, setLoading] = useState<boolean>(true);
+	const [loading, setLoading] = useState<boolean>(true);
 	const [players, setPlayers] = useState<OnlinePlayer[]>([]);
 
 	useEffect(() => {
@@ -23,7 +23,7 @@ export function usePlayerlistSocket(): UsePlayerlistReturn {
 		// Full list sync (sent on subscribe + periodically)
 		const offSync = on<OnlinePlayer[]>('playerlist', 'initial', (msg) => {
 			setPlayers(msg.data);
-      setLoading(false);
+			setLoading(false);
 		});
 
 		// Incremental updates
@@ -80,7 +80,7 @@ export function usePlayerlistSocket(): UsePlayerlistReturn {
 
 	return {
 		players,
-    loading,
+		loading,
 		getPlayer: (id) => players.find((p) => p.id === id),
 		count: players.length,
 	};

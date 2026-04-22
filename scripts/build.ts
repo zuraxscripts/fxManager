@@ -43,12 +43,14 @@ async function copyDir(src: string, dest: string) {
 
 /** Helper function to wait for files to exist */
 async function waitForFile(filePath: string, timeout = 5000) {
-  const start = Date.now();
-  while (Date.now() - start < timeout) {
-    if (await fs.exists(filePath)) return true;
-    await new Promise(resolve => setTimeout(resolve, 100)); // Sleep 100ms
-  }
-  throw new Error(`Timeout: File ${filePath} did not appear after ${timeout}ms`);
+	const start = Date.now();
+	while (Date.now() - start < timeout) {
+		if (await fs.exists(filePath)) return true;
+		await new Promise((resolve) => setTimeout(resolve, 100)); // Sleep 100ms
+	}
+	throw new Error(
+		`Timeout: File ${filePath} did not appear after ${timeout}ms`,
+	);
 }
 
 await copyDir(webpanelDist, ASSETS_DIR);
@@ -61,18 +63,20 @@ const resourceDist = path.join(process.cwd(), 'apps/resource');
 	await copyDir(path, targetpath);
 });
 
-await Promise.all(['fxmanifest.lua', 'README.md', '.yarn.installed'].map(async (localPath) => {
-  const src = join(resourceDist, localPath);
-  const dest = join(RESOURCE_DIR, localPath);
-  
-  try {
-    await waitForFile(src);
-    await fs.copyFile(src, dest);
-  } catch (err) {
-    console.error(`Failed to copy ${localPath}:`, (err as Error).message);
-    process.exit(1);
-  }
-}));
+await Promise.all(
+	['fxmanifest.lua', 'README.md', '.yarn.installed'].map(async (localPath) => {
+		const src = join(resourceDist, localPath);
+		const dest = join(RESOURCE_DIR, localPath);
+
+		try {
+			await waitForFile(src);
+			await fs.copyFile(src, dest);
+		} catch (err) {
+			console.error(`Failed to copy ${localPath}:`, (err as Error).message);
+			process.exit(1);
+		}
+	}),
+);
 
 // define target to build for
 const toBuild =
