@@ -1,3 +1,4 @@
+import { Loading } from '@/components/loading';
 import { AuthContext } from '@/hooks/use-auth';
 import { QueryService } from '@/lib/query';
 import type { AuthUser } from '@/types/auth';
@@ -98,7 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 		<AuthContext.Provider
 			value={{ user, loading, login, logout, setup, hasPermission }}
 		>
-			{children}
+			{loading ? <Loading /> : children}
 		</AuthContext.Provider>
 	);
 }

@@ -4,12 +4,9 @@ import AppLayout from './components/sidebar';
 import { ProtectedRoute } from './components/protected-route';
 import NotFound from './pages/NotFound';
 import { useAuth } from './hooks/use-auth';
-import { Loading } from './components/loading';
 
 export function App() {
-	const { user, loading } = useAuth();
-
-	if (loading) return <Loading />;
+	const { user } = useAuth();
 
 	const layoutRoutes = routes.filter(
 		(r) => r.layout !== false && r.auth !== false,
