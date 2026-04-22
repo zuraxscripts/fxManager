@@ -12,7 +12,7 @@ import {
 } from 'react';
 
 export function WSProvider({ children }: { children: ReactNode }) {
-	const { user, loading } = useAuth();
+	const { user } = useAuth();
 	const [connected, setConnected] = useState(false);
 	const socketRef = useRef<WebSocket | null>(null);
 	// handlers keyed by `channel:event`
