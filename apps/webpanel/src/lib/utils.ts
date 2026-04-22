@@ -12,11 +12,7 @@ export function formatUptime(startedAt: Date | string | number): string {
 	const initialDate =
 		startedAt instanceof Date ? startedAt : new Date(startedAt);
 
-	const diffInMinutes = Math.floor(
-		(Date.now() - initialDate.getTime()) / 60_000,
-	);
-
-	return formatDuration(diffInMinutes);
+	return formatDuration(Date.now() - initialDate.getTime());
 }
 
 export function formatDate(date: Date | string | null | undefined): string {
