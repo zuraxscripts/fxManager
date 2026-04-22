@@ -30,7 +30,7 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
   fastify.post('/update', (request) => {
     const { body } = request;
 
-    gm.playerUpdates(body as PlayerUpdatePackage);
+    gm.playerUpdates((body as { payload: PlayerUpdatePackage}).payload);
     return { ack: true };
   });
 }
