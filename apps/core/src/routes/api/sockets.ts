@@ -69,6 +69,10 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm, gm }) => {
 		},
 	);
 
+	wsManager.setInitialData<ServerState>('server_state', () => {
+		return pm.getState();
+	});
+
 	wsManager.setInitialData<OnlinePlayer[]>('playerlist', () => {
 		return gm.getPlayerList();
 	});
