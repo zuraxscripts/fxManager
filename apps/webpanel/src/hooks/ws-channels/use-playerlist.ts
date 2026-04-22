@@ -19,7 +19,7 @@ export function usePlayerlistSocket(): UsePlayerlistReturn {
 		subscribe('playerlist');
 
 		// Full list sync (sent on subscribe + periodically)
-		const offSync = on<OnlinePlayer[]>('playerlist', 'sync', (msg) => {
+		const offSync = on<OnlinePlayer[]>('playerlist', 'initial', (msg) => {
 			setPlayers(msg.data);
 		});
 
@@ -34,7 +34,7 @@ export function usePlayerlistSocket(): UsePlayerlistReturn {
 
 		const offUpdate = on<PlayerUpdatePackage>(
 			'playerlist',
-			'player_updated',
+			'player_update',
 			(msg) => {
 				const updates = msg.data;
 
