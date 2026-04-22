@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 import { wsManager } from '../../modules/ws.manager';
 import type { AuthedRequest, RouteModule } from '../../types';
-import type { ServerState, ProcessOutputLine } from '@fxmanager/shared/types';
+import type { ServerState, ProcessOutputLine, OnlinePlayer } from '@fxmanager/shared/types';
 import { sessionAuth } from '../../middleware/session';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
@@ -10,7 +10,7 @@ wsManager.addCheck('console', (admin) => {
 	return PermissionManager.has(admin.permissions, UserPermissions.CONSOLE_ACCESS);
 });
 
-const wsEndpoints: RouteModule['handler'] = async (fastify, { pm }) => {
+const wsEndpoints: RouteModule['handler'] = async (fastify, { pm, gm }) => {
 	
 	fastify.addHook('preHandler', sessionAuth);
 
@@ -50,6 +50,10 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm }) => {
 		}
 
 		pm.sendCommand(command);
+	});
+
+	wsManager.setInitialData<OnlinePlayer[]>('playerlist', () => {
+		return gm.getPlayerList();
 	});
 };
 
