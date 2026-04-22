@@ -1,5 +1,12 @@
 # fxManager
 
+A self-contained, cross-platform admin panel for FiveM & RedM servers.  
+Single binary deployment - no runtime dependencies required on the target machine.
+
+> [!WARNING]
+> This project is still in intensive development, it is **not** to be considered stable until a `v1.0.0+` release.
+> If this repository is public, it's for transparency, feedback and open source contributions to help it achieve this milestone.
+
 ## Structure
 
 Each app/package will have it's own more detailled structure in it's README.
@@ -19,7 +26,131 @@ fxManager/
 └── turbo.json         # Build pipeline config
 ```
 
+---
+
 ## Development
+
+```bash
+# Install dependencies
+bun install
+
+# Start system
+bun dev
+```
+
+The React dev server runs on `:5173` and proxies API/WS calls on `:3000`.
+
+---
+
+## Code Quality
+
+```bash
+bun check        # lint + format + fix (recommended during dev)
+bun lint         # lint only
+bun format       # format only
+bun typecheck    # tsc --noEmit across all packages (via Turbo)
+bun db:studio    # open Drizzle Studio to browse the database (optional)
+```
+
+---
+
+## Development & Code Quality
+
+* **`bun lint`** – Runs linting across the entire monorepo to find and fix code smells.
+* **`bun format`** – Automatically formats all source code and internal build scripts.
+* **`bun typecheck`** – Validates TypeScript types across all packages via Turbo.
+* **`bun db:studio`** – Opens a browser-based GUI to manage and browse your database.
+* **`bun build`** – Compiles all packages and prepares the production bundle.
+* **`bun dev`** – Starts the development environment with hot-reloading.
+
+### Game Resource ( [`apps/resource`](./apps/resource) )
+Commands specific to the game-side resource and NUI:
+
+* **`bun web:dev`** – Runs the Vite dev server for the NUI frontend.
+* **`bun watch`** – Rebuilds the resource automatically as you save files.
+* **`bun deploy`** – Bundles the resource and copies it to the path defined in your `DEPLOY_PATH` environment variable.
+
+## Adding a migration
+
+Edit `packages/database/src/migrations/index.ts` and append to the array:
+
+```ts
+{
+  version: 2,
+  description: 'Add player notes',
+  up: [
+    'ALTER TABLE players ADD COLUMN notes TEXT',
+  ],
+},
+```
+
+Migrations run automatically on next startup. No CLI commands needed.
+
+Biome handles everything ESLint + Prettier would - faster, single config at the root.
+
+---
+
+## Building
+
+```bash
+# Build for both platforms
+bun run build
+
+# Build for a specific platform
+bun run build --target=linux
+bun run build --target=windows
+```
+
+Turbo caches build outputs - subsequent builds only rebuild what changed.
+
+Output in `dist/`:
+
+```
+dist/
+  fxmanager-linux          ← Linux binary
+  fxmanager-windows.exe    ← Windows binary
+  public/                  ← UI assets - must stay next to the binary
+  resource/                ← Drop into your server's resources/ folder
+```
+
+> ⚠️ The `public/` folder must remain in the same directory as the binary when deploying. The server resolves it relative to its own location at runtime.
+
+---
+
+## Deployment
+
+### 1. Run the binary
+
+```
+your-deploy-folder/
+  fxmanager-linux      (or fxmanager-windows.exe)
+  public/
+  .env
+```
+
+```bash
+./fxmanager-linux    # or fxmanager-windows.exe
+```
+
+The panel will be available at `http://your-server-ip:4000`.
+
+### 2. Install the resource
+
+1. Copy `dist/resource/` into your server's `resources/` folder as `fxManager`
+2. **IMPORTANT** Add `ensure fxManager` to your `server.cfg`
+
+---
+
+## Environment Variables
+
+| Variable              | Default           | Description                          |
+|-----------------------|-------------------|--------------------------------------|
+| `FXSERVER_EXECUTABLE` | `./FXServer`      | Path to FXServer binary              |
+| `FXSERVER_DATA_PATH`  | `./server-data`   | Path to server-data folder           |
+| `FXSERVER_CFG`        | `server.cfg`      | Config file name inside data path    |
+| `PANEL_PORT`          | `3000` (opt)      | Web panel port                       |
+| `COOKIE_SECRET`       | N/A (opt)         | Defines the secret for cookie sign   |
+| `DEPLOY_PATH`         | N/A               | Used in development for the resource |
 
 ## Errrh anything else ?
 
