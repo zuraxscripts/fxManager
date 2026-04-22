@@ -34,9 +34,7 @@ export async function QueryManager<T>(
 			options.body = body ? JSON.stringify(body) : JSON.stringify({});
 		}
 
-		console.log('fetch req on', url, options.method);
 		const response = await fetch(url, options);
-		console.log('fetch req response', response);
 
 		if (!response.ok) {
 			let errorData: { message: string };
