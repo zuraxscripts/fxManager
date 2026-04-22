@@ -12,7 +12,7 @@ import { relations, sql } from 'drizzle-orm';
 export const players = sqliteTable('players', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	name: text('name').notNull(),
-	playtime: integer('playtime').notNull().default(0),
+	playtime: integer('playtime').notNull().default(0), // time in milliseconds !!
 	firstSeen: integer('first_seen', { mode: 'timestamp' })
 		.default(sql`CURRENT_TIMESTAMP`)
 		.notNull(),
