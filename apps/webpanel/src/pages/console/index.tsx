@@ -4,7 +4,7 @@ import type { ProcessOutputLine } from '@fxmanager/shared/types';
 import { Button } from '@fxmanager/ui/components/button';
 import { Card } from '@fxmanager/ui/components/card';
 import { Input } from '@fxmanager/ui/components/input';
-import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
+import { ScrollArea, ScrollBar } from '@fxmanager/ui/components/scroll-area';
 import Ansi from 'ansi-to-react';
 import { ArrowRight, SendHorizonal, Terminal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -67,7 +67,7 @@ export default function Console() {
 		<div className="flex h-[calc(100vh-5rem)] flex-col gap-4">
 			<PageHeader Icon={Terminal} title="Console" />
 
-			<Card className="flex flex-1 flex-col min-h-0 pb-0 overflow-hidden">
+			<Card className="flex flex-1 flex-col min-h-0 pb-0 overflow-hidden gap-0.5">
 				<ScrollArea className="flex-1 min-h-0" viewportRef={viewportRef}>
 					<div className="p-4 font-mono text-xs leading-relaxed">
 						{lines.length === 0 ? (
@@ -82,6 +82,7 @@ export default function Console() {
 							</div>
 						)}
 					</div>
+          <ScrollBar orientation="horizontal" />
 				</ScrollArea>
 
 				<div className="flex flex-none items-center gap-2 border-t p-3 bg-background/50">
