@@ -182,7 +182,8 @@ export function createPlayersRepository(db: DB) {
 
 			db.update(players)
 				.set({ lastSeen: now, playtime })
-				.where(eq(players.id, playerId));
+				.where(eq(players.id, playerId))
+				.run();
 		},
 
 		async findById(id: number): Promise<PlayerProfile | null> {
@@ -324,15 +325,15 @@ export function createPlayersRepository(db: DB) {
 
 			if (playerNote) {
 				if (content.trim()) {
-					await db
-						.update(playerNotes)
+					db.update(playerNotes)
 						.set({ content, issuedAt: now })
 						.where(
 							and(
 								eq(playerNotes.playerId, playerId),
 								eq(playerNotes.issuer, adminId),
 							),
-						);
+						)
+						.run();
 				} else {
 					await db
 						.delete(playerNotes)
@@ -386,7 +387,8 @@ export function createPlayersRepository(db: DB) {
 				await db
 					.update(bans)
 					.set({ expiresAt: now })
-					.where(eq(bans.id, activeBan.id));
+					.where(eq(bans.id, activeBan.id))
+					.run();
 			}
 
 			await db.insert(bans).values({
