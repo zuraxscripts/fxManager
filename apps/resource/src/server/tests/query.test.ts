@@ -1,6 +1,6 @@
 // import { ApiError } from '@fxmanager/shared/types';
 
-import { QueryManager } from "./utils/query";
+import { QueryManager } from './utils/query';
 
 // const HOSTNAME = '127.0.0.1:3000';
 // make sure to hardocde it in the @fxManager/core/common/config file

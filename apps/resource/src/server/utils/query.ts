@@ -21,7 +21,7 @@ export async function QueryManager<T>(
 	const url = `http://${HOSTNAME}${external ? '' : '/internal'}${cleanEndpoint}`;
 
 	try {
-	const options: any = {
+		const options: any = {
 			method,
 			headers: {
 				'Content-Type': 'application/json',
@@ -31,7 +31,7 @@ export async function QueryManager<T>(
 		};
 
 		if (method !== 'GET') {
-			options.body = (body ? JSON.stringify(body) : JSON.stringify({}));
+			options.body = body ? JSON.stringify(body) : JSON.stringify({});
 		}
 
 		console.log('fetch req on', url, options.method);
