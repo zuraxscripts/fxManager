@@ -28,7 +28,7 @@ jobs:
 
       - name: Sync Versions
         run: |
-          bun bump-version ${{ github.ref_name }}
+          bun run scripts/bump-version.ts ${{ github.ref_name }}
 
       - name: Commit Updated Versions
         run: |
