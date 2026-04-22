@@ -1,5 +1,5 @@
 import { ChevronRightIcon } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
 	Collapsible,
 	CollapsibleContent,
@@ -19,12 +19,17 @@ import type { NavItem } from '@/types/sidebar';
 import { NAV } from '@/static/navigation';
 
 function NavItemWithSubItems({ item }: { item: NavItem }) {
+  const { pathname } = useLocation();
 	const NavIcon = item.icon;
+
+  const isActive = 
+    pathname === item.url || 
+    item.items?.some((subItem) => pathname === subItem.url);
 
 	return (
 		<Collapsible
 			asChild
-			defaultOpen={item.isActive}
+			defaultOpen={isActive}
 			className="group/collapsible"
 		>
 			<SidebarMenuItem>
