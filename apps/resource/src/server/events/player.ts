@@ -92,7 +92,7 @@ on(
 	},
 );
 
-on('playerJoining', () => {
+on('playerJoining', async () => {
 	const src = source;
 	const name = GetPlayerName(`${src}`);
 	// guarateed to have a license
@@ -114,31 +114,35 @@ on('playerJoining', () => {
 		serverId: number;
 	};
 
-	QueryManager<{ ack: true }>({
-		endpoint: '/players/join',
-		method: 'POST',
-		body,
-	}).catch((err) => {
+	try {
+		await QueryManager<{ ack: true }>({
+			endpoint: '/players/join',
+			method: 'POST',
+			body,
+		});
+	} catch (err) {
 		console.error(
 			`[API Error] Failed to process join for ${name} (${src}):`,
-			err.message,
+			(err as Error).message,
 		);
-	});
+	}
 });
 
-on('playerDropped', () => {
+on('playerDropped', async () => {
 	const src = source;
 
 	playerManager.removePlayer(src);
 
-	QueryManager<{ ack: true }>({
-		endpoint: '/players/drop',
-		method: 'POST',
-		body: { serverId: src },
-	}).catch((err) => {
+	try {
+		QueryManager<{ ack: true }>({
+			endpoint: '/players/drop',
+			method: 'POST',
+			body: { serverId: src },
+		});
+	} catch (err) {
 		console.error(
 			`[API Error] Failed to process drop for ID ${src}:`,
-			err.message,
+			(err as Error).message,
 		);
-	});
+	}
 });
