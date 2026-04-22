@@ -6,10 +6,12 @@ import ConsolePage from './console';
 import PlayersPage from './players';
 import SettingsPage from './settings';
 import PlayerView from './players/playerview';
+import { UserPermissions } from '@fxmanager/shared/constants';
 
 type RouteConfig = {
 	path: string;
 	element: ComponentType;
+	permission?: number;
 	auth?: boolean;
 	layout?: boolean;
 };
@@ -20,6 +22,14 @@ export const routes: RouteConfig[] = [
 	{ path: '/dashboard/players', element: OnlinePlayerListPage },
 	{ path: '/players', element: PlayersPage },
 	{ path: '/players/:playerId', element: PlayerView },
-	{ path: '/console', element: ConsolePage },
-	{ path: '/settings', element: SettingsPage },
+	{
+		path: '/console',
+		element: ConsolePage,
+		permission: UserPermissions.CONSOLE_ACCESS,
+	},
+	{
+		path: '/settings',
+		element: SettingsPage,
+		permission: UserPermissions.SETTINGS_ACCESS,
+	},
 ];

@@ -4,6 +4,7 @@ import AppLayout from './components/sidebar';
 import { ProtectedRoute } from './components/protected-route';
 import NotFound from './pages/NotFound';
 import { useAuth } from './hooks/use-auth';
+import { PermissionManager } from '@fxmanager/shared/utils';
 
 export function App() {
 	const { user } = useAuth();
@@ -31,13 +32,21 @@ export function App() {
 			))}
 
 			<Route element={<AppLayout />}>
-				{layoutRoutes.map(({ path, element, auth }) => (
-					<Route
-						key={path}
-						path={path}
-						element={<ProtectedRoute element={element} auth={auth} />}
-					/>
-				))}
+				{layoutRoutes.map(({ path, element, auth, permission }) => {
+					if (
+						permission &&
+						!PermissionManager.has(user!.permissions, permission)
+					)
+						return;
+
+					return (
+						<Route
+							key={path}
+							path={path}
+							element={<ProtectedRoute element={element} auth={auth} />}
+						/>
+					);
+				})}
 			</Route>
 
 			<Route
