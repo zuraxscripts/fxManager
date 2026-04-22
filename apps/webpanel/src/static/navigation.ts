@@ -1,5 +1,6 @@
 import { LayoutDashboard, Terminal, Users, Settings } from 'lucide-react';
 import type { NavItem } from '@/types/sidebar';
+import { UserPermissions } from '@fxmanager/shared/constants';
 
 export const NAV: NavItem[] = [
 	{
@@ -11,7 +12,17 @@ export const NAV: NavItem[] = [
 			{ url: '/dashboard/players', title: 'Player List' },
 		],
 	},
-	{ url: '/console', icon: Terminal, title: 'Console' },
+	{
+		url: '/console',
+		icon: Terminal,
+		title: 'Console',
+		permission: UserPermissions.CONSOLE_ACCESS,
+	},
 	{ url: '/players', icon: Users, title: 'Players' },
-	{ url: '/settings', icon: Settings, title: 'Settings' },
+	{
+		url: '/settings',
+		icon: Settings,
+		title: 'Settings',
+		permission: UserPermissions.SETTINGS_ACCESS,
+	},
 ];

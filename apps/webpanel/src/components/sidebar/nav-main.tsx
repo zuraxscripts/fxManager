@@ -17,21 +17,26 @@ import {
 } from '@fxmanager/ui/components/sidebar';
 import type { NavItem } from '@/types/sidebar';
 import { NAV } from '@/static/navigation';
+import { useAuth } from '@/hooks/use-auth';
+import type { AuthUser } from '@/types/auth';
+import { PermissionManager } from '@fxmanager/shared/utils';
 
-function NavItemWithSubItems({ item }: { item: NavItem }) {
-  const { pathname } = useLocation();
+function NavItemWithSubItems({
+	item,
+	user,
+}: {
+	item: NavItem;
+	user: AuthUser;
+}) {
+	const { pathname } = useLocation();
 	const NavIcon = item.icon;
 
-  const isActive = 
-    pathname === item.url || 
-    item.items?.some((subItem) => pathname === subItem.url);
+	const isActive =
+		pathname === item.url ||
+		item.items?.some((subItem) => pathname === subItem.url);
 
 	return (
-		<Collapsible
-			asChild
-			defaultOpen={isActive}
-			className="group/collapsible"
-		>
+		<Collapsible asChild defaultOpen={isActive} className="group/collapsible">
 			<SidebarMenuItem>
 				<CollapsibleTrigger asChild>
 					<SidebarMenuButton tooltip={item.title}>
@@ -42,15 +47,23 @@ function NavItemWithSubItems({ item }: { item: NavItem }) {
 				</CollapsibleTrigger>
 				<CollapsibleContent>
 					<SidebarMenuSub>
-						{item.items?.map((subItem) => (
-							<SidebarMenuSubItem key={subItem.title}>
-								<SidebarMenuSubButton asChild>
-									<Link to={subItem.url}>
-										<span>{subItem.title}</span>
-									</Link>
-								</SidebarMenuSubButton>
-							</SidebarMenuSubItem>
-						))}
+						{item.items?.map((subItem) => {
+							if (
+								subItem.permission &&
+								!PermissionManager.has(user.permissions, subItem.permission)
+							)
+								return;
+
+							return (
+								<SidebarMenuSubItem key={subItem.title}>
+									<SidebarMenuSubButton asChild>
+										<Link to={subItem.url}>
+											<span>{subItem.title}</span>
+										</Link>
+									</SidebarMenuSubButton>
+								</SidebarMenuSubItem>
+							);
+						})}
 					</SidebarMenuSub>
 				</CollapsibleContent>
 			</SidebarMenuItem>
@@ -58,7 +71,19 @@ function NavItemWithSubItems({ item }: { item: NavItem }) {
 	);
 }
 
-export function NavItemNoItems({ item }: { item: NavItem }) {
+export function NavItemNoItems({
+	item,
+	user,
+}: {
+	item: NavItem;
+	user: AuthUser;
+}) {
+	if (
+		item.permission &&
+		!PermissionManager.has(user.permissions, item.permission)
+	)
+		return;
+
 	return (
 		<SidebarMenuItem>
 			<SidebarMenuButton asChild tooltip={item.title}>
@@ -72,17 +97,22 @@ export function NavItemNoItems({ item }: { item: NavItem }) {
 }
 
 export function NavMain() {
+	const { user } = useAuth();
+
 	return (
 		<SidebarGroup>
 			<SidebarGroupLabel>Platform</SidebarGroupLabel>
 			<SidebarMenu>
-				{NAV.map((item) => {
-					const subItems = !!item.items;
+				{user &&
+					NAV.map((item) => {
+						const subItems = !!item.items;
 
-					if (subItems)
-						return <NavItemWithSubItems item={item} key={item.url} />;
-					return <NavItemNoItems item={item} key={item.url} />;
-				})}
+						if (subItems)
+							return (
+								<NavItemWithSubItems user={user} item={item} key={item.url} />
+							);
+						return <NavItemNoItems user={user} item={item} key={item.url} />;
+					})}
 			</SidebarMenu>
 		</SidebarGroup>
 	);
