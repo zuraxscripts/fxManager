@@ -26,21 +26,20 @@ export function useConsoleSocket({
 
 		subscribe('console');
 
-		const offLine = on<ProcessOutputLine>('console', 'line', (msg) => {
-			setLines((prev) => {
-				const next = [...prev, msg.data].slice(-maxLines);
-				cache.current = next;
-				return next;
+		// Server dumps last N lines on subscribe via a 'history' event
+		const offInitial = on<ProcessOutputLine[]>('console', 'initial', ({ data }) => {
+			setLines(() => {
+				const merged = data.slice(-maxLines);
+				cache.current = merged;
+				return merged;
 			});
 		});
 
-		// Server dumps last N lines on subscribe via a 'history' event
-		const offInitial = on<ProcessOutputLine[]>('console', 'initial', (msg) => {
+		const offLine = on<ProcessOutputLine>('console', 'line', ({ data }) => {
 			setLines((prev) => {
-				// Prepend history, dedup by timestamp, cap at maxLines
-				const merged = [...msg.data, ...prev].slice(-maxLines);
-				cache.current = merged;
-				return merged;
+				const next = [...prev, data].slice(-maxLines);
+				cache.current = next;
+				return next;
 			});
 		});
 
