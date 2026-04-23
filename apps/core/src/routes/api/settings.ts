@@ -34,6 +34,30 @@ const SettingsEndpoints: RouteModule['handler'] = async (fastify) => {
 			sortOrder: query.sortOrder as any,
 		});
 	});
+
+	fastify.get('/admins/:adminId', async (request, reply) => {
+		const { admin } = request as AuthedRequest;
+
+		const allowed = PermissionManager.has(
+			admin.permissions,
+			UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+		);
+
+		if (!allowed) throw new Error('Unauthorized');
+
+		const { adminId: adminIdRaw } = request.params as { adminId: string };
+		const adminId = parseInt(adminIdRaw);
+
+		const profile = await repo.settings.getAdminProfile(adminId);
+
+		if (!profile)
+			return {
+				success: false,
+				error: `Admin id ${adminId} does not exist.`,
+			};
+
+		return { success: true, data: profile };
+	});
 };
 
 export default {
