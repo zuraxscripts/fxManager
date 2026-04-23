@@ -7,6 +7,7 @@ import PlayersPage from './players';
 import SettingsPage from './settings';
 import PlayerView from './players/playerview';
 import { UserPermissions } from '@fxmanager/shared/constants';
+import AdminManagementList from './settings/adminmanagement';
 
 type RouteConfig = {
 	path: string;
@@ -31,5 +32,10 @@ export const routes: RouteConfig[] = [
 		path: '/settings',
 		element: SettingsPage,
 		permission: UserPermissions.SETTINGS_ACCESS,
+	},
+	{
+		path: '/settings/admins',
+		element: AdminManagementList,
+		permission: UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
 	},
 ];
