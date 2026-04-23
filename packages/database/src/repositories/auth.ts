@@ -20,7 +20,7 @@ export function createAuthRepository(db: DB) {
 				algorithm: 'bcrypt',
 			});
 
-      // failsafe check, only allow master permission if no users are created
+			// failsafe check, only allow master permission if no users are created
 			const sanitizedPerms =
 				this.countUsers() === 0
 					? permissions
@@ -37,6 +37,24 @@ export function createAuthRepository(db: DB) {
 				})
 				.returning()
 				.get();
+		},
+
+		async deleteUser(adminId: number) {
+			return await db.transaction(async (tx) => {
+				const admin = await tx.query.adminUsers.findFirst({
+					columns: {
+						id: true,
+						permissions: true,
+					},
+					where: eq(adminUsers.id, adminId),
+				});
+
+				if (!admin) throw new Error('not_found');
+				if (admin.permissions & UserPermissions.MASTER)
+					throw new Error('admin_is_master');
+
+				await tx.delete(adminUsers).where(eq(adminUsers.id, adminId));
+			});
 		},
 
 		findUserByUsername(username: string) {
