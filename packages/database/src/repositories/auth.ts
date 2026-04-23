@@ -2,6 +2,7 @@ import { eq, and, gt } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { adminUsers, sessions } from '../schema';
 import type * as schema from '../schema';
+import { UserPermissions } from '@fxmanager/shared/constants';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
@@ -18,6 +19,13 @@ export function createAuthRepository(db: DB) {
 			const passwordHash = await Bun.password.hash(password, {
 				algorithm: 'bcrypt',
 			});
+
+      // failsafe check, only allow master permission if no users are created
+			const sanitizedPerms =
+				this.countUsers() === 0
+					? permissions
+					: permissions & ~UserPermissions.MASTER;
+
 			return db
 				.insert(adminUsers)
 				.values({
@@ -25,7 +33,7 @@ export function createAuthRepository(db: DB) {
 					passwordHash,
 					createdAt: new Date(),
 					lastLoginAt: updateLoggedIn ? new Date() : null,
-					permissions,
+					permissions: sanitizedPerms,
 				})
 				.returning()
 				.get();
