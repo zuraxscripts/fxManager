@@ -1,4 +1,4 @@
-import { asc, count, desc, eq, like, or, sql } from 'drizzle-orm';
+import { asc, count, desc, eq, like, sql } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import {
 	settings,
@@ -11,6 +11,7 @@ import {
 } from '../schema';
 import type * as schema from '../schema';
 import { BaseAdminUser, PaginatedResponse } from '@fxmanager/shared/types';
+import { UserPermissions } from '@fxmanager/shared/constants';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
@@ -142,6 +143,32 @@ export function createSettingsRepository(db: DB) {
 					totalNotes: 0,
 				},
 			};
+		},
+
+		async updateAdminPermissions(adminId: number, newPerms: number) {
+			const admin = await db.query.adminUsers.findFirst({
+				where: eq(adminUsers.id, adminId),
+				columns: { permissions: true },
+			});
+
+			if (!admin) throw new Error('not_found');
+			if (admin.permissions & UserPermissions.MASTER)
+				throw new Error('admin_is_master');
+
+			// failsafe final check, don't set master permission
+			const sanitizedPerms = newPerms & ~UserPermissions.MASTER;
+
+			const result = await db
+				.update(adminUsers)
+				.set({
+					permissions: sanitizedPerms,
+				})
+				.where(eq(adminUsers.id, adminId))
+				.returning({ newPerms: adminUsers.permissions });
+
+			if (!result[0]) throw new Error('not_found');
+
+			return result[0];
 		},
 	};
 }
