@@ -21,6 +21,7 @@ export const UserPermissions = {
 	CONSOLE_ACCESS: 1 << 13, // 4096 - execute console commands
 
 	SETTINGS_ACCESS: 1 << 14, // 8192 - access & edit settings
+	SETTINGS_ADMIN_MANAGEMENT: 1 << 15, // 32768 - access & edit admins
 
-	MASTER: 1 << 30, // (1,073,741,824)
+	MASTER: 1 << 30, // 1073741824
 } as const;
