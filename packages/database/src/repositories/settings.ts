@@ -1,6 +1,14 @@
-import { asc, desc, eq, like, or, sql } from 'drizzle-orm';
+import { asc, count, desc, eq, like, or, sql } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
-import { settings, adminUsers } from '../schema';
+import {
+	settings,
+	adminUsers,
+	auditLog,
+	bans,
+	kicks,
+	warns,
+	playerNotes,
+} from '../schema';
 import type * as schema from '../schema';
 import { BaseAdminUser, PaginatedResponse } from '@fxmanager/shared/types';
 
@@ -85,6 +93,54 @@ export function createSettingsRepository(db: DB) {
 				total,
 				page,
 				pageSize,
+			};
+		},
+
+		async getAdminProfile(adminId: number) {
+			const profile = await db.query.adminUsers.findFirst({
+				where: eq(adminUsers.id, adminId),
+				columns: {
+					id: true,
+					username: true,
+					permissions: true,
+					playerId: true,
+					createdAt: true,
+					lastLoginAt: true,
+				},
+				with: {
+					auditLogs: {
+						limit: 10,
+						orderBy: [desc(auditLog.createdAt)],
+					},
+				},
+			});
+
+			if (!profile) return null;
+
+			const stats = db
+				.select({
+					totalBans: count(bans.id),
+					totalKicks: count(kicks.id),
+					totalWarns: count(warns.id),
+					totalNotes: count(playerNotes.id),
+				})
+				.from(adminUsers)
+				.leftJoin(bans, eq(bans.issuer, adminUsers.id))
+				.leftJoin(kicks, eq(kicks.issuer, adminUsers.id))
+				.leftJoin(warns, eq(warns.issuer, adminUsers.id))
+				.leftJoin(playerNotes, eq(playerNotes.issuer, adminUsers.id))
+				.where(eq(adminUsers.id, adminId))
+				.groupBy(adminUsers.id)
+				.get();
+
+			return {
+				...profile,
+				stats: stats || {
+					totalBans: 0,
+					totalKicks: 0,
+					totalWarns: 0,
+					totalNotes: 0,
+				},
 			};
 		},
 	};
