@@ -1,4 +1,10 @@
-import { ArrowUpDown, Search, Settings, UserRoundCog } from 'lucide-react';
+import {
+	ArrowUpDown,
+	Plus,
+	Search,
+	Settings,
+	UserRoundCog,
+} from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { useEffect, useState } from 'react';
 import { QueryService } from '@/lib/query';
@@ -21,7 +27,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from '@fxmanager/ui/components/select';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Button } from '@fxmanager/ui/components/button';
 import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
@@ -142,34 +148,45 @@ export default function AdminManagementList() {
 				description="Manage admin accounts."
 			/>
 
-			<div className="flex items-center gap-3">
-				<div className="relative flex-1 max-w-sm">
-					<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-					<Input
-						placeholder="Search by name or identifier..."
-						value={search}
-						onChange={(e) => setSearch(e.target.value)}
-						className="pl-8"
-					/>
+			<div className="flex flex-row justify-between">
+				<div className="flex items-center gap-3">
+					<div className="relative flex-1 max-w-sm">
+						<Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+						<Input
+							placeholder="Search by name..."
+							value={search}
+							onChange={(e) => setSearch(e.target.value)}
+							className="pl-8"
+						/>
+					</div>
+
+					<Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+						<SelectTrigger className="lg:w-40">
+							<SelectValue placeholder="Sort by" />
+						</SelectTrigger>
+						<SelectContent>
+							<SelectItem value="createdAt">Created at</SelectItem>
+							<SelectItem value="lastLoginAt">Last login</SelectItem>
+						</SelectContent>
+					</Select>
+
+					<Button
+						variant="outline"
+						onClick={toggleSortOrder}
+						className="lg:w-40 justify-between"
+					>
+						<span className="hidden lg:block">
+							{sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+						</span>
+						<ArrowUpDown className="h-4 w-4" />
+					</Button>
 				</div>
 
-				<Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
-					<SelectTrigger className="w-40">
-						<SelectValue placeholder="Sort by" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="createdAt">Created at</SelectItem>
-						<SelectItem value="lastLoginAt">Last login</SelectItem>
-					</SelectContent>
-				</Select>
-
-				<Button
-					variant="outline"
-					onClick={toggleSortOrder}
-					className="w-40 justify-between"
-				>
-					<span>{sortOrder === 'asc' ? 'Ascending' : 'Descending'}</span>
-					<ArrowUpDown className="h-4 w-4" />
+				<Button asChild>
+					<Link to="/settings/admins/create">
+						<Plus />
+						<span className="hidden lg:block">Create User</span>
+					</Link>
 				</Button>
 			</div>
 
@@ -177,8 +194,8 @@ export default function AdminManagementList() {
         find a solution for mobile display as this fucks up, options:
         * Dynamically display columns on mobile (only show active filter)
         * Don't show extra columns
-
       */}
+
 			<Card className="bg-card/50 py-0">
 				<div className="overflow-hidden rounded-t-lg">
 					<Table className="table-fixed w-full">
