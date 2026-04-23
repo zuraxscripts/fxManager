@@ -223,6 +223,27 @@ export const playersRelations = relations(players, ({ many, one }) => ({
 	}),
 }));
 
+export const adminUsersRelations = relations(adminUsers, ({ many, one }) => ({
+	player: one(players, {
+		fields: [adminUsers.playerId],
+		references: [players.id],
+	}),
+	bans: many(bans),
+	warns: many(warns),
+	kicks: many(kicks),
+	notes: many(playerNotes),
+	sessions: many(sessions),
+	auditLogs: many(auditLog),
+	reportMessages: many(reportMessages),
+}));
+
+export const auditLogRelations = relations(auditLog, ({ one }) => ({
+	admin: one(adminUsers, {
+		fields: [auditLog.adminId],
+		references: [adminUsers.id],
+	}),
+}));
+
 export const playerIdentifiersRelations = relations(
 	playerIdentifiers,
 	({ one }) => ({
@@ -238,12 +259,20 @@ export const bansRelations = relations(bans, ({ one }) => ({
 		fields: [bans.playerId],
 		references: [players.id],
 	}),
+	issuer: one(adminUsers, {
+		fields: [bans.issuer],
+		references: [adminUsers.id],
+	}),
 }));
 
 export const warnsRelations = relations(warns, ({ one }) => ({
 	player: one(players, {
 		fields: [warns.playerId],
 		references: [players.id],
+	}),
+	issuer: one(adminUsers, {
+		fields: [warns.issuer],
+		references: [adminUsers.id],
 	}),
 }));
 
@@ -252,12 +281,20 @@ export const kicksRelations = relations(kicks, ({ one }) => ({
 		fields: [kicks.playerId],
 		references: [players.id],
 	}),
+	issuer: one(adminUsers, {
+		fields: [kicks.issuer],
+		references: [adminUsers.id],
+	}),
 }));
 
 export const playerNotesRelations = relations(playerNotes, ({ one }) => ({
 	player: one(players, {
 		fields: [playerNotes.playerId],
 		references: [players.id],
+	}),
+	issuer: one(adminUsers, {
+		fields: [playerNotes.issuer],
+		references: [adminUsers.id],
 	}),
 }));
 
