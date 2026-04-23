@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react';
+import { UserPermissions } from '@fxmanager/shared/constants';
 import LoginPage from './login';
 import DashboardPage from './dashboard';
 import OnlinePlayerListPage from './dashboard/playerList';
@@ -6,8 +7,8 @@ import ConsolePage from './console';
 import PlayersPage from './players';
 import SettingsPage from './settings';
 import PlayerView from './players/playerview';
-import { UserPermissions } from '@fxmanager/shared/constants';
 import AdminManagementList from './settings/adminmanagement';
+import AdminView from './settings/adminview';
 
 type RouteConfig = {
 	path: string;
@@ -36,6 +37,11 @@ export const routes: RouteConfig[] = [
 	{
 		path: '/settings/admins',
 		element: AdminManagementList,
+		permission: UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+	},
+	{
+		path: '/settings/admins/:adminId',
+		element: AdminView,
 		permission: UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
 	},
 ];
