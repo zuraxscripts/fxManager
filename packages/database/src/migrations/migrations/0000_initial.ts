@@ -1,7 +1,7 @@
 import type { Migration } from '../types';
 
-export const migration_0001_initial: Migration = {
-	version: 1,
+export const m0000_initial: Migration = {
+	version: 0,
 	description: 'Initial schema',
 	up: [
 		// region core tables
