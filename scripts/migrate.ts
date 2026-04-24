@@ -38,9 +38,9 @@ function sanitizeSql(sql: string): string[] {
 	return sql
 		.replace(/\/\*[\s\S]*?\*\//g, '') // remove multiline comments
 		.replace(/--.*$/gm, '') // remove single line comments
-		.split('\n')
-		.map((line) => line.trim())
-		.filter((line) => line.length > 0);
+		.split(';') // split into individual queries
+		.map((query) => query.trim().replace(/`/g, '\\`')) // clean up whitespace/newlines
+		.filter((query) => query.length > 0); // remove empty entries
 }
 
 const rl = createInterface({
@@ -88,13 +88,29 @@ for (const { tag, version } of pendingEntries) {
 	const description = await rl.question('Description: ');
 
 	const varName = `m${tag}`;
-	const payload = { version, description, up: queries };
 
-	const fileContent = [
-		"import type { Migration } from '../types';",
-		'',
-		`export const ${varName}: Migration = ${JSON.stringify(payload, null, 2)};`,
-	].join('\n');
+	const formattedQueries = queries
+		.map((query) => {
+			const lines = query.split('\n');
+			if (lines.length === 1) return `    \`${lines[0]}\``;
+
+			const indentedLines = lines
+				.map((line, i) => (i === 0 ? line : `    ${line}`)) // indent sub-lines
+				.join('\n');
+
+			return `    \`${indentedLines}\``;
+		})
+		.join(',\n');
+
+	const fileContent = `import type { Migration } from '../types';
+
+export const ${varName}: Migration = {
+  version: ${version},
+  description: ${JSON.stringify(description)},
+  up: [
+${formattedQueries}
+  ]
+};`;
 
 	await Bun.write(join(targetMigrationDir, `${tag}.ts`), fileContent);
 	await updateMigrationRegistry(varName, tag);
