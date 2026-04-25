@@ -28,7 +28,7 @@ INSERT INTO player_identifiers (player_id, type, value) VALUES
 
 INSERT INTO admin_users (id, username, password_hash, player_id, permissions, created_at, last_login_at) VALUES
     /* password is "password" */
-    (1, "admin", "$2b$10$oirDDGH10Qiun.MpWRkYNu7QmKfXnGqm5ECS0ohfNrhUfde4fngsG", 1, 1073741824, 1773054660, null);
+    (1, 'admin', '$2b$10$oirDDGH10Qiun.MpWRkYNu7QmKfXnGqm5ECS0ohfNrhUfde4fngsG', 1, 1073741824, 1773054660, null);
 
 INSERT INTO bans (id, player_id, reason, issuer, expires_at, created_at, revoked_at) VALUES
     (1, 7, 'This is an example Perma-Ban', 1, NULL, 1777113143, NULL),
@@ -48,4 +48,4 @@ INSERT INTO warns (id, player_id, reason, "read", revoked, issuer, issued_at) VA
     (4, 10, 'And a third warning, because 3 is a nice number. What''s next ? Well a ban of course', 0, 0, 1, 1777113874);
 
 INSERT INTO player_notes (id, player_id, content, issuer, issued_at) VALUES
-    (1, 4, "Seems like a nice chap.", 1, 1777113158);
+    (1, 4, 'Seems like a nice chap.', 1, 1777113158);
