@@ -1,4 +1,4 @@
-import { asc, count, desc, eq, like, sql } from 'drizzle-orm';
+import { asc, countDistinct, desc, eq, like, sql } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import {
 	settings,
@@ -120,10 +120,10 @@ export function createSettingsRepository(db: DB) {
 
 			const stats = db
 				.select({
-					totalBans: count(bans.id),
-					totalKicks: count(kicks.id),
-					totalWarns: count(warns.id),
-					totalNotes: count(playerNotes.id),
+					totalBans: countDistinct(bans.id),
+					totalKicks: countDistinct(kicks.id),
+					totalWarns: countDistinct(warns.id),
+					totalNotes: countDistinct(playerNotes.id),
 				})
 				.from(adminUsers)
 				.leftJoin(bans, eq(bans.issuer, adminUsers.id))
