@@ -125,6 +125,7 @@ export function createSettingsRepository(db: DB) {
 
 			return {
 				...profile,
+				group: PermissionManager.getGroup(profile.permissions),
 			};
 		},
 
