@@ -41,11 +41,12 @@ export const m0000_grey_mother_askani: Migration = {
     	\`id\` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
     	\`player_id\` integer NOT NULL,
     	\`reason\` text NOT NULL,
-    	\`banned_by\` text NOT NULL,
+    	\`issuer\` INTEGER NULL,
     	\`expires_at\` integer,
     	\`created_at\` integer NOT NULL,
     	\`revoked_at\` integer,
-    	FOREIGN KEY (\`player_id\`) REFERENCES \`players\`(\`id\`) ON UPDATE no action ON DELETE cascade
+    	FOREIGN KEY (\`player_id\`) REFERENCES \`players\`(\`id\`) ON UPDATE no action ON DELETE cascade,
+      FOREIGN KEY (\`issuer\`) REFERENCES \`admin_users\`(\`id\`) ON DELETE SET NULL
     )`,
 		`CREATE INDEX \`bans_player_idx\` ON \`bans\` (\`player_id\`)`,
 		`CREATE TABLE \`kicks\` (

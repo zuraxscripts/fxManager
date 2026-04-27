@@ -82,7 +82,7 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		const { playerId: playerIdRaw } = request.params as { playerId: string };
 		const { reason, expiresAt } = request.body as {
 			reason: string;
-			expiresAt: Date | null;
+			expiresAt: string | null;
 		};
 		const { admin } = request as AuthedRequest;
 		const playerId = parseInt(playerIdRaw);
@@ -97,9 +97,9 @@ const PlayerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		try {
 			const result = await repo.players.addBan(
 				playerId,
-				expiresAt,
+				expiresAt ? new Date(expiresAt) : null,
 				reason,
-				admin.username,
+				admin.id,
 			);
 
 			const onlinePlayer = gm.getPlayer(playerId);

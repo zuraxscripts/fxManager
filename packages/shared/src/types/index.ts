@@ -4,4 +4,5 @@ export * from './game';
 export * from './process-manager';
 export * from './players';
 export * from './security';
+export * from './settings';
 export * from './websockets';

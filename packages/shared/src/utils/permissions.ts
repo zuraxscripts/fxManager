@@ -1,7 +1,11 @@
-import type { UserPermissionsType } from '@fxmanager/shared/types';
-import { UserPermissions } from '@fxmanager/shared/constants';
+import type { AdminGroup, UserPermissionsType } from '@fxmanager/shared/types';
+import {
+	PERMISSION_GROUPS,
+	UserPermissions,
+} from '@fxmanager/shared/constants';
 
 export class PermissionManager {
+	private static groups: AdminGroup[] = PERMISSION_GROUPS;
 	constructor() {}
 
 	static has(userBitfield: number, required: UserPermissionsType): boolean {
@@ -27,5 +31,18 @@ export class PermissionManager {
 
 	static revoke(userBitfield: number, toRemove: UserPermissionsType): number {
 		return userBitfield & ~toRemove;
+	}
+
+	static loadGroups(groups: AdminGroup[]) {
+		this.groups = groups;
+	}
+
+	static getGroup(permission: number): AdminGroup | null {
+		const group =
+			this.groups.find(
+				(group) => (permission & group.permissions) === group.permissions,
+			) ?? null;
+
+		return group;
 	}
 }

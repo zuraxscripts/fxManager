@@ -24,5 +24,13 @@ export const NAV: NavItem[] = [
 		icon: Settings,
 		title: 'Settings',
 		permission: UserPermissions.SETTINGS_ACCESS,
+		items: [
+			{ url: '/settings/', title: 'Settings' },
+			{
+				url: '/settings/admins/',
+				title: 'Admin List',
+				permission: UserPermissions.SETTINGS_ADMIN_MANAGEMENT,
+			},
+		],
 	},
 ];
