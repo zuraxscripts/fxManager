@@ -1,3 +1,4 @@
+import { m0001_dapper_landau } from './0001_dapper_landau';
 import { m0000_grey_mother_askani } from './0000_grey_mother_askani';
 import type { Migration } from '../types';
 
@@ -17,4 +18,7 @@ import type { Migration } from '../types';
 // - IMMUTABILITY: Never edit a migration file (.ts or .sql or .json) once deployed.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export const migrations: Migration[] = [m0000_grey_mother_askani];
+export const migrations: Migration[] = [
+	m0000_grey_mother_askani,
+	m0001_dapper_landau,
+];

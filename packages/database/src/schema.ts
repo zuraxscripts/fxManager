@@ -7,7 +7,7 @@ import {
 } from 'drizzle-orm/sqlite-core';
 import { relations, sql } from 'drizzle-orm';
 
-// region Players 
+// region Players
 
 export const players = sqliteTable('players', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
@@ -37,7 +37,16 @@ export const playerIdentifiers = sqliteTable(
 	],
 );
 
-// region Admins & Sessions 
+export const whitelistedIdentifers = sqliteTable('whitelisted_identifiers', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	type: text('type').notNull(), // license, discord, steam, etc.
+	value: text('value').notNull(),
+	added: integer('added', { mode: 'timestamp' })
+		.default(sql`CURRENT_TIMESTAMP`)
+		.notNull(),
+});
+
+// region Admins & Sessions
 
 export const adminUsers = sqliteTable(
 	'admin_users',
@@ -68,7 +77,7 @@ export const sessions = sqliteTable(
 	(t) => [index('sessions_admin_idx').on(t.adminId)],
 );
 
-// region Punishments 
+// region Punishments
 
 export const bans = sqliteTable(
 	'bans',
@@ -119,7 +128,7 @@ export const kicks = sqliteTable('kicks', {
 		.notNull(),
 });
 
-// region Reports & Notes 
+// region Reports & Notes
 
 export const reports = sqliteTable('reports', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
@@ -167,7 +176,7 @@ export const playerNotes = sqliteTable('player_notes', {
 		.notNull(),
 });
 
-// region System 
+// region System
 
 export const auditLog = sqliteTable(
 	'audit_log',
@@ -208,7 +217,7 @@ export const apiTokens = sqliteTable(
 	(t) => [index('tokens_token_idx').on(t.token)],
 );
 
-// region Relations 
+// region Relations
 
 export const playersRelations = relations(players, ({ many, one }) => ({
 	identifiers: many(playerIdentifiers),
