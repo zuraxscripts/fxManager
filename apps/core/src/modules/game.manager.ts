@@ -1,13 +1,12 @@
-import EventEmitter from 'events';
 import { repo } from '@fxmanager/database';
-import { EventNames } from '@fxmanager/shared/constants';
-import {
-	type ApiResponse,
-	type BanDataCard,
-	type DeferralCheckResponse,
-	type OnlinePlayer,
-	type PlayerIdentifiers,
-	type PlayerUpdatePackage,
+import type {
+	WhitelistMode,
+	ApiResponse,
+	BanDataCard,
+	DeferralCheckResponse,
+	OnlinePlayer,
+	PlayerIdentifiers,
+	PlayerUpdatePackage,
 } from '@fxmanager/shared/types';
 import { loadConfig } from '../common/config';
 import { wsManager } from './ws.manager';
@@ -33,7 +32,7 @@ export class GameManager {
 
 	// region receiving actions
 
-	playerDeferralChecks(identifiers: PlayerIdentifiers): DeferralCheckResponse {
+	async playerDeferralChecks(identifiers: PlayerIdentifiers): Promise<DeferralCheckResponse> {
 		const ban = repo.players.checkBanned(identifiers);
 
 		if (ban) {
@@ -63,8 +62,58 @@ export class GameManager {
 		}
 
 		/* ToDo: Add whitelist checks */
+		const setting = repo.settings.get<WhitelistMode>('whitelist.mode');
 
-		return { access: true };
+		if (!setting || setting === 'none') return { access: true };
+
+		if (setting === 'admin-only') {
+			const player = repo.players.findByLicense(identifiers.license);
+
+			if (!player) {
+				return {
+					access: false,
+					type: 'error',
+					reason:
+						'Server is in Administer Mode, you can not connect at this time.',
+				};
+			}
+
+			const isAdmin = repo.players.isStaff(player.id);
+			if (isAdmin) {
+				return { access: true };
+			} else {
+				return {
+					access: false,
+					type: 'error',
+					reason:
+						'Server is in Administer Mode, you can not connect at this time.',
+				};
+			}
+		} else if (setting === 'identifier') {
+      const isWhitelisted = await repo.players.isAnyIdentifierWhitelisted(identifiers);
+
+      if (isWhitelisted) {
+				return { access: true };
+			} else {
+				return {
+					access: false,
+					type: 'error',
+					reason:
+						'You are not whitelisted.',
+				};
+			}
+		} else if (setting === 'discord') {
+      // ToDo
+		}
+
+		console.warn(
+			'[game.manager] an invalid whitelist.mode was set, connections will be refused.',
+		);
+		return {
+			access: false,
+			type: 'error',
+			reason: 'Server whitelist mode is not set, please inform server owner.',
+		};
 	}
 
 	async playerJoin({
