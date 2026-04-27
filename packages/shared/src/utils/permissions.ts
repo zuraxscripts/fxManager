@@ -1,36 +1,11 @@
 import type { AdminGroup, UserPermissionsType } from '@fxmanager/shared/types';
-import { UserPermissions } from '@fxmanager/shared/constants';
-
-// ToDo: move to dynamic loading from DB
-const GROUPS: AdminGroup[] = [
-	{
-		label: 'Master Account',
-		permissions: 1073741824,
-		colour: '#FF0000',
-		icon: 'Star',
-	},
-	{
-		label: 'Development',
-		permissions: 30720,
-		colour: '#00FF00',
-		icon: 'FileCode',
-	},
-	{
-		label: 'Management',
-		permissions: 36863,
-		colour: '#0000FF',
-		icon: 'UserRoundKey',
-	},
-	{
-		label: 'Moderation',
-		permissions: 1991,
-		colour: '#ff6600',
-		icon: 'Shield',
-	},
-];
+import {
+	PERMISSION_GROUPS,
+	UserPermissions,
+} from '@fxmanager/shared/constants';
 
 export class PermissionManager {
-	private static groups: AdminGroup[] = GROUPS;
+	private static groups: AdminGroup[] = PERMISSION_GROUPS;
 	constructor() {}
 
 	static has(userBitfield: number, required: UserPermissionsType): boolean {
@@ -64,7 +39,7 @@ export class PermissionManager {
 
 	static getGroup(permission: number): AdminGroup | null {
 		const group =
-			GROUPS.find(
+			this.groups.find(
 				(group) => (permission & group.permissions) === group.permissions,
 			) ?? null;
 
