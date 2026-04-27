@@ -154,5 +154,32 @@ export function createSettingsRepository(db: DB) {
 
 			return result[0];
 		},
+
+		async updateAdminLinkedPlayer(
+			adminId: number,
+			playerId: AdminProfile['playerId'],
+			isMaster: boolean,
+		) {
+			const admin = await db.query.adminUsers.findFirst({
+				where: eq(adminUsers.id, adminId),
+				columns: { permissions: true },
+			});
+
+			if (!admin) throw new Error('not_found');
+			if (admin.permissions & UserPermissions.MASTER && !isMaster)
+				throw new Error('admin_is_master');
+
+			const result = await db
+				.update(adminUsers)
+				.set({
+					playerId,
+				})
+				.where(eq(adminUsers.id, adminId))
+				.returning({ newPlayerId: adminUsers.playerId });
+
+			if (!result[0]) throw new Error('not_found');
+
+			return result[0];
+		},
 	};
 }
