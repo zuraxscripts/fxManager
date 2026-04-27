@@ -1,17 +1,35 @@
 import { QueryService } from '@/lib/query';
-import { UserPermissions } from '@fxmanager/shared/constants';
-import type { ApiResponse } from '@fxmanager/shared/types';
+import {
+	PERMISSION_GROUPS,
+	UserPermissions,
+} from '@fxmanager/shared/constants';
+import type { AdminGroup, ApiResponse } from '@fxmanager/shared/types';
+import { PermissionManager } from '@fxmanager/shared/utils';
+import {
+	DynamicIcon,
+	type LucidIconName,
+} from '@fxmanager/ui/components/dynamic-icon';
 import { Input } from '@fxmanager/ui/components/input';
 import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
 import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@fxmanager/ui/components/select';
+import {
+	Blend,
 	Hash,
+	Layers,
 	Loader2,
 	RotateCcw,
 	Save,
 	ShieldCheck,
 	Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 export const PERMISSION_LABELS: Record<
@@ -124,6 +142,9 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 	const { value, updatePerms, skipServerSave = false } = props;
 
 	const [bitfield, setBitField] = useState<number>(value ?? 0);
+	const [permissionGroup, setPermissionGroup] = useState<
+		AdminGroup | undefined
+	>(undefined);
 	const [isSaving, setIsSaving] = useState(false);
 
 	const canEdit = skipServerSave || props.editable;
@@ -139,6 +160,18 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 	};
 
 	const hasPermission = (bit: number) => (bitfield & bit) !== 0;
+
+	const handleBitFieldChange = ({
+		target,
+	}: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) => {
+		const cleanValue = target.value.replace(/[^0-9]/g, '');
+
+		if (cleanValue === '') {
+			setBitField(0);
+		} else {
+			setBitField(parseInt(cleanValue));
+		}
+	};
 
 	const handleSave = async () => {
 		if (skipServerSave) return;
@@ -165,6 +198,11 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 		}
 	};
 
+	useEffect(() => {
+		console.log(bitfield, PermissionManager.getGroup(bitfield));
+		setPermissionGroup(PermissionManager.getGroup(bitfield) ?? undefined);
+	}, [bitfield]);
+
 	return (
 		<div className="flex flex-col flex-1 min-h-0 space-y-4">
 			<div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl border bg-card shadow-sm shrink-0">
@@ -173,15 +211,58 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 						<Hash className="h-6 w-6 text-muted-foreground" />
 						<div className="flex flex-col items-start">
 							<span className="text-[10px] uppercase font-bold text-muted-foreground">
-								Current Bitmask
+								Bitmask
 							</span>
 							<Input
 								type="text"
 								value={bitfield}
 								disabled={!canEdit}
-								onChange={(e) => setBitField(Number(e.target.value) || 0)}
+								onChange={handleBitFieldChange}
 								className="bg-muted border-none rounded px-2 py-1 text-sm font-mono w-32 text-right"
 							/>
+						</div>
+					</div>
+
+					<div className="flex flex-row gap-2 items-center pl-3">
+						<Layers className="h-6 w-6 text-muted-foreground" />
+						<div className="flex flex-col items-start">
+							<span className="text-[10px] uppercase font-bold text-muted-foreground">
+								Permission Group
+							</span>
+							<Select
+								value={
+									permissionGroup !== undefined
+										? `${permissionGroup.permissions}`
+										: undefined
+								}
+								disabled={!canEdit}
+								onValueChange={(value) => setBitField(parseInt(value))}
+							>
+								<SelectTrigger className="w-44 border-none bg-muted">
+									<SelectValue placeholder="Custom" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectGroup>
+										{PERMISSION_GROUPS.filter(
+											(g) => g.permissions !== UserPermissions.MASTER,
+										).map((g) => (
+											<SelectItem
+												key={`${g.permissions}`}
+												value={`${g.permissions}`}
+											>
+												<DynamicIcon
+													name={(g.icon as LucidIconName) ?? 'UserRound'}
+												/>
+												{g.label}
+											</SelectItem>
+										))}
+										<SelectItem value="0">
+											<Blend className="h-4 w-4" />
+											Custom
+										</SelectItem>
+									</SelectGroup>
+								</SelectContent>
+							</Select>
 						</div>
 					</div>
 				</div>
