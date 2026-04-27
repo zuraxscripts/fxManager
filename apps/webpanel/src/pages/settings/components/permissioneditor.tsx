@@ -1,6 +1,7 @@
 import { QueryService } from '@/lib/query';
 import {
 	PERMISSION_GROUPS,
+	PERMISSION_LABELS,
 	UserPermissions,
 } from '@fxmanager/shared/constants';
 import type { AdminGroup, ApiResponse } from '@fxmanager/shared/types';
@@ -31,96 +32,6 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-
-export const PERMISSION_LABELS: Record<
-	number,
-	{ label: string; desc: string; category: string }
-> = {
-	[UserPermissions.KICK]: {
-		label: 'Kick Players',
-		desc: 'Disconnect players from the server.',
-		category: 'Moderation',
-	},
-	[UserPermissions.BAN]: {
-		label: 'Ban Players',
-		desc: 'Prevent players from reconnecting.',
-		category: 'Moderation',
-	},
-	[UserPermissions.WARN]: {
-		label: 'Warn Players',
-		desc: 'Issue formal warnings to users.',
-		category: 'Moderation',
-	},
-	[UserPermissions.REVOKE_KICK]: {
-		label: 'Revoke Kicks',
-		desc: 'Clear kick history for players.',
-		category: 'Moderation',
-	},
-	[UserPermissions.REVOKE_BAN]: {
-		label: 'Revoke Bans',
-		desc: 'Unban players from the server.',
-		category: 'Moderation',
-	},
-	[UserPermissions.REVOKE_WARN]: {
-		label: 'Revoke Warns',
-		desc: 'Remove warnings from player profiles.',
-		category: 'Moderation',
-	},
-
-	[UserPermissions.WHITELIST]: {
-		label: 'Add Whitelist',
-		desc: 'Grant whitelist access to players.',
-		category: 'Access Control',
-	},
-	[UserPermissions.REVOKE_WHITELIST]: {
-		label: 'Remove Whitelist',
-		desc: 'Strip whitelist access from players.',
-		category: 'Access Control',
-	},
-
-	[UserPermissions.VIEW_REPORT]: {
-		label: 'View Reports',
-		desc: 'Read incoming player reports.',
-		category: 'Reporting',
-	},
-	[UserPermissions.SEND_REPORT]: {
-		label: 'Reply to Reports',
-		desc: 'Send messages within report threads.',
-		category: 'Reporting',
-	},
-	[UserPermissions.CLOSE_REPORT]: {
-		label: 'Resolve Reports',
-		desc: 'Mark reports as closed or resolved.',
-		category: 'Reporting',
-	},
-
-	[UserPermissions.SERVER_ACTIONS]: {
-		label: 'Power Actions',
-		desc: 'Start, stop, or restart the server.',
-		category: 'System',
-	},
-	[UserPermissions.CONSOLE_VIEW]: {
-		label: 'View Console',
-		desc: 'Read-only access to live server logs.',
-		category: 'System',
-	},
-	[UserPermissions.CONSOLE_ACCESS]: {
-		label: 'Execute Console',
-		desc: 'Run commands directly via console.',
-		category: 'System',
-	},
-
-	[UserPermissions.SETTINGS_ACCESS]: {
-		label: 'System Settings',
-		desc: 'Modify global server configuration.',
-		category: 'Administration',
-	},
-	[UserPermissions.SETTINGS_ADMIN_MANAGEMENT]: {
-		label: 'Manage Admins',
-		desc: 'Create, edit, and delete admin users.',
-		category: 'Administration',
-	},
-};
 
 type PermissionEditorProps =
 	| {
