@@ -245,8 +245,8 @@
 					"notNull": true,
 					"autoincrement": false
 				},
-				"banned_by": {
-					"name": "banned_by",
+				"issuer": {
+					"name": "issuer",
 					"type": "text",
 					"primaryKey": false,
 					"notNull": true,

@@ -52,7 +52,7 @@ CREATE TABLE
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         player_id INTEGER NOT NULL REFERENCES players (id),
         reason TEXT NOT NULL,
-        banned_by TEXT NOT NULL,
+        issuer TEXT NOT NULL,
         expires_at INTEGER,
         created_at INTEGER NOT NULL,
         revoked_at INTEGER
