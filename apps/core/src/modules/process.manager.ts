@@ -275,11 +275,15 @@ export class ProcessManager {
 
 	/* ToDo: implement onExit checks to clean up */
 	private async onExit(code: number | null) {
-    const crashed = code !== 143 && code !== 0 && code !== null && this.state.status !== 'stopping';
+		const crashed =
+			code !== 143 &&
+			code !== 0 &&
+			code !== null &&
+			this.state.status !== 'stopping';
 
-    if (crashed) {
-      console.warn(`[core] fxServer process exited with code ${code}`);
-      this.setState('crashed');
-    }
-  }
+		if (crashed) {
+			console.warn(`[core] fxServer process exited with code ${code}`);
+			this.setState('crashed');
+		}
+	}
 }
