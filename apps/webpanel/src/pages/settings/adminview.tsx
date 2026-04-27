@@ -34,6 +34,7 @@ import {
 	Info,
 	Trash,
 	UserPlus,
+	UserSearch,
 	UsersRound,
 } from 'lucide-react';
 import { formatDate, initials } from '@/lib/utils';
@@ -56,6 +57,7 @@ import {
 	DynamicIcon,
 	type LucidIconName,
 } from '@fxmanager/ui/components/dynamic-icon';
+import { PlayerSearch } from './components/player-search';
 
 function LoadingSkeleton() {
 	return (
@@ -139,6 +141,38 @@ export default function AdminView() {
 		});
 	}
 
+	async function handleLinkedPlayerChange(playerId: AdminProfile['playerId']) {
+		const changePromise = QueryService<
+			ApiResponse<{ newPlayerId: AdminProfile['playerId'] }>
+		>({
+			endpoint: `/settings/admins/${params.adminId}/player`,
+			method: 'POST',
+			body: { playerId },
+		});
+
+		toast.promise(changePromise, {
+			loading: 'Updating linked player...',
+			success: (r) => {
+				if (!r.success) throw new Error(r.error);
+
+				setAdminData((prev) => {
+					if (!prev) throw new Error('Invalid Action Sequence (no admin data)');
+
+					return {
+						...prev,
+						playerId: r.data.newPlayerId,
+					};
+				});
+
+				return `Linked player has been updated.`;
+			},
+			error: (err) => {
+				console.error('Failed to update linked player', err.message);
+				return `Update failed: ${err.message}`;
+			},
+		});
+	}
+
 	if (loading) return <LoadingSkeleton />;
 
 	if (error || !adminData || !params.adminId) {
@@ -189,37 +223,55 @@ export default function AdminView() {
 					</div>
 				</div>
 
-				{!isMaster && (
-					<AlertDialog>
-						<AlertDialogTrigger asChild>
-							<Button variant="destructive">
-								<Trash />
-								<span className="hidden md:block">Delete User</span>
-							</Button>
-						</AlertDialogTrigger>
+				<div className="space-x-2">
+					{(!isMaster || adminData.id === user!.id) && (
+						<PlayerSearch
+							value={adminData.playerId}
+							onChange={(id) => handleLinkedPlayerChange(id)}
+							align="end"
+							trigger={
+								<Button variant="outline">
+									<UserSearch className="h-4 w-4" />
+									<span className="hidden lg:block">Update linked player</span>
+								</Button>
+							}
+						/>
+					)}
+					{!isMaster && (
+						<AlertDialog>
+							<AlertDialogTrigger asChild>
+								<Button variant="destructive">
+									<Trash />
+									<span className="hidden md:block">Delete User</span>
+								</Button>
+							</AlertDialogTrigger>
 
-						<AlertDialogContent>
-							<AlertDialogHeader>
-								<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-								<AlertDialogDescription>
-									This action cannot be undone. This will permanently delete the
-									admin account for{' '}
-									<span className="font-bold text-foreground">
-										{adminData.username}{' '}
-									</span>
-									and remove their access from the panel.
-								</AlertDialogDescription>
-							</AlertDialogHeader>
+							<AlertDialogContent>
+								<AlertDialogHeader>
+									<AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+									<AlertDialogDescription>
+										This action cannot be undone. This will permanently delete
+										the admin account for{' '}
+										<span className="font-bold text-foreground">
+											{adminData.username}{' '}
+										</span>
+										and remove their access from the panel.
+									</AlertDialogDescription>
+								</AlertDialogHeader>
 
-							<AlertDialogFooter>
-								<AlertDialogCancel>Cancel</AlertDialogCancel>
-								<AlertDialogAction onClick={handleDelete} variant="destructive">
-									Delete User
-								</AlertDialogAction>
-							</AlertDialogFooter>
-						</AlertDialogContent>
-					</AlertDialog>
-				)}
+								<AlertDialogFooter>
+									<AlertDialogCancel>Cancel</AlertDialogCancel>
+									<AlertDialogAction
+										onClick={handleDelete}
+										variant="destructive"
+									>
+										Delete User
+									</AlertDialogAction>
+								</AlertDialogFooter>
+							</AlertDialogContent>
+						</AlertDialog>
+					)}
+				</div>
 			</div>
 
 			<div className="space-y-6 pt-2 pb-0 pl-0 pr-4">
