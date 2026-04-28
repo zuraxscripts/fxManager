@@ -1,14 +1,14 @@
-import { Type, type Static } from "@sinclair/typebox";
-import type { FastifyPluginAsync } from "fastify";
-import { repo } from "@fxmanager/database";
-import { UserPermissions } from "@fxmanager/shared/constants";
+import { Type, type Static } from '@sinclair/typebox';
+import type { FastifyPluginAsync } from 'fastify';
+import { repo } from '@fxmanager/database';
+import { UserPermissions } from '@fxmanager/shared/constants';
 
 import {
 	COOKIE_NAME,
 	isFxManagerSetup,
 	isProduction,
-} from "../../common/utils";
-import type { RouteModule } from "../../types";
+} from '../../common/utils';
+import type { RouteModule } from '../../types';
 
 const SetupBody = Type.Object({
 	username: Type.String(),
