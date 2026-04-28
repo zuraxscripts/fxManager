@@ -76,7 +76,7 @@ export function BansTab({
 						<TableCell>
 							<BanStatus ban={ban} />
 						</TableCell>
-						<TableCell>{ban.bannedBy ?? 'System'}</TableCell>
+						<TableCell>{ban.issuer ?? 'System'}</TableCell>
 						<TableCell>
 							{ban.expiresAt ? (
 								formatDate(ban.expiresAt)

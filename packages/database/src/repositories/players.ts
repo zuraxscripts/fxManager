@@ -155,7 +155,7 @@ export function createPlayersRepository(db: DB) {
 					id: bans.id,
 					playerId: bans.playerId,
 					reason: bans.reason,
-					bannedBy: bans.bannedBy,
+					issuer: bans.issuer,
 					createdAt: bans.createdAt,
 					expiresAt: bans.expiresAt,
 				})
@@ -359,7 +359,7 @@ export function createPlayersRepository(db: DB) {
 			playerId: number,
 			expiresAt: Date | null,
 			reason: string,
-			adminUsername: string,
+			adminId: number,
 		) {
 			const now = new Date();
 
@@ -394,7 +394,7 @@ export function createPlayersRepository(db: DB) {
 			await db.insert(bans).values({
 				playerId,
 				expiresAt,
-				bannedBy: adminUsername,
+				issuer: adminId,
 				reason,
 				createdAt: now,
 			});

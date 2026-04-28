@@ -1,13 +1,11 @@
-import EventEmitter from 'events';
 import { repo } from '@fxmanager/database';
-import { EventNames } from '@fxmanager/shared/constants';
-import {
-	type ApiResponse,
-	type BanDataCard,
-	type DeferralCheckResponse,
-	type OnlinePlayer,
-	type PlayerIdentifiers,
-	type PlayerUpdatePackage,
+import type {
+	ApiResponse,
+	BanDataCard,
+	DeferralCheckResponse,
+	OnlinePlayer,
+	PlayerIdentifiers,
+	PlayerUpdatePackage,
 } from '@fxmanager/shared/types';
 import { wsManager } from './ws.manager';
 import { ConfigManager } from './config.manager';
@@ -38,11 +36,9 @@ export class GameManager {
 		const ban = repo.players.checkBanned(identifiers);
 
 		if (ban) {
-			const isPerm = ban.expiresAt === null;
-
 			let data: BanDataCard;
 
-			if (isPerm)
+			if (ban.expiresAt === null)
 				data = {
 					permanent: true,
 					reason: ban.reason,
@@ -53,7 +49,7 @@ export class GameManager {
 					permanent: false,
 					reason: ban.reason,
 					createdAt: ban.createdAt,
-					expiresAt: ban.expiresAt!,
+					expiresAt: ban.expiresAt,
 				};
 
 			return {
@@ -125,7 +121,7 @@ export class GameManager {
 	async playerUpdates(data: PlayerUpdatePackage) {
 		for (const [idString, [health, ping]] of Object.entries(data)) {
 			// record keys are converted to strings so we typed it as such as well
-			const serverId = parseInt(idString);
+			const serverId = parseInt(idString, 10);
 
 			const player = this.playerlist.find((p) => p.serverId === serverId);
 

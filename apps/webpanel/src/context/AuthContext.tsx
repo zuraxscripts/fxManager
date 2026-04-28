@@ -63,8 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			method: 'POST',
 		});
 		setUser(null);
-    navigate('/login', { replace: true });
-	}, []);
+		navigate('/login', { replace: true });
+	}, [navigate]);
 
 	const setup = useCallback(
 		async (username: string, password: string) => {

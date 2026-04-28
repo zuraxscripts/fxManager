@@ -38,7 +38,7 @@ CREATE TABLE `bans` (
 	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`player_id` integer NOT NULL,
 	`reason` text NOT NULL,
-	`banned_by` text NOT NULL,
+	`issuer` text NOT NULL,
 	`expires_at` integer,
 	`created_at` integer NOT NULL,
 	`revoked_at` integer,

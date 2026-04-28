@@ -31,6 +31,12 @@ function NavItemWithSubItems({
 	const { pathname } = useLocation();
 	const NavIcon = item.icon;
 
+	if (
+		item.permission &&
+		!PermissionManager.has(user.permissions, item.permission)
+	)
+		return;
+
 	const isActive =
 		pathname === item.url ||
 		item.items?.some((subItem) => pathname === subItem.url);
@@ -52,7 +58,7 @@ function NavItemWithSubItems({
 								subItem.permission &&
 								!PermissionManager.has(user.permissions, subItem.permission)
 							)
-								return;
+								return null;
 
 							return (
 								<SidebarMenuSubItem key={subItem.title}>

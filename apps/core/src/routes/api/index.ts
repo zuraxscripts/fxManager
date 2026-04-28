@@ -1,8 +1,9 @@
+import type { RouteModule } from '../../types';
 import AuthModule from './auth';
 import ServerModule from './server';
 import PlayerModule from './players';
 import WsModule from './sockets';
-import type { RouteModule } from '../../types';
+import SettingsModule from './settings';
 
 const apiRoutes: RouteModule['handler'] = async (fastify, options) => {
 	fastify.register(AuthModule.handler, {
@@ -18,6 +19,11 @@ const apiRoutes: RouteModule['handler'] = async (fastify, options) => {
 	fastify.register(PlayerModule.handler, {
 		...options,
 		prefix: PlayerModule.prefix,
+	});
+
+	fastify.register(SettingsModule.handler, {
+		...options,
+		prefix: SettingsModule.prefix,
 	});
 
 	fastify.register(WsModule.handler, {
