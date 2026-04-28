@@ -1,6 +1,4 @@
-// import { ApiError } from '@fxmanager/shared/types';
-
-import { ApiError, PlayerIdentifiers, PlayerUpdatePackage } from '@fxmanager/shared/types';
+import { ApiError } from '@fxmanager/shared/types';
 // import { QueryManager } from '../utils/query';
 
 const HOSTNAME = '127.0.0.1:3000';
