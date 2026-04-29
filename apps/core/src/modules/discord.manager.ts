@@ -1,7 +1,7 @@
 import { Client, Events, GatewayIntentBits, type Guild } from 'discord.js';
 import type { DiscordManagerConfig } from '@fxmanager/shared/types';
 
-export class DiscordManager {
+class DiscordManager {
 	private client = new Client({
 		intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
 	});
@@ -92,3 +92,12 @@ export class DiscordManager {
 		}
 	}
 }
+
+// NOTE / ToDo:
+// config settings for the bot will be migrated to settings db
+
+export const discordManager = new DiscordManager({
+	token: process.env.DISCORD_BOT_TOKEN ?? '',
+	guildId: process.env.DISCORD_GUILDID ?? '',
+	whitelistedRoles: (process.env.DISCORD_ROLE_IDS ?? '')?.split(','),
+});
