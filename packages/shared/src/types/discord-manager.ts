@@ -1,5 +1,5 @@
 export interface DiscordManagerConfig {
-  token: string;
-  guildId: string;
-  whitelistedRoles: string[];
+	token: string;
+	guildId: string;
+	whitelistedRoles: string[];
 }
