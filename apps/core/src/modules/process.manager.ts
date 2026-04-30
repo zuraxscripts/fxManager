@@ -62,8 +62,6 @@ export class ProcessManager {
 				env: { ...process.env },
 			});
 
-			this.setState('running');
-
 			this.pipeOutput(
 				this.proc.stdout as ReadableStream<Uint8Array<ArrayBuffer>>,
 				'stdout',
@@ -255,6 +253,13 @@ export class ProcessManager {
 					source,
 					ts: Date.now(),
 				} satisfies ProcessOutputLine;
+
+				if (
+					this.state.status === 'starting' &&
+					value.includes('Authenticated with cfx.re Nucleus')
+				) {
+					this.setState('running');
+				}
 
 				console.log(value);
 
