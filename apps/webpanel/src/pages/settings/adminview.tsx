@@ -32,6 +32,7 @@ import {
 	Clock,
 	FileUser,
 	Info,
+	Loader2,
 	Trash,
 	UserPlus,
 	UserSearch,
@@ -84,6 +85,25 @@ function LoadingSkeleton() {
 			<Skeleton className="h-48 w-full rounded-lg" />
 		</div>
 	);
+}
+
+function PlayerCardContent({ id, name }: { id: number | null, name: string | null }) {
+  const navigate = useNavigate();
+
+  function handleClick() {
+    toast.info(`Navigating to "${name}" player view`, {
+      icon: <Loader2 className='animate-spin' />,
+      duration: 1_500,
+    });
+
+    setTimeout(() => navigate(`/players/${id}`), 1_000);
+  }
+
+  if (!id || !name) return <p className='font-mono'>Unlinked</p>
+
+  return (
+    <p onClick={handleClick} className="font-mono cursor-pointer hover:underline">{`${name} (#${id})`}</p>
+  )
 }
 
 export default function AdminView() {
@@ -280,9 +300,7 @@ export default function AdminView() {
 					<StatCard
 						icon={FileUser}
 						label="Linked Player"
-						value={
-							<p className="font-mono">{adminData.playerId ?? 'Unlinked'}</p>
-						}
+						value={<PlayerCardContent id={adminData.playerId} name={adminData.playerName} />}
 					/>
 					<StatCard
 						icon={UserPlus}
