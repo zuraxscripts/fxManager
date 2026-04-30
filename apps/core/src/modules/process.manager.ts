@@ -17,27 +17,17 @@ export class ProcessManager {
 		const config = loadConfig();
 		this.setState('starting');
 
+		// biome-ignore format: keep it readible
 		const args: string[] = [
-			'+exec',
-			config.configFile,
-			'+set',
-			'onesync',
-			'on',
-			'+set',
-			'resource-api-token',
-			config.resourceApiToken,
-			'+set',
-			'api-port',
-			`${config.webServerPort}`,
+			'+exec', config.configFile,
+      '+set', 'onesync',            'on',
+			'+set', 'resource-api-token', config.resourceApiToken,
+			'+set', 'api-port',           `${config.webServerPort}`,
 			// Check if this actually works, would be neat to be able to hide it in console or have it read only
-			'+add_convar_permission',
-			'fxManager',
-			'read',
-			'resource-api-token',
-			'+add_convar_permission',
-			'fxManager',
-			'read',
-			'api-port',
+			'+add_convar_permission', 'fxManager', 'read', 'resource-api-token',
+			'+add_convar_permission', 'fxManager', 'read', 'api-port',
+
+      '+ensure',  'fxManager'
 		];
 
 		console.log(`[core] Starting fxServer`);
