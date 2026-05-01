@@ -1,6 +1,6 @@
 export type Channel =
 	| 'server_state'
-	| 'resource_list'
+	| 'resourcelist'
 	| 'playerlist'
 	| 'console'
 	| `report:general`

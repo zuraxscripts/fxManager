@@ -1,4 +1,4 @@
-import type { ApiResponse, ResourceData } from '@fxmanager/shared/types';
+import type { ApiResponse, ResourceData, ResourceInitialData } from '@fxmanager/shared/types';
 import { loadConfig } from '../common/config';
 import { wsManager } from './ws.manager';
 
@@ -55,9 +55,18 @@ class ResourceManager {
 			status: 'stopped',
 		}));
 		this.available = false;
+
+    wsManager.broadcast<ResourceInitialData>({
+      channel: 'resourcelist',
+      event: 'refresh',
+      data: {
+        status: this.available,
+        resourcelist: this.resourcelist,
+      },
+    });
 	}
 
-	getResourceList() {
+	getResourceList(): ResourceInitialData {
 		return { status: this.available, resourcelist: this.resourcelist };
 	}
 
@@ -79,15 +88,25 @@ class ResourceManager {
 					...payload.data,
 				};
 			}
+      
+      wsManager.broadcast<ResourceData>({
+        channel: 'resourcelist',
+        event: payload.event,
+        data: payload.data,
+      });
 		} else {
 			this.resourcelist = payload.data;
+      
+      wsManager.broadcast<ResourceInitialData>({
+        channel: 'resourcelist',
+        event: payload.event,
+        data: {
+          status: this.available,
+          resourcelist: payload.data,
+        },
+      });
 		}
 
-		wsManager.broadcast<ResourceData | ResourceData[]>({
-			channel: 'resource_list',
-			event: payload.event,
-			data: payload.data,
-		});
 	}
 }
 
