@@ -6,6 +6,7 @@ import type {
 import { loadConfig } from '../common/config';
 import { LogBuffer } from './buffer.manager';
 import { wsManager } from './ws.manager';
+import { resourceManager } from './resource.manager';
 
 export class ProcessManager {
 	private state: ServerState = { status: 'stopped', startedAt: null };
@@ -199,6 +200,12 @@ export class ProcessManager {
 			event: 'status_changed',
 			data: newState,
 		});
+
+		if (status === 'running') {
+			resourceManager.loadResources();
+		} else if (status === 'crashed' || status === 'stopping') {
+			resourceManager.stoppingServer();
+		}
 	}
 
 	private createLineBreakTransformer() {
