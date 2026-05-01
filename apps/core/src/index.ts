@@ -20,7 +20,8 @@ applyMigrations();
 // checkVersion(isProduction ? process.env.VERSION as string : 'dev-build');
 checkVersion('dev-build');
 
-const { cookieSecret, webServerPort } = await ConfigManager.load(true);
+const cm = new ConfigManager();
+const { cookieSecret, webServerPort } = await cm.load(true);
 const fastify = Fastify({ logger: !isProduction });
 
 fastify.register(fastifyCookie, {
@@ -70,8 +71,8 @@ fastify.get('/api/health', async () => {
 const pm = new ProcessManager();
 const gm = new GameManager();
 
-fastify.register(apiRoutes, { prefix: '/api', pm, gm });
-fastify.register(internalRoutes, { prefix: '/internal', pm, gm });
+fastify.register(apiRoutes, { prefix: '/api', pm, gm, cm });
+fastify.register(internalRoutes, { prefix: '/internal', pm, gm, cm });
 
 if (!isProduction) {
 	const devUrl = 'http://localhost:5173';

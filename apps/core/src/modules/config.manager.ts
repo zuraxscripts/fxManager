@@ -11,7 +11,7 @@ interface CoreSettings extends CoreConfig {
 }
 
 export class ConfigManager {
-	private static systemValues: CoreConfig = {
+	private systemValues: CoreConfig = {
 		platform: (process.platform === 'win32'
 			? 'windows'
 			: 'linux') as PlatformOS,
@@ -22,13 +22,13 @@ export class ConfigManager {
 		cookieSecret: process.env.COOKIE_SECRET ?? crypto.randomUUID(),
 	};
 
-	static regenerateApiToken() {
+	regenerateApiToken() {
 		this.systemValues.resourceApiToken = crypto.randomUUID();
 	}
 
-	static async load(skipDb: true): Promise<CoreConfig>;
-	static async load(skipDb?: false): Promise<CoreSettings>;
-	static async load(
+	async load(skipDb: true): Promise<CoreConfig>;
+	async load(skipDb?: false): Promise<CoreSettings>;
+	async load(
 		skipDb: boolean = false,
 	): Promise<CoreSettings | CoreConfig> {
 		if (skipDb) return { ...this.systemValues };
