@@ -36,3 +36,13 @@ export interface OnlinePlayer extends Player {
 
 /** struct: key: serverid - value: [health, ping] */
 export type PlayerUpdatePackage = Record<string, [number, number]>;
+
+export interface ResourceData {
+	name: string;
+	version: string | null;
+	author: string | null;
+	description: string | null;
+	repository: string | null;
+	path: string;
+	status: 'started' | 'stopped';
+}
