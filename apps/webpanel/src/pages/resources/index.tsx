@@ -46,7 +46,7 @@ export function ResourceList() {
 				<div className="p-8 text-center animate-pulse">
 					Loading resources...
 				</div>
-			) : (
+			) : status ? (
 				<ScrollArea className="h-[calc(100vh-7rem)] rounded-md border border-zinc-800 p-4">
 					<div className="grid gap-4">
 						{resources.map((res) => (
@@ -127,16 +127,6 @@ export function ResourceList() {
 											>
 												<Square size={16} />
 											</Button>
-
-											{/* <Button
-												variant="ghost"
-												size="icon"
-												className="h-8 w-8 bg-blue-500/20 disabled:bg-transparent hover:text-blue-500"
-												disabled={res.status === 'stopped'}
-												title="Restart Resource"
-											>
-												<RefreshCcwIcon size={16} />
-											</Button> */}
 										</div>
 									</div>
 								</div>
@@ -144,6 +134,9 @@ export function ResourceList() {
 						))}
 					</div>
 				</ScrollArea>
+			) : (
+        // ToDo: make this shit nicer...
+				<div className="p-8 text-center">Server is stopped</div>
 			)}
 		</div>
 	);
