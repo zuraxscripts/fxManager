@@ -1,5 +1,6 @@
 import { PageHeader } from '@/components/page-header';
 import { useResourcelistSocket } from '@/hooks/ws-channels/use-resourcelist';
+import { QueryService } from '@/lib/query';
 import { Badge } from '@fxmanager/ui/components/badge';
 import { Button } from '@fxmanager/ui/components/button';
 import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
@@ -12,6 +13,7 @@ import {
 	AlertCircle,
 	RefreshCcwIcon,
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function ResourceList() {
 	const { resources, loading, status } = useResourcelistSocket();
@@ -22,8 +24,24 @@ export function ResourceList() {
 		else return `v${version}`;
 	}
 
-	// ToDo
-	function handleAction(resource: string, action: 'start' | 'stop') {}
+	async function handleAction(resource: string, action: 'start' | 'stop') {
+		try {
+			await QueryService({
+				endpoint: `/server/resource/${action}`,
+				method: 'POST',
+				body: { resource },
+			});
+		} catch (err) {
+			console.error(
+				`Unable to execute action ${action}`,
+				(err as Error).message,
+			);
+			toast.error(`Unable to ${action} for resource ${resource}`, {
+				richColors: true,
+				position: 'top-center',
+			});
+		}
+	}
 
 	return (
 		<div className="space-y-6">

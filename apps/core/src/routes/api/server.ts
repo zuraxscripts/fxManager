@@ -59,6 +59,53 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 		return reply.code(result ? 200 : 500).send({ success: result });
 	});
+
+	fastify.post('/resource/action/start', async (request, reply) => {
+		const { admin } = request as AuthedRequest;
+
+		const allowed = PermissionManager.has(
+			admin.permissions,
+			UserPermissions.RESOURCE_LIST,
+		);
+
+		if (!allowed) {
+			return reply.code(403).send({ error: 'Not authorized' });
+		}
+
+		const body = request.body as { action: 'start' | 'stop'; resource: string };
+
+		pm.injectConsoleLine({
+			process: `cmd:${admin.username}`,
+			value: `\x1b[37m> ensure ${body.resource}\x1b[0m`,
+		});
+		pm.sendCommand(`ensure ${body.resource}`);
+
+		return reply.code(200);
+	});
+
+	fastify.post('/resource/action/stop', async (request, reply) => {
+		const { admin } = request as AuthedRequest;
+
+		const allowed = PermissionManager.has(
+			admin.permissions,
+			UserPermissions.RESOURCE_LIST,
+		);
+
+		if (!allowed) {
+			return reply.code(403).send({ error: 'Not authorized' });
+		}
+
+		const body = request.body as { resource: string };
+
+		pm.injectConsoleLine({
+			process: `cmd:${admin.username}`,
+			value: `\x1b[37m> stop ${body.resource}\x1b[0m`,
+		});
+
+		pm.sendCommand(`stop ${body.resource}`);
+
+		return reply.code(200);
+	});
 };
 
 export default {
