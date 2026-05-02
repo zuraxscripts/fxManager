@@ -66,7 +66,7 @@ export function useResourcelistSocket(): UseResourcelistReturn {
 	const [resources, setResources] = useState<ResourceData[]>([]);
 
 	useEffect(() => {
-		subscribe('playerlist');
+		subscribe('resourcelist');
 
 		const offSync = on<ResourceInitialData>(
 			'resourcelist',
