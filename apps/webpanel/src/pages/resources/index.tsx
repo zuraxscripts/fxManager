@@ -15,6 +15,17 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+function formatPath(path: string): string {
+	const normalized = path.replace(/\\/g, '/');
+
+	const parts = normalized.split(/\/resources\/+/i);
+	if (parts.length > 1) {
+		return parts[parts.length - 1];
+	}
+
+	return normalized;
+}
+
 export function ResourceList() {
 	const { resources, loading, status } = useResourcelistSocket();
 
@@ -93,7 +104,7 @@ export function ResourceList() {
 													<User size={12} /> {res.author}
 												</span>
 											)}
-											<span className="font-mono">{res.path}</span>
+											<span className="font-mono">{formatPath(res.path)}</span>
 										</div>
 									</div>
 
@@ -153,7 +164,7 @@ export function ResourceList() {
 					</div>
 				</ScrollArea>
 			) : (
-        // ToDo: make this shit nicer...
+				// ToDo: make this shit nicer...
 				<div className="p-8 text-center">Server is stopped</div>
 			)}
 		</div>
