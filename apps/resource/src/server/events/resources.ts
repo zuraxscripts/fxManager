@@ -1,9 +1,13 @@
 import { QueryManager } from '../utils/query';
 import { getResourcesData } from '../utils/resources';
+import { sleep } from '@common/utils';
 
 on('onResourceStart', async (resource: string) => {
 	try {
+		await sleep(100);
 		const body = getResourcesData(resource);
+
+		if (!body) return;
 
 		await QueryManager({
 			endpoint: 'resources/update',
@@ -18,9 +22,12 @@ on('onResourceStart', async (resource: string) => {
 	}
 });
 
-on('onResourceStopped', async (resource: string) => {
+on('onResourceStop', async (resource: string) => {
 	try {
+		await sleep(100);
 		const body = getResourcesData(resource);
+
+		if (!body) return;
 
 		await QueryManager({
 			endpoint: 'resources/update',
