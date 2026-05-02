@@ -39,6 +39,9 @@ class ResourceManager {
 
 			if (result.success) {
 				this.resourcelist = result.data;
+				this.available = true;
+
+				this.sendWsUpdate();
 			} else {
 				this.available = 'errored';
 				console.error(
@@ -60,6 +63,10 @@ class ResourceManager {
 		}));
 		this.available = false;
 
+		this.sendWsUpdate();
+	}
+
+	sendWsUpdate() {
 		wsManager.broadcast<ResourceInitialData>({
 			channel: 'resourcelist',
 			event: 'refresh',
