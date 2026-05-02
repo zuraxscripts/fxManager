@@ -48,6 +48,6 @@ export interface ResourceData {
 }
 
 export interface ResourceInitialData {
-  status: boolean | 'errored';
-  resourcelist: ResourceData[];
+	status: boolean | 'errored';
+	resourcelist: ResourceData[];
 }

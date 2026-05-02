@@ -25,7 +25,7 @@ export const UserPermissions = {
 	SETTINGS_ACCESS: 1 << 14, // 8192 - access & edit settings
 	SETTINGS_ADMIN_MANAGEMENT: 1 << 15, // 32768 - access & edit admins
 
-  RESOURCE_LIST: 1 << 16, // 65536 - view & (re)start/stop resources
+	RESOURCE_LIST: 1 << 16, // 65536 - view & (re)start/stop resources
 
 	MASTER: 1 << 30, // 1073741824
 } as const;
