@@ -38,7 +38,7 @@ export function ResourceList() {
 	async function handleAction(resource: string, action: 'start' | 'stop') {
 		try {
 			await QueryService({
-				endpoint: `/server/resource/${action}`,
+				endpoint: `/server/resource/action/${action}`,
 				method: 'POST',
 				body: { resource },
 			});

@@ -95,9 +95,9 @@ export function useResourcelistSocket(): UseResourcelistReturn {
 				if (idx < 0) {
 					return [...prev, data];
 				} else {
-          const next = [...prev];
-          next[idx] = data;
-          return next;
+					const next = [...prev];
+					next[idx] = data;
+					return next;
 				}
 			});
 		});
