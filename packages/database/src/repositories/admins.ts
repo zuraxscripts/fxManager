@@ -164,7 +164,5 @@ class AdminsRepository {
 }
 
 export function createAdminsRepository(db: DB) {
-	console.log('TEST', AdminsRepository.getInstance(db));
-
 	return AdminsRepository.getInstance(db);
 }
