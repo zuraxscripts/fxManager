@@ -1,17 +1,19 @@
 import { repo } from '@fxmanager/database';
-import type { CoreConfig, PlatformOS } from '@fxmanager/shared/types';
+import type {
+	CoreConfig,
+	PlatformOS,
+	ServerConfig,
+} from '@fxmanager/shared/types';
 import crypto from 'node:crypto';
 
-interface CoreSettings extends CoreConfig {
-	onesync: 'on' | 'legacy' | 'off';
-	executable: string;
-	serverDataPath: string;
-	serverConfigFile: string;
-	[key: string]: any;
-}
+type CoreSettings = CoreConfig &
+	ServerConfig & {
+		[key: string]: any;
+	};
 
 export class ConfigManager {
-  private static instance: ConfigManager | null = null;
+	private static instance: ConfigManager | null = null;
+
 	private systemValues: CoreConfig = {
 		platform: (process.platform === 'win32'
 			? 'windows'
@@ -23,27 +25,42 @@ export class ConfigManager {
 		cookieSecret: process.env.COOKIE_SECRET ?? crypto.randomUUID(),
 	};
 
-  private constructor() {}
+	private fxServerValues: ServerConfig = {
+		onesync: 'on',
+		executable: process.env.FXSERVER_EXECUTABLE || './FXServer',
+		serverDataPath: process.env.FXSERVER_DATA_PATH || './server-data',
+		serverConfigFile: process.env.FXSERVER_CFG || 'server.cfg',
+	};
 
-  static getInstance() {
-    if (!ConfigManager.instance) {
-      ConfigManager.instance = new ConfigManager();
-    }
+	private constructor() {}
 
-    return ConfigManager.instance;
-  }
+	static getInstance() {
+		if (!ConfigManager.instance) {
+			ConfigManager.instance = new ConfigManager();
+		}
+
+		return ConfigManager.instance;
+	}
 
 	regenerateApiToken() {
 		this.systemValues.resourceApiToken = crypto.randomUUID();
 	}
 
-	async load(skipDb: true): Promise<CoreConfig>;
-	async load(skipDb?: false): Promise<CoreSettings>;
-	async load(
-		skipDb: boolean = false,
-	): Promise<CoreSettings | CoreConfig> {
-		if (skipDb) return { ...this.systemValues };
+	getSystemValues() {
+		return this.systemValues;
+	}
 
+	getFxServerValues(useDb: boolean = false) {
+		if (!useDb) return this.fxServerValues;
+
+		const dbValues = repo.settings.getMultiple(
+			Object.keys(this.fxServerValues),
+		);
+
+		return { ...this.fxServerValues, ...dbValues };
+	}
+
+	getAllValues(): CoreSettings {
 		const dbEntries = repo.settings.all();
 
 		const persistent = dbEntries.reduce((acc, curr) => {
@@ -52,13 +69,9 @@ export class ConfigManager {
 		}, {} as any);
 
 		return {
-			executable: './FXServer',
-			serverDataPath: './server-data',
-			serverConfigFile: 'server.cfg',
-			onesync: 'on',
-
+			...this.fxServerValues,
 			...persistent,
-			...this.systemValues,
+			...this.systemValues, // System values should override everything else
 		};
 	}
 }

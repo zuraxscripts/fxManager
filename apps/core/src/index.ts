@@ -21,7 +21,7 @@ applyMigrations();
 checkVersion('dev-build');
 
 const cm = ConfigManager.getInstance();
-const { cookieSecret, webServerPort } = await cm.load(true);
+const { cookieSecret, webServerPort } = cm.getSystemValues();
 const fastify = Fastify({ logger: !isProduction });
 
 fastify.register(fastifyCookie, {

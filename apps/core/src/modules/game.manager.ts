@@ -17,7 +17,7 @@ export class GameManager {
 	constructor() {}
 
 	private async getApiToken() {
-		const { resourceApiToken } = await this.config.load(true);
+		const { resourceApiToken } = this.config.getSystemValues();
 		return resourceApiToken;
 	}
 

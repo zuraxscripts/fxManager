@@ -16,13 +16,13 @@ export class ProcessManager {
 	// region process methods
 	async start() {
 		this.config.regenerateApiToken();
-		const config = await this.config.load();
+		const config = this.config.getAllValues();
 
 		this.setState('starting');
 
 		// biome-ignore format: the array should not be formatted
 		const args: string[] = [
-			'+exec',                      config.configFile,
+			'+exec',                      config.serverConfigFile,
 			'+set', 'onesync',            config.onesync,
 			'+set', 'resource-api-token', config.resourceApiToken,
 			'+set', 'api-port',           `${config.webServerPort}`,

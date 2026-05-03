@@ -6,3 +6,10 @@ export interface CoreConfig {
 	resourceApiToken: string;
 	cookieSecret: string;
 }
+
+export interface ServerConfig {
+	onesync: 'on' | 'legacy' | 'off';
+	executable: string;
+	serverDataPath: string;
+	serverConfigFile: string;
+}
