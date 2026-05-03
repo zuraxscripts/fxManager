@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { settings } from '../schema';
 import type * as schema from '../schema';
@@ -25,13 +25,35 @@ class SettingsRepository {
 		return SettingsRepository.instance;
 	}
 
-	get<T = unknown>(key: string): T | undefined {
+	get<T = string>(key: string): T | undefined {
 		const row = this.db
 			.select()
 			.from(settings)
 			.where(eq(settings.key, key))
 			.get();
 		return row?.value as T | undefined;
+	}
+
+	getMultiple<T = string, K extends string = string>(
+		keys: readonly K[],
+	): Record<K, T | undefined> {
+		if (keys.length === 0) {
+			return {} as Record<K, T | undefined>;
+		}
+
+		const rows = this.db
+			.select()
+			.from(settings)
+			.where(inArray(settings.key, keys))
+			.all();
+
+		return keys.reduce<Record<K, T | undefined>>(
+			(acc, key) => {
+				acc[key] = rows.find((row) => row.key === key)?.value as T | undefined;
+				return acc;
+			},
+			{} as Record<K, T | undefined>,
+		);
 	}
 
 	set(key: (typeof EDITABLE_SETTINGS_KEYS)[number], value: unknown) {
