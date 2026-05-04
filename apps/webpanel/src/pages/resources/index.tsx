@@ -176,7 +176,7 @@ export function ResourceList() {
 
 		try {
 			await QueryService({
-				endpoint: `/server/resource/action/${action}`,
+				endpoint: `/resources/action/${action}`,
 				method: 'POST',
 				...(resource && { body: { resource } }),
 			});
