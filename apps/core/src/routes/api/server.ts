@@ -2,6 +2,7 @@ import type { AuthedRequest, RouteModule } from '../../types';
 import { sessionAuth } from '../../middleware/session';
 import { PermissionManager } from '@fxmanager/shared/utils';
 import { UserPermissions } from '@fxmanager/shared/constants';
+import { resourceManager } from '../../modules/resource.manager';
 
 const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	const { pm } = options;
@@ -105,6 +106,30 @@ const ServerEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		pm.sendCommand(`stop ${body.resource}`);
 
 		return reply.code(200);
+	});
+
+	fastify.post('/resource/action/refresh', async (request, reply) => {
+		const { admin } = request as AuthedRequest;
+
+		const allowed = PermissionManager.has(
+			admin.permissions,
+			UserPermissions.RESOURCE_LIST,
+		);
+
+		if (!allowed) {
+			return reply.code(403).send({ error: 'Not authorized' });
+		}
+
+		pm.injectConsoleLine({
+			process: `cmd:${admin.username}`,
+			value: `\x1b[37m> refresh\x1b[0m`,
+		});
+
+		pm.sendCommand(`refresh`);
+
+		await resourceManager.loadResources();
+
+		return reply.code(200).send({ success: true });
 	});
 };
 
