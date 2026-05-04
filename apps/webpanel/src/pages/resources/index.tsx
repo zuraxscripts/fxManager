@@ -2,9 +2,12 @@ import { PageHeader } from '@/components/page-header';
 import { useServerStateSocket } from '@/hooks/ws-channels';
 import { useResourcelistSocket } from '@/hooks/ws-channels/use-resourcelist';
 import { QueryService } from '@/lib/query';
+import type { ResourceData, ServerState } from '@fxmanager/shared/types';
 import { Badge } from '@fxmanager/ui/components/badge';
 import { Button } from '@fxmanager/ui/components/button';
+import { Input } from '@fxmanager/ui/components/input';
 import { ScrollArea } from '@fxmanager/ui/components/scroll-area';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@fxmanager/ui/components/select';
 import { Skeleton } from '@fxmanager/ui/components/skeleton';
 import { cn } from '@fxmanager/ui/lib/utils';
 import {
@@ -16,7 +19,10 @@ import {
 	AlertCircle,
 	RefreshCcwIcon,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+
+type FilterValue = 'all' | 'started' | 'stopped';
 
 function formatPath(path: string): string {
 	const normalized = path.replace(/\\/g, '/');
@@ -116,6 +122,30 @@ export function ResourceList() {
 		loading,
 		status: resourceListStatus,
 	} = useResourcelistSocket();
+	const [displayedResources, setDisplayedResources] = useState<ResourceData[]>(resources);
+	const [searchValue, setSearchValue] = useState<string>('');
+	const [filterValue, setFilterValue] = useState<FilterValue>('all');
+
+	useEffect(() => {
+		const filtered = resources.filter(res => {
+			const matchesSearch =
+				searchValue.trim() === '' ||
+				res.name.toLowerCase().includes(searchValue.toLowerCase());
+
+			const matchesStatus =
+				filterValue === 'all' || res.status === filterValue;
+
+			return matchesSearch && matchesStatus;
+		});
+
+		setDisplayedResources(filtered);
+	}, [resources, searchValue, filterValue]);
+
+	function handleSearch({ target }: React.ChangeEvent<HTMLInputElement, HTMLInputElement>) {
+		const { value } = target;
+
+		setSearchValue(value);
+	}
 
 	function formatVersion(version: string | null) {
 		if (!version) return 'unknown';
@@ -143,7 +173,7 @@ export function ResourceList() {
 	}
 
 	return (
-		<div className="space-y-6">
+		<div className="space-y-4">
 			<div className="flex justify-between items-end">
 				<PageHeader
 					Icon={LayoutList}
@@ -159,18 +189,67 @@ export function ResourceList() {
 				</div>
 			</div>
 
+			<div className="w-full border border-zinc-800 rounded-lg bg-zinc-900/50 p-4">
+				<div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+					<div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+						<Input
+							type="text"
+							onChange={handleSearch}
+							placeholder="Search resources..."
+							className="sm:w-64"
+						/>
+
+						<Select onValueChange={(v) => setFilterValue(v as FilterValue)}>
+							<SelectTrigger className="w-full sm:w-[160px]">
+								<SelectValue placeholder="Filter status" />
+							</SelectTrigger>
+							<SelectContent>
+								<SelectItem value="all">All</SelectItem>
+								<SelectItem value="started">Started</SelectItem>
+								<SelectItem value="stopped">Stopped</SelectItem>
+							</SelectContent>
+						</Select>
+					</div>
+
+					<div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto">
+						{state.status === 'running' && <div className="flex items-center gap-6 text-sm">
+							<div className="flex flex-col items-center">
+								<span className="text-zinc-400">Total</span>
+								<span className="font-semibold text-zinc-100">
+									{resources.length}
+								</span>
+							</div>
+
+							<div className="flex flex-col items-center">
+								<span className="text-green-400">Started</span>
+								<span className="font-semibold text-zinc-100">
+									{resources.filter(res => res.status === 'started').length}
+								</span>
+							</div>
+
+							<div className="flex flex-col items-center">
+								<span className="text-red-400">Stopped</span>
+								<span className="font-semibold text-zinc-100">
+									{resources.filter(res => res.status === 'stopped').length}
+								</span>
+							</div>
+						</div>}
+					</div>
+				</div>
+			</div>
+
 			<div
 				className={cn(
-					'h-[calc(100vh-7rem)] rounded-md border border-zinc-800 p-4',
+					'h-[calc(100vh-13rem)] rounded-md border border-zinc-800 p-4 pr-1',
 					(loading || state.status !== 'running') && 'overflow-hidden',
 				)}
 			>
 				{loading ? (
 					<LoadingSkeleton />
 				) : state.status === 'running' ? (
-					<ScrollArea className="h-[calc(100vh-8rem)]">
+					<ScrollArea className="h-[calc(100vh-15rem)] pr-3">
 						<div className="grid gap-4">
-							{resources.map((res) => (
+							{displayedResources.map((res) => (
 								<div
 									key={res.name}
 									className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-lg hover:bg-zinc-900 transition-colors group"
@@ -258,7 +337,7 @@ export function ResourceList() {
 						</div>
 					</ScrollArea>
 				) : (
-					<div className="relative overflow-hidden">
+					<div className="relative overflow-hidden h-[calc(100vh-15rem)] pr-3">
 						<LoadingSkeleton blur />
 						<div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
 							<div className="pointer-events-auto">
