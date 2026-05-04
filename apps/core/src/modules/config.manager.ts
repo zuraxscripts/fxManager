@@ -57,12 +57,15 @@ export class ConfigManager {
 			Object.keys(this.fxServerValues),
 		);
 
-    const persistent = Object.entries(dbValues).reduce((acc, [key, value]) => {
-      if (value !== undefined) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {} as Record<string, string>);
+		const persistent = Object.entries(dbValues).reduce(
+			(acc, [key, value]) => {
+				if (value !== undefined) {
+					acc[key] = value;
+				}
+				return acc;
+			},
+			{} as Record<string, string>,
+		);
 
 		return { ...this.fxServerValues, ...persistent };
 	}
