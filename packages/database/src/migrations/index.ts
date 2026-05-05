@@ -4,7 +4,7 @@ import type { Migration } from './types';
 export * from './migrations';
 
 // region version tables
-// bootstrap the version tracking table 
+// bootstrap the version tracking table
 // This is the only table created outside the migration system itself.
 
 function ensureVersionTable(sqlite: Database) {
