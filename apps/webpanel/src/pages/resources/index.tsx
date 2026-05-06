@@ -176,6 +176,11 @@ export function ResourceList() {
 		action: 'start' | 'stop' | 'refresh',
 		resource?: string,
 	) {
+		if (state.status !== 'running') {
+			toast.error('Server is not running');
+			return;
+		}
+
 		if (action === 'refresh') {
 			if (refreshing) {
 				toast.warning('Refresh already ongoing');
@@ -232,11 +237,15 @@ export function ResourceList() {
 						<Input
 							type="text"
 							onChange={handleSearch}
+							disabled={state.status !== 'running'}
 							placeholder="Search resources..."
 							className="sm:w-64"
 						/>
 
-						<Select onValueChange={(v) => setFilterValue(v as FilterValue)}>
+						<Select
+							onValueChange={(v) => setFilterValue(v as FilterValue)}
+							disabled={state.status !== 'running'}
+						>
 							<SelectTrigger className="w-full sm:w-[160px]">
 								<SelectValue placeholder="Filter status" />
 							</SelectTrigger>
@@ -279,6 +288,7 @@ export function ResourceList() {
 							size="icon"
 							className="h-9 w-9 bg-zinc-800/60 hover:bg-zinc-700"
 							onClick={() => handleAction('refresh')}
+							disabled={state.status !== 'running'}
 							title="Refresh resources"
 						>
 							<RefreshCcwIcon
