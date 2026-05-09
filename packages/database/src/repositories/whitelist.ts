@@ -1,8 +1,17 @@
-import { eq, or } from 'drizzle-orm';
+import { asc, desc, eq, like, or, sql } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
-import { whitelistedIdentifers } from '../schema';
+import {
+	whitelistedIdentifers,
+	adminUsers,
+	players,
+	playerIdentifiers,
+} from '../schema';
 import type * as schema from '../schema';
-import type { PlayerIdentifiers } from '@fxmanager/shared/types';
+import type {
+	PaginatedResponse,
+	PlayerIdentifiers,
+	WhitelistEntry,
+} from '@fxmanager/shared/types';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
@@ -41,6 +50,86 @@ class WhitelistRepository {
 			.limit(1);
 
 		return result.length > 0;
+	}
+
+	async list(
+		page = 1,
+		pageSize = 20,
+		options?: {
+			search?: string;
+			sortBy?: 'addedAt' | 'value';
+			sortOrder?: 'asc' | 'desc';
+		},
+	): Promise<PaginatedResponse<WhitelistEntry>> {
+		const { search, sortBy = 'addedAt', sortOrder = 'desc' } = options ?? {};
+
+		const orderFn = sortOrder === 'asc' ? asc : desc;
+		const sortCol =
+			sortBy === 'value'
+				? whitelistedIdentifers.value
+				: whitelistedIdentifers.addedAt;
+
+		const filters = search
+			? or(
+					like(whitelistedIdentifers.value, `%${search}%`),
+					like(adminUsers.username, `%${search}%`),
+					like(players.name, `%${search}%`),
+				)
+			: undefined;
+
+		const countResult = this.db
+			.select({
+				count: sql<number>`count(DISTINCT ${whitelistedIdentifers.id})`,
+			})
+			.from(whitelistedIdentifers)
+			.leftJoin(adminUsers, eq(whitelistedIdentifers.adminId, adminUsers.id))
+			.leftJoin(
+				playerIdentifiers,
+				eq(whitelistedIdentifers.value, playerIdentifiers.value),
+			)
+			.leftJoin(players, eq(playerIdentifiers.playerId, players.id))
+			.where(filters)
+			.get();
+
+		const total = countResult?.count ?? 0;
+
+		const rows = await this.db
+			.select({
+				id: whitelistedIdentifers.id,
+				type: whitelistedIdentifers.type,
+				value: whitelistedIdentifers.value,
+				addedAt: whitelistedIdentifers.addedAt,
+				addedByAdmin: adminUsers.username,
+				playerName: players.name,
+				system: whitelistedIdentifers.system,
+			})
+			.from(whitelistedIdentifers)
+			.leftJoin(adminUsers, eq(whitelistedIdentifers.adminId, adminUsers.id))
+			.leftJoin(
+				playerIdentifiers,
+				eq(whitelistedIdentifers.value, playerIdentifiers.value),
+			)
+			.leftJoin(players, eq(playerIdentifiers.playerId, players.id))
+			.where(filters)
+			.orderBy(orderFn(sortCol))
+			.limit(pageSize)
+			.offset((page - 1) * pageSize)
+			.all();
+
+		return {
+			items: rows.map((row) => ({
+				id: row.id,
+				type: row.type,
+				value: row.value,
+				addedAt: row.addedAt,
+				addedByAdmin:
+					row.system === 1 ? 'System' : (row.addedByAdmin ?? 'Unknown'),
+				playerName: row.playerName ?? 'N/A',
+			})),
+			total,
+			page,
+			pageSize,
+		};
 	}
 }
 
