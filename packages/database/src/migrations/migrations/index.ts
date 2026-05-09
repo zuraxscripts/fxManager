@@ -22,6 +22,5 @@ import type { Migration } from '../types';
 export const migrations: Migration[] = [
 	m0000_grey_mother_askani,
 	m0001_dapper_landau,
-	,
 	m0002_dry_molten_man,
 ];
