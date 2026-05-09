@@ -45,7 +45,7 @@ export const whitelistedIdentifers = sqliteTable('whitelisted_identifiers', {
 		onDelete: 'cascade',
 	}),
 	system: integer('system').default(0).notNull(),
-	added: integer('added', { mode: 'timestamp' })
+	addedAt: integer('added_at', { mode: 'timestamp' })
 		.default(sql`CURRENT_TIMESTAMP`)
 		.notNull(),
 });
