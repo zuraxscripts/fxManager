@@ -5,3 +5,12 @@
  * * 'none'         - no whitelisting
  */
 export type WhitelistMode = 'none' | 'identifier' | 'discord' | 'admin-only';
+
+export type WhitelistEntry = {
+	id: number;
+	type: string;
+	value: string;
+	addedAt: Date;
+	addedByAdmin?: string;
+	playerName?: string;
+};
