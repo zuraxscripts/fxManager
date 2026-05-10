@@ -1,4 +1,10 @@
-import { LayoutDashboard, Terminal, Users, Settings } from 'lucide-react';
+import {
+	LayoutDashboard,
+	Terminal,
+	Users,
+	Settings,
+	ScanEye,
+} from 'lucide-react';
 import type { NavItem } from '@/types/sidebar';
 import { UserPermissions } from '@fxmanager/shared/constants';
 
@@ -18,6 +24,7 @@ export const NAV: NavItem[] = [
 		title: 'Console',
 		permission: UserPermissions.CONSOLE_ACCESS,
 	},
+	{ url: '/whitelist', icon: ScanEye, title: 'Whitelist' },
 	{ url: '/players', icon: Users, title: 'Players' },
 	{
 		url: '/settings',
