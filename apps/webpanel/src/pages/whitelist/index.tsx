@@ -9,6 +9,7 @@ import {
 	Trash2,
 	Loader2,
 	Server,
+	UserX2,
 } from 'lucide-react';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@fxmanager/ui/components/button';
@@ -367,10 +368,17 @@ export default function WhitelistIndex() {
 											</TableCell>
 
 											<TableCell className="flex-[1] hidden lg:flex items-center gap-2">
-												{entry.addedByAdmin === 'System' ? (
+												{entry.addedByAdmin === 'system' ? (
 													<>
 														<Server className="h-4 w-4 text-primary" />
 														<span className="truncate">System</span>
+													</>
+												) :  entry.addedByAdmin === 'deleted_admin' ? (
+													<>
+														<UserX2 className="h-4 w-4 text-red-500" />
+														<span className="truncate">
+															Deleted Admin
+														</span>
 													</>
 												) : (
 													<>
