@@ -369,15 +369,15 @@ export default function WhitelistIndex() {
 											<TableCell className="flex-[1] hidden lg:flex items-center gap-2">
 												{entry.addedByAdmin === 'System' ? (
 													<>
+														<Server className="h-4 w-4 text-primary" />
+														<span className="truncate">System</span>
+													</>
+												) : (
+													<>
 														<ShieldCheck className="h-4 w-4 text-blue-500" />
 														<span className="truncate">
 															{entry.addedByAdmin}
 														</span>
-													</>
-												) : (
-													<>
-														<Server className="h-4 w-4 text-primary" />
-														<span className="truncate">System</span>
 													</>
 												)}
 											</TableCell>
