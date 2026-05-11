@@ -10,22 +10,24 @@ class ResourceManager {
 	private config = ConfigManager.getInstance();
 	private available: boolean | 'errored' = false;
 	private resourcelist: ResourceData[] = [];
-	private apiToken: string;
 
-	constructor() {
+	constructor() {}
+
+	private getApiToken() {
 		const { resourceApiToken } = this.config.getSystemValues();
-		this.apiToken = resourceApiToken;
+		return resourceApiToken;
 	}
 
 	async loadResources(): Promise<void> {
 		try {
+			const apiToken = this.getApiToken();
 			const response = await fetch(
 				'http://localhost:30120/fxManager/resources/load',
 				{
 					method: 'GET',
 					headers: {
 						Application: 'json/application',
-						'x-resource-token': this.apiToken,
+						'x-resource-token': apiToken,
 					},
 				},
 			);
