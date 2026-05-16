@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
 	ScanEye,
 	Search,
@@ -64,7 +64,6 @@ const formatIdentifier = (val: string) => {
 
 export default function WhitelistIndex() {
 	const [searchParams, setSearchParams] = useSearchParams();
-	const navigate = useNavigate();
 
 	const [isDeleting, setIsDeleting] = useState<number | null>(null);
 	const [addForm, setAddForm] = useState<{ type: string; value: string }>({
@@ -134,6 +133,35 @@ export default function WhitelistIndex() {
 	const toggleSortOrder = () =>
 		setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
 
+	const fetchFromServer = useCallback(
+		async (cancelled = { current: false }) => {
+			try {
+				const params = new URLSearchParams({
+					sortBy,
+					sortOrder,
+					page: page.toString(),
+					pageSize: pageSize.toString(),
+				});
+
+				if (debouncedSearch) params.set('search', debouncedSearch);
+
+				const response = await QueryService<PaginatedResponse<WhitelistEntry>>({
+					endpoint: `/whitelist?${params.toString()}`,
+					method: 'GET',
+				});
+
+				if (cancelled.current) return;
+
+				const { items, total: newTotal } = response;
+				setEntries(items);
+				setTotal(newTotal);
+			} catch (err) {
+				toast.error((err as Error).message);
+			}
+		},
+		[debouncedSearch, sortBy, sortOrder, page, pageSize],
+	);
+
 	const handleDelete = async (id: number) => {
 		setIsDeleting(id);
 		try {
@@ -143,8 +171,8 @@ export default function WhitelistIndex() {
 				body: { id },
 			});
 			toast.success('Entry removed from whitelist');
-			// refresh page
-			navigate('/whitelist');
+
+			fetchFromServer();
 		} catch (err) {
 			toast.error((err as Error).message);
 		} finally {
@@ -153,6 +181,11 @@ export default function WhitelistIndex() {
 	};
 
 	const handleAdd = async () => {
+		if (addForm.value.length < 5) {
+			toast.error('Value is too short');
+			return;
+		}
+
 		try {
 			await QueryService({
 				endpoint: `/whitelist/add`,
@@ -161,45 +194,22 @@ export default function WhitelistIndex() {
 			});
 			toast.success('Entry added to whitelist');
 			setAddForm((prev) => ({ ...prev, value: '' }));
-			// refresh page
-			navigate('/whitelist');
+
+			fetchFromServer();
 		} catch (err) {
 			toast.error((err as Error).message);
 		}
 	};
 
 	useEffect(() => {
-		let cancelled = false;
+		const cancelled = { current: false };
 
-		const params = new URLSearchParams({
-			sortBy,
-			sortOrder,
-			page: page.toString(),
-			pageSize: pageSize.toString(),
-		});
-
-		if (debouncedSearch) params.set('search', debouncedSearch);
-
-		QueryService<PaginatedResponse<WhitelistEntry>>({
-			endpoint: `/whitelist?${params.toString()}`,
-			method: 'GET',
-		})
-			.then((response) => {
-				if (cancelled) return;
-
-				const { items, total: newTotal } = response;
-
-				setEntries(items);
-				setTotal(newTotal);
-			})
-			.catch((err) => {
-				toast.error(err.message);
-			});
+		fetchFromServer(cancelled);
 
 		return () => {
-			cancelled = true;
+			cancelled.current = true;
 		};
-	}, [debouncedSearch, sortBy, sortOrder, page, pageSize]);
+	}, [fetchFromServer]);
 
 	return (
 		<div className="flex h-[calc(100vh-5rem)] flex-col gap-4">
@@ -373,12 +383,10 @@ export default function WhitelistIndex() {
 														<Server className="h-4 w-4 text-primary" />
 														<span className="truncate">System</span>
 													</>
-												) :  entry.addedByAdmin === 'deleted_admin' ? (
+												) : entry.addedByAdmin === 'deleted_admin' ? (
 													<>
 														<UserX2 className="h-4 w-4 text-red-500" />
-														<span className="truncate">
-															Deleted Admin
-														</span>
+														<span className="truncate">Deleted Admin</span>
 													</>
 												) : (
 													<>
