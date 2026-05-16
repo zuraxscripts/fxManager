@@ -77,6 +77,16 @@ const WhitelistEndpoints: RouteModule['handler'] = async (fastify, options) => {
 					success: false,
 					error: 'Identifier is already whitelisted',
 				};
+			} else if (msg === 'unsupported_type') {
+				return {
+					success: false,
+					error: 'Provided type is unsupported',
+				};
+			} else if (msg === 'invalid_format') {
+				return {
+					success: false,
+					error: `Identifier does not follow the format for ${body.type}.`,
+				};
 			} else {
 				console.error('/api/whitelist/add failed:', err);
 				return {
