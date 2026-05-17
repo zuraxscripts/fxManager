@@ -154,7 +154,7 @@ class AdminsRepository {
 	) {
 		const admin = await this.db.query.adminUsers.findFirst({
 			where: eq(adminUsers.id, adminId),
-			columns: { permissions: true },
+			columns: { permissions: true, playerId: true },
 		});
 
 		if (!admin) throw new Error('not_found');
@@ -167,11 +167,15 @@ class AdminsRepository {
 				playerId,
 			})
 			.where(eq(adminUsers.id, adminId))
-			.returning({ newPlayerId: adminUsers.playerId });
+			.returning();
 
 		if (!result[0]) throw new Error('not_found');
 
-		return result[0];
+		return {
+			...result[0],
+			previousPlayerId: admin.playerId,
+			newPlayerId: playerId,
+		};
 	}
 }
 
