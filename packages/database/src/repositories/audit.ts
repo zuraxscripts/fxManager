@@ -2,6 +2,7 @@ import { desc } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { auditLog } from '../schema';
 import type * as schema from '../schema';
+import { AuditLogAction } from '@fxmanager/shared/types';
 
 type DB = BunSQLiteDatabase<typeof schema>;
 
@@ -20,7 +21,7 @@ class AuditRepository {
 
 	log(input: {
 		adminId?: number;
-		action: string;
+		action: AuditLogAction;
 		target?: string;
 		metadata?: Record<string, unknown>;
 	}) {
