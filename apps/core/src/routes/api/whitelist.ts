@@ -65,6 +65,15 @@ const WhitelistEndpoints: RouteModule['handler'] = async (fastify, options) => {
 				adminId: admin.id,
 			});
 
+			repo.audit.log({
+				adminId: admin.id,
+				action: 'whitelist.add',
+				metadata: {
+					type: body.type,
+					identifier: value,
+				},
+			});
+
 			return {
 				success: true,
 				data: undefined,
@@ -122,6 +131,16 @@ const WhitelistEndpoints: RouteModule['handler'] = async (fastify, options) => {
 
 		const { items: players } = repo.players.list(1, 5, {
 			search: whitelistData.value,
+		});
+
+		repo.audit.log({
+			adminId: admin.id,
+			action: 'whitelist.revoke',
+			target: players.length === 0 ? undefined : players.map(p => p.name).join(', '),
+			metadata: {
+				type: whitelistData.type,
+				identifier: whitelistData.value,
+			},
 		});
 
 		if (players.length === 0) {
