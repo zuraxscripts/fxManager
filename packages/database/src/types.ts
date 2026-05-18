@@ -32,9 +32,10 @@ export interface PlayerProfile extends Player {
 	notes: (typeof playerNotes.$inferSelect)[];
 }
 
-export type AuditLog = typeof auditLog.$inferSelect;
+export type BaseAuditLog = typeof auditLog.$inferSelect;
+export type AuditLog = BaseAuditLog & { admin: string | null };
 
 export interface AdminProfile extends BaseAdminUser {
-	auditLogs: AuditLog[];
+	auditLogs: BaseAuditLog[];
 	playerName: string | null;
 }
