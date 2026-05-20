@@ -7,6 +7,13 @@ import { Input } from '@fxmanager/ui/components/input';
 import { Checkbox } from '@fxmanager/ui/components/checkbox';
 import { Label } from '@fxmanager/ui/components/label';
 import { ScrollArea, ScrollBar } from '@fxmanager/ui/components/scroll-area';
+import {
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
+} from '@fxmanager/ui/components/select';
 import Ansi from 'ansi-to-react';
 import { ArrowRight, SendHorizonal, Terminal } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -23,7 +30,8 @@ function LogLine({ event }: { event: ProcessOutputLine }) {
 }
 
 export default function Console() {
-	const { lines, sendCommand } = useConsoleSocket({ maxLines: 200 });
+	const [maxLines, setMaxLines] = useState<number>(200);
+	const { lines, sendCommand } = useConsoleSocket({ maxLines });
 	const {
 		state: { status: serverStatus },
 	} = useServerStateSocket();
@@ -71,9 +79,6 @@ export default function Console() {
 		}
 
 		const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-		console.log(isNearBottom, el.scrollHeight - el.scrollTop - el.clientHeight, {
-			scrollHeight: el.scrollHeight, scrollTop: el.scrollTop, clientHeight: el.clientHeight
-		})
 		if (isNearBottom) {
 			el.scrollTop = el.scrollHeight;
 		}
@@ -102,28 +107,52 @@ export default function Console() {
 					<ScrollBar orientation="horizontal" />
 				</ScrollArea>
 
-				<div className="flex flex-none items-center gap-2 border-t p-3 bg-background/50">
-					<ArrowRight className="h-4 w-4 text-primary" />
-					<Input
-						value={input}
-						onChange={(e) => setInput(e.target.value)}
-						onKeyDown={onKeyDown}
-						disabled={serverStatus !== 'running'}
-						placeholder={
-							serverStatus === 'running'
-								? 'Enter server command...'
-								: 'Server not running...'
-						}
-						className="flex-1 border-0 bg-transparent font-mono text-sm shadow-none outline-none focus-visible:ring-0"
-					/>
-					<Label className="hidden md:flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none mr-2">
-						<Checkbox
-							defaultChecked
-							checked={autoScroll}
-							onCheckedChange={setAutoScroll}
+				<div className="flex flex-none items-center gap-4 border-t p-3 bg-background/50">
+					<div className="flex flex-1 items-center gap-2">
+						<ArrowRight className="h-4 w-4 text-primary" />
+						<Input
+							value={input}
+							onChange={(e) => setInput(e.target.value)}
+							onKeyDown={onKeyDown}
+							disabled={serverStatus !== 'running'}
+							placeholder={
+								serverStatus === 'running'
+									? 'Enter server command...'
+									: 'Server not running...'
+							}
+							className="flex-1 border-0 bg-transparent font-mono text-sm shadow-none outline-none focus-visible:ring-0"
 						/>
-						<span>Auto-scroll</span>
-					</Label>
+					</div>
+
+					<div className="flex items-center gap-4 border-l pl-4 h-6 border-muted">
+						<div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
+							<span className="whitespace-nowrap">Max lines:</span>
+							<Select
+								value={String(maxLines)}
+								onValueChange={(val) => setMaxLines(Number(val))}
+							>
+								<SelectTrigger className="h-7 w-[80px] text-xs font-mono bg-background">
+									<SelectValue placeholder="200" />
+								</SelectTrigger>
+								<SelectContent>
+									<SelectItem value="100">100</SelectItem>
+									<SelectItem value="200">200</SelectItem>
+									<SelectItem value="500">500</SelectItem>
+									<SelectItem value="1000">1000</SelectItem>
+								</SelectContent>
+							</Select>
+						</div>
+
+						<Label className="hidden md:flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+							<Checkbox
+								defaultChecked
+								checked={autoScroll}
+								onCheckedChange={setAutoScroll}
+							/>
+							<span>Auto-scroll</span>
+						</Label>
+					</div>
+
 					<Button
 						size="icon"
 						variant="ghost"
