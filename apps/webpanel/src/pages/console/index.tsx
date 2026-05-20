@@ -4,6 +4,8 @@ import type { ProcessOutputLine } from '@fxmanager/shared/types';
 import { Button } from '@fxmanager/ui/components/button';
 import { Card } from '@fxmanager/ui/components/card';
 import { Input } from '@fxmanager/ui/components/input';
+import { Checkbox } from '@fxmanager/ui/components/checkbox';
+import { Label } from '@fxmanager/ui/components/label';
 import { ScrollArea, ScrollBar } from '@fxmanager/ui/components/scroll-area';
 import Ansi from 'ansi-to-react';
 import { ArrowRight, SendHorizonal, Terminal } from 'lucide-react';
@@ -27,9 +29,10 @@ export default function Console() {
 	} = useServerStateSocket();
 
 	const viewportRef = useRef<HTMLDivElement>(null);
-	const [input, setInput] = useState('');
+	const [autoScroll, setAutoScroll] = useState<boolean | 'indeterminate'>(true);
+	const [input, setInput] = useState<string>('');
 	const [history, setHistory] = useState<string[]>([]);
-	const [histIdx, setHistIdx] = useState(-1);
+	const [histIdx, setHistIdx] = useState<number>(-1);
 
 	const submit = () => {
 		const cmd = input.trim();
@@ -62,11 +65,19 @@ export default function Console() {
 		const el = viewportRef.current;
 		if (!el) return;
 
+		if (autoScroll === true) {
+			el.scrollTop = el.scrollHeight;
+			return;
+		}
+
 		const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+		console.log(isNearBottom, el.scrollHeight - el.scrollTop - el.clientHeight, {
+			scrollHeight: el.scrollHeight, scrollTop: el.scrollTop, clientHeight: el.clientHeight
+		})
 		if (isNearBottom) {
 			el.scrollTop = el.scrollHeight;
 		}
-	}, []);
+	}, [autoScroll]);
 
 	return (
 		<div className="flex h-[calc(100vh-2rem)] flex-col gap-4">
@@ -105,6 +116,14 @@ export default function Console() {
 						}
 						className="flex-1 border-0 bg-transparent font-mono text-sm shadow-none outline-none focus-visible:ring-0"
 					/>
+					<Label className="hidden md:flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none mr-2">
+						<Checkbox
+							defaultChecked
+							checked={autoScroll}
+							onCheckedChange={setAutoScroll}
+						/>
+						<span>Auto-scroll</span>
+					</Label>
 					<Button
 						size="icon"
 						variant="ghost"
