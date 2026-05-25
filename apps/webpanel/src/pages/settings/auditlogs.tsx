@@ -113,7 +113,7 @@ export default function AuditLogPage() {
 	};
 
 	return (
-		<div className="flex h-[calc(100vh-2rem)] flex-col gap-6 p-4">
+		<div className="flex h-[calc(100vh-2rem)] flex-col gap-6">
 			<PageHeader
 				Icon={ScrollText}
 				title="Audit Logs"
