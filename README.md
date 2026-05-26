@@ -141,7 +141,7 @@ The panel will be available at `http://your-server-ip:4000`.
 ### 2. Install the resource
 
 1. Copy `dist/resource/` into your server's `resources/` folder as `fxManager`
-2. **IMPORTANT** Add `ensure fxManager` to your `server.cfg`
+2. **IMPORTANT** Do not add `ensure fxManager` to your `server.cfg` or attempt to stop it
 
 ---
 
