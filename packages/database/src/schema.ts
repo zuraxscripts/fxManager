@@ -265,6 +265,10 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
 		fields: [auditLog.adminId],
 		references: [adminUsers.id],
 	}),
+	player: one(players, {
+		fields: [auditLog.playerId],
+		references: [players.id],
+	}),
 }));
 
 export const playerIdentifiersRelations = relations(
