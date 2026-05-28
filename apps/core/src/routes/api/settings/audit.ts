@@ -26,7 +26,7 @@ const AuditLogEndpoint: RouteModule['handler'] = async (fastify) => {
 			action?: AuditLogAction | AuditLogAction[];
 			dateFrom?: string;
 			dateTo?: string;
-			adminId?: string | 'system';
+			admin?: string | string[];
 		};
 		const page = rawQuery.page ? parseInt(rawQuery.page, 10) : 1;
 		const pageSize = rawQuery.pageSize ? parseInt(rawQuery.pageSize, 10) : 50;
@@ -38,12 +38,11 @@ const AuditLogEndpoint: RouteModule['handler'] = async (fastify) => {
 				: [rawQuery.action];
 		}
 
-		let adminIdFilter: number | 'system' | undefined;
-		if (rawQuery.adminId !== undefined && rawQuery.adminId !== '') {
-			adminIdFilter =
-				rawQuery.adminId === 'system'
-					? 'system'
-					: parseInt(rawQuery.adminId, 10);
+		let adminIdFilter: number[] | undefined;
+		if (rawQuery.admin !== undefined && rawQuery.admin !== '') {
+			adminIdFilter = Array.isArray(rawQuery.admin)
+				? rawQuery.admin.map((adminId) => parseInt(adminId, 10))
+				: [parseInt(rawQuery.admin, 10)];
 		}
 
 		const targetFilter = rawQuery.target?.trim() || undefined;
