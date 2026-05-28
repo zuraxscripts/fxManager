@@ -292,9 +292,9 @@ export default function AuditLogPage() {
 												{log.action.replace('_', ' ').replace('.', ': ')}
 											</span>
 
-											{log.target && (
+											{log.player && (
 												<span className="text-xs font-mono bg-muted border border-border/80 text-muted-foreground px-2 py-0.5 rounded">
-													target:{log.target}
+													target: {log.player} (#{log.playerId})
 												</span>
 											)}
 										</div>
