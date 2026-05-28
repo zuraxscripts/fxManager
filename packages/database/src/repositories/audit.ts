@@ -108,6 +108,8 @@ class AuditRepository {
 		const countResult = this.db
 			.select({ count: sql<number>`count(${auditLog.id})` })
 			.from(auditLog)
+			.leftJoin(adminUsers, eq(auditLog.adminId, adminUsers.id))
+			.leftJoin(players, eq(players.id, auditLog.playerId))
 			.where(whereClause)
 			.get();
 
