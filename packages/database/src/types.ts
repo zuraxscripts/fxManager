@@ -33,7 +33,10 @@ export interface PlayerProfile extends Player {
 }
 
 export type BaseAuditLog = typeof auditLog.$inferSelect;
-export type AuditLog = BaseAuditLog & { admin: string | null };
+export type AuditLog = BaseAuditLog & {
+	admin: string | null;
+	player: string | null;
+};
 
 export interface AdminProfile extends BaseAdminUser {
 	auditLogs: BaseAuditLog[];
