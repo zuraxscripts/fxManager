@@ -39,7 +39,6 @@ class AuditRepository {
 		playerId?: number;
 		metadata?: Record<string, unknown>;
 	}) {
-		console.log('adding audit log', input);
 		return this.db
 			.insert(auditLog)
 			.values({ ...input, createdAt: new Date() })
