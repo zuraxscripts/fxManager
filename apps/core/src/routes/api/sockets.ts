@@ -74,9 +74,7 @@ const wsEndpoints: RouteModule['handler'] = async (fastify, { pm, gm }) => {
 					value: `  Protected Convar - \x1b[1maction denied\x1b[0m`,
 					color: '\x1b[31m',
 				});
-			} else if (
-				/^(start|stop|ensure|restart)\s+fxManager/.test(command)
-			) {
+			} else if (/^(start|stop|ensure|restart)\s+fxManager/.test(command)) {
 				pm.injectConsoleLine({
 					process: `fxManager`,
 					value: `  Cannot perform action on protected resource \x1b[1mfxManager\x1b[0m`,
