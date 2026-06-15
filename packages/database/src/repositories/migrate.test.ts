@@ -64,7 +64,9 @@ describe('repo.migrate.fromTxAdmin', () => {
 
 		expect(db.select().from(schema.players).all()).toHaveLength(2);
 		expect(db.select().from(schema.bans).all()).toHaveLength(1);
-		expect(db.select().from(schema.whitelistedIdentifers).all()).toHaveLength(1);
+		expect(db.select().from(schema.whitelistedIdentifers).all()).toHaveLength(
+			1,
+		);
 
 		const storedIds = db
 			.select()

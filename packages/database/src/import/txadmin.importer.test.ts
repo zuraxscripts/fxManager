@@ -315,7 +315,9 @@ describe('importTxAdmin - whitelist', () => {
 		importTxAdmin(db, data);
 		const summary = importTxAdmin(db, data);
 
-		expect(db.select().from(schema.whitelistedIdentifers).all()).toHaveLength(2);
+		expect(db.select().from(schema.whitelistedIdentifers).all()).toHaveLength(
+			2,
+		);
 		expect(summary.whitelist.created).toBe(0);
 	});
 });

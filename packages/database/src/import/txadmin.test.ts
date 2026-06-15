@@ -23,31 +23,20 @@ describe('parseIdentifiers', () => {
 	});
 
 	it('keeps license2 as a distinct identifier type', () => {
-		const result = parseIdentifiers([
-			'license:abc',
-			'license2:def',
-		]);
+		const result = parseIdentifiers(['license:abc', 'license2:def']);
 
 		expect(result).toContainEqual({ type: 'license', value: 'license:abc' });
 		expect(result).toContainEqual({ type: 'license2', value: 'license2:def' });
 	});
 
 	it('skips malformed entries with no colon or empty value', () => {
-		const result = parseIdentifiers([
-			'garbage',
-			'license:',
-			'',
-			'steam:valid',
-		]);
+		const result = parseIdentifiers(['garbage', 'license:', '', 'steam:valid']);
 
 		expect(result).toEqual([{ type: 'steam', value: 'steam:valid' }]);
 	});
 
 	it('dedupes identical identifiers', () => {
-		const result = parseIdentifiers([
-			'license:abc',
-			'license:abc',
-		]);
+		const result = parseIdentifiers(['license:abc', 'license:abc']);
 
 		expect(result).toEqual([{ type: 'license', value: 'license:abc' }]);
 	});
@@ -110,9 +99,7 @@ describe('transformPlayer', () => {
 	});
 
 	it('returns a null note when the note text is empty', () => {
-		expect(
-			transformPlayer({ ...raw, notes: { text: '   ' } }).note,
-		).toBeNull();
+		expect(transformPlayer({ ...raw, notes: { text: '   ' } }).note).toBeNull();
 	});
 
 	it('falls back to pureName then "Unknown" when displayName is missing', () => {
@@ -150,9 +137,9 @@ describe('transformAction (ban)', () => {
 	});
 
 	it('converts a numeric expiration to a Date', () => {
-		expect(transformAction({ ...ban, expiration: 1800000000 }).expiresAt).toEqual(
-			new Date(1800000000 * 1000),
-		);
+		expect(
+			transformAction({ ...ban, expiration: 1800000000 }).expiresAt,
+		).toEqual(new Date(1800000000 * 1000));
 	});
 
 	it('leaves revokedAt null when not revoked', () => {
