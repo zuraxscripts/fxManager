@@ -8,6 +8,7 @@ import {
 	ShieldUser,
 	BookUser,
 	ScrollText,
+	ChartBar,
 } from 'lucide-react';
 import type { NavCategory } from '@/types/sidebar';
 import { UserPermissions } from '@fxmanager/shared/constants';
@@ -36,6 +37,12 @@ const NAV_SERVER: NavCategory = {
 			url: '/resources',
 			icon: LayoutList,
 			permission: UserPermissions.RESOURCE_LIST,
+		},
+		{
+			title: 'Performance',
+			url: '/perf',
+			icon: ChartBar,
+			permission: UserPermissions.CONSOLE_ACCESS,
 		},
 	],
 };
