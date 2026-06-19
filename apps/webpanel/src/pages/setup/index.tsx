@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { Server } from 'lucide-react';
 import { cn } from '@fxmanager/ui/lib/utils';
-import { Alert, AlertDescription } from '@fxmanager/ui/components/alert';
 
 import type { SetupFormData, SetupSteps } from './types';
 import { AccountStep } from './AccountStep';
 import { ServerStep } from './ServerStep';
 import { PermissionsStep } from './PermissionsStep';
 import { QueryService } from '@/lib/query';
+import { toast } from 'sonner';
 
 export function SetupApp() {
-	const [step, setStep] = useState<SetupSteps>('account');
+	const [step, setStep] = useState<SetupSteps>('permissions');
 	const [formData, setFormData] = useState<SetupFormData>({
 		username: '',
 		password: '',
@@ -21,15 +21,24 @@ export function SetupApp() {
 		adminGroups: [],
 	});
 
-	const [error, setError] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
+
+	function setError(message: string) {
+		toast.error('An error occured', {
+			description: message,
+			position: 'top-right',
+			dismissible: true,
+			closeButton: true,
+			richColors: true,
+			duration: 10_000,
+		})
+	}
 
 	function handleChange<K extends keyof SetupFormData>(
 		field: K,
 		value: SetupFormData[K],
 	) {
 		setFormData((prev) => ({ ...prev, [field]: value }));
-		setError(null);
 	}
 
 	function handleAccountNext(e: React.FormEvent) {
@@ -42,7 +51,6 @@ export function SetupApp() {
 			setError('Password must be at least 8 characters.');
 			return;
 		}
-		setError(null);
 		setStep('server');
 	}
 
@@ -130,14 +138,6 @@ export function SetupApp() {
 							</span>
 						</div>
 					</div>
-
-					{error && (
-						<Alert variant="destructive">
-							<AlertDescription className="font-medium text-center">
-								{error}
-							</AlertDescription>
-						</Alert>
-					)}
 
 					{step === 'account' && (
 						<AccountStep
