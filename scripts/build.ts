@@ -57,11 +57,13 @@ await copyDir(webpanelDist, ASSETS_DIR);
 
 const resourceDist = path.join(process.cwd(), 'apps/resource');
 
-await Promise.all(['locales', 'static', 'dist'].map(async (localPath) => {
-	const path = join(resourceDist, localPath);
-	const targetpath = join(RESOURCE_DIR, localPath);
-	await copyDir(path, targetpath);
-}));
+await Promise.all(
+	['locales', 'static', 'dist'].map(async (localPath) => {
+		const path = join(resourceDist, localPath);
+		const targetpath = join(RESOURCE_DIR, localPath);
+		await copyDir(path, targetpath);
+	}),
+);
 
 await Promise.all(
 	['fxmanifest.lua', 'README.md', '.yarn.installed'].map(async (localPath) => {
@@ -88,7 +90,7 @@ const toBuild =
 const stripDevLabels = {
 	name: 'strip-dev-labels',
 	setup(build: PluginBuilder) {
-		build.onLoad({ filter: /\.(ts|tsx)$/ }, async (args: any) => {
+		build.onLoad({ filter: /\.(ts|tsx)$/ }, async (args) => {
 			const text = await Bun.file(args.path).text();
 			return {
 				contents: text.replaceAll(/^\s*DEV:.*$/gm, ''),
