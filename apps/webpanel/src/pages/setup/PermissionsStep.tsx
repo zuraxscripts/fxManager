@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, CircleHelp } from 'lucide-react';
 import { Label } from '@fxmanager/ui/components/label';
 import { Input } from '@fxmanager/ui/components/input';
 import { Button } from '@fxmanager/ui/components/button';
@@ -7,6 +7,8 @@ import type { SetupFormData } from './types';
 import type { AdminGroup } from '@fxmanager/shared/types';
 import PermissionEditor from '../settings/components/permissioneditor';
 import { ScrollArea, ScrollBar } from '@fxmanager/ui/components/scroll-area';
+import { IconPicker } from '@fxmanager/ui/components/icon-selectmenu';
+import { getIconComponent } from '@fxmanager/ui/lib/icons';
 
 interface PermissionsStepProps {
 	formData: SetupFormData;
@@ -89,11 +91,9 @@ export function PermissionsStep({
 					</div>
 					<div className="flex flex-col gap-1.5">
 						<Label className="text-xs">Lucide Symbol Icon Key</Label>
-						<Input
+						<IconPicker
 							value={newGroup.icon}
-							onChange={(e) =>
-								setNewGroup((p) => ({ ...p, icon: e.target.value }))
-							}
+							onChange={(icon) => setNewGroup((p) => ({ ...p, icon }))}
 						/>
 					</div>
 				</div>
@@ -143,35 +143,47 @@ export function PermissionsStep({
 							</div>
 						) : (
 							<div className="flex flex-col gap-2 max-h-[320px] overflow-y-auto pr-1">
-								{formData.adminGroups.map((grp, index) => (
-									<div
-										key={grp.label}
-										className="flex items-center justify-between text-xs bg-background p-3 rounded-lg border shadow-xs"
-									>
-										<div className="flex items-center gap-2.5 overflow-hidden">
-											<span
-												className="w-2.5 h-2.5 rounded-full shrink-0"
-												style={{ backgroundColor: grp.colour }}
-											/>
-											<div className="truncate">
-												<p className="font-bold text-foreground truncate">
-													{grp.label}
-												</p>
-												<p className="text-[10px] font-mono text-muted-foreground truncate">
-													Bits: {grp.permissions}
-												</p>
-											</div>
-										</div>
-										<Button
-											size="icon"
-											variant="ghost"
-											className="h-7 w-7 text-destructive hover:bg-destructive/10 shrink-0"
-											onClick={() => onRemoveGroup(index)}
+								{formData.adminGroups.map((grp, index) => {
+									const IconComponent = grp.icon
+										? getIconComponent(grp.icon)
+										: null;
+									const Icon = IconComponent || CircleHelp;
+
+									return (
+										<div
+											key={grp.label.toLowerCase().replace(' ','-')}
+											className="flex items-center justify-between text-xs bg-background p-3 rounded-lg border shadow-xs"
 										>
-											<Trash2 className="size-3.5" />
-										</Button>
-									</div>
-								))}
+											<div className="flex items-center gap-2.5 overflow-hidden">
+												<Icon
+													className="w-5 h-5 shrink-0"
+													stroke={grp.colour || 'currentColor'}
+												/>
+												<div className="truncate">
+													<p className="font-bold text-foreground truncate">
+														{grp.label}
+													</p>
+													<p className="text-[10px] font-mono text-muted-foreground truncate">
+														Bits: {grp.permissions}
+													</p>
+												</div>
+											</div>
+
+											<Button
+												type="button"
+												size="icon"
+												variant="ghost"
+												className="h-7 w-7 text-destructive hover:bg-destructive/10 shrink-0"
+												onClick={(e) => {
+													e.preventDefault();
+													onRemoveGroup(index);
+												}}
+											>
+												<Trash2 className="size-3.5" />
+											</Button>
+										</div>
+									);
+								})}
 							</div>
 						)}
 					</div>
