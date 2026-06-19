@@ -43,36 +43,36 @@ function formatPath(path: string): string {
 }
 
 function ResourceCardSkeleton() {
-	const skeletonBg = "bg-zinc-300 dark:bg-zinc-800/80";
+	const skeletonBg = 'bg-zinc-300 dark:bg-zinc-800/80';
 	return (
-    <div className="bg-zinc-300/50 dark:bg-zinc-900/50 border border-zinc-300 dark:border-zinc-800 p-4 rounded-lg animate-pulse">
-      <div className="flex items-start justify-between">
-        <div className="space-y-2 w-full">
-          <div className="flex items-center gap-2">
-            <Skeleton className={`h-4 w-4 rounded ${skeletonBg}`} />
-            <Skeleton className={`h-4 w-32 ${skeletonBg}`} />
-            <Skeleton className={`h-4 w-12 rounded ${skeletonBg}`} />
-          </div>
+		<div className="bg-zinc-300/50 dark:bg-zinc-900/50 border border-zinc-300 dark:border-zinc-800 p-4 rounded-lg animate-pulse">
+			<div className="flex items-start justify-between">
+				<div className="space-y-2 w-full">
+					<div className="flex items-center gap-2">
+						<Skeleton className={`h-4 w-4 rounded ${skeletonBg}`} />
+						<Skeleton className={`h-4 w-32 ${skeletonBg}`} />
+						<Skeleton className={`h-4 w-12 rounded ${skeletonBg}`} />
+					</div>
 
-          <Skeleton className={`h-3 w-3/4 ${skeletonBg}`} />
-          <Skeleton className={`h-3 w-2/3 ${skeletonBg}`} />
+					<Skeleton className={`h-3 w-3/4 ${skeletonBg}`} />
+					<Skeleton className={`h-3 w-2/3 ${skeletonBg}`} />
 
-          <div className="flex gap-4 mt-2">
-            <Skeleton className={`h-3 w-24 ${skeletonBg}`} />
-            <Skeleton className={`h-3 w-40 ${skeletonBg}`} />
-          </div>
-        </div>
+					<div className="flex gap-4 mt-2">
+						<Skeleton className={`h-3 w-24 ${skeletonBg}`} />
+						<Skeleton className={`h-3 w-40 ${skeletonBg}`} />
+					</div>
+				</div>
 
-        <div className="flex flex-col items-center gap-4 p-2">
-          <Skeleton className={`h-6 w-24 rounded ${skeletonBg}`} />
+				<div className="flex flex-col items-center gap-4 p-2">
+					<Skeleton className={`h-6 w-24 rounded ${skeletonBg}`} />
 
-          <div className="flex gap-2">
-            <Skeleton className={`h-8 w-8 rounded ${skeletonBg}`} />
-            <Skeleton className={`h-8 w-8 rounded ${skeletonBg}`} />
-          </div>
-        </div>
-      </div>
-    </div>
+					<div className="flex gap-2">
+						<Skeleton className={`h-8 w-8 rounded ${skeletonBg}`} />
+						<Skeleton className={`h-8 w-8 rounded ${skeletonBg}`} />
+					</div>
+				</div>
+			</div>
+		</div>
 	);
 }
 

@@ -12,7 +12,7 @@ import {
 /* ToDo:
  * Expand performance with the ability to see evolution over time
  * as well as being able to review data from previous sessions.
-*/
+ */
 
 export default function PerformancePage() {
 	const { samples } = usePerfSocket();

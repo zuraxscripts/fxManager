@@ -72,10 +72,12 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 
 	const togglePermission = (bit: number) => {
 		if (!canEdit || bit === UserPermissions.MASTER) return;
-		setBitField((prev) => prev ^ bit);
+
+		const nextBitfield = bitfield ^ bit;
+		setBitField(nextBitfield);
 
 		if (skipServerSave) {
-			updatePerms(bitfield & ~UserPermissions.MASTER);
+			updatePerms(nextBitfield & ~UserPermissions.MASTER);
 			return;
 		}
 	};
@@ -120,7 +122,6 @@ export default function PermissionEditor(props: PermissionEditorProps) {
 	};
 
 	useEffect(() => {
-		console.log(bitfield, PermissionManager.getGroup(bitfield));
 		setPermissionGroup(PermissionManager.getGroup(bitfield) ?? undefined);
 	}, [bitfield]);
 
