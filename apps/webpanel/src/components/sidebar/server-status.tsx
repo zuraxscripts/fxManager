@@ -68,9 +68,10 @@ export function ServerStatusCard() {
 	const { count } = usePlayerlistSocket();
 	const { state: sideBarState, setOpen } = useSidebar();
 	const isCollapsed = sideBarState === 'collapsed';
-	const isRunning = serverState.status === 'running';
 	const canStart =
 		serverState.status === 'stopped' || serverState.status === 'crashed';
+	const canStop =
+		serverState.status === 'running' || serverState.status === 'starting';
 
 	if (isCollapsed) {
 		return (
@@ -120,14 +121,14 @@ export function ServerStatusCard() {
 							/>
 							<ActionButton
 								action="stop"
-								disabled={!isRunning}
+								disabled={!canStop}
 								colour="destructive"
 								Icon={Square}
 								tooltip="Stop server"
 							/>
 							<ActionButton
 								action="restart"
-								disabled={!isRunning}
+								disabled={!canStop}
 								colour="primary"
 								Icon={RefreshCw}
 								tooltip="Restart server"
