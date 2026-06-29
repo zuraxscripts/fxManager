@@ -8,14 +8,30 @@ import { ConfigManager } from '../config/manager';
 import { wsManager } from '../ws/manager';
 import { resourceManager } from '../resource/manager';
 
+const STARTUP_STALL_MS = 90_000;
+const KILL_GRACE_MS = 5_000;
+
 export class ProcessManager {
 	private state: ServerState = { status: 'stopped', startedAt: null };
 	private proc: ReturnType<typeof Bun.spawn> | null = null;
 	private buffer = new LogBuffer<ProcessOutputLine>();
 	private config = ConfigManager.getInstance();
+	private startupTimer: ReturnType<typeof setTimeout> | null = null;
+	private readonly startupStallMs: number;
+
+	constructor(opts?: { startupStallMs?: number }) {
+		this.startupStallMs = opts?.startupStallMs ?? STARTUP_STALL_MS;
+	}
 
 	// region process methods
 	async start() {
+		if (this.state.status !== 'stopped' && this.state.status !== 'crashed') {
+			console.warn(
+				`[core] start() ignored, server is already '${this.state.status}'`,
+			);
+			return false;
+		}
+
 		this.config.regenerateApiToken();
 		const systemValues = this.config.getSystemValues();
 		const fxServerValues = this.config.getFxServerValues(true);
@@ -69,19 +85,31 @@ export class ProcessManager {
 			);
 
 			this.proc.exited.then((code) => this.onExit(code));
+			this.armStartupWatchdog();
 
 			return true;
 		} catch (err) {
 			console.error(`[core] Failed to start fxServer`, err);
+			this.clearStartupWatchdog();
+			this.proc = null;
+			this.setState('crashed');
 			return false;
 		}
 	}
 
 	async stop() {
-		if (this.state.status !== 'running' || !this.proc) return false;
+		if (
+			!this.proc ||
+			this.state.status === 'stopping' ||
+			this.state.status === 'stopped'
+		)
+			return false;
+
+		const proc = this.proc;
 
 		console.log(`[core] Stopping fxServer`);
 		this.setState('stopping');
+		this.clearStartupWatchdog();
 
 		this.injectConsoleLine({
 			payload: {
@@ -95,12 +123,9 @@ export class ProcessManager {
 			} satisfies ProcessOutputLine,
 		});
 
-		this.proc.kill();
-		await this.proc.exited;
-		this.proc = null;
+		await this.terminate(proc);
 
 		console.log(`[core] fxServer has stopped`);
-		this.setState('stopped');
 
 		this.injectConsoleLine({
 			payload: {
@@ -118,7 +143,8 @@ export class ProcessManager {
 	}
 
 	async restart() {
-		if (this.state.status === 'running') await this.stop();
+		if (this.state.status === 'running' || this.state.status === 'starting')
+			await this.stop();
 		await this.start();
 
 		return true;
@@ -214,6 +240,57 @@ export class ProcessManager {
 		}
 	}
 
+	private armStartupWatchdog() {
+		this.clearStartupWatchdog();
+		this.startupTimer = setTimeout(() => {
+			void this.onStartupStalled();
+		}, this.startupStallMs);
+		this.startupTimer.unref?.();
+	}
+
+	private clearStartupWatchdog() {
+		if (this.startupTimer) {
+			clearTimeout(this.startupTimer);
+			this.startupTimer = null;
+		}
+	}
+
+	private async onStartupStalled() {
+		if (this.state.status !== 'starting' || !this.proc) return;
+
+		console.warn(
+			`[core] fxServer produced no output for ${this.startupStallMs}ms while starting, terminating it`,
+		);
+		this.injectConsoleLine({
+			process: 'fxManager',
+			value:
+				'Server stalled while starting (no output — possible license/auth issue). Stopping it so you can try again.',
+			color: '\x1b[38;5;196m',
+		});
+
+		await this.terminate(this.proc);
+	}
+
+	private async terminate(proc: ReturnType<typeof Bun.spawn>) {
+		proc.kill();
+
+		let escalation: ReturnType<typeof setTimeout> | null = setTimeout(() => {
+			try {
+				proc.kill('SIGKILL');
+			} catch {}
+		}, KILL_GRACE_MS);
+		escalation.unref?.();
+
+		try {
+			await proc.exited;
+		} finally {
+			if (escalation) {
+				clearTimeout(escalation);
+				escalation = null;
+			}
+		}
+	}
+
 	private createLineBreakTransformer() {
 		let buffer = '';
 		return new TransformStream<string, string>({
@@ -258,11 +335,13 @@ export class ProcessManager {
 					ts: Date.now(),
 				} satisfies ProcessOutputLine;
 
-				if (
-					this.state.status === 'starting' &&
-					value.includes('Authenticated with cfx.re Nucleus')
-				) {
-					this.setState('running');
+				if (this.state.status === 'starting') {
+					if (value.includes('Authenticated with cfx.re Nucleus')) {
+						this.clearStartupWatchdog();
+						this.setState('running');
+					} else {
+						this.armStartupWatchdog();
+					}
 				}
 
 				console.log(value);
@@ -279,15 +358,26 @@ export class ProcessManager {
 		}
 	}
 
-	/* ToDo: implement onExit checks to clean up */
 	private async onExit(code: number | null) {
-		const crashed =
-			code !== 143 &&
-			code !== 0 &&
-			code !== null &&
-			this.state.status !== 'stopping';
+		this.clearStartupWatchdog();
+		const previous = this.state.status;
+		this.proc = null;
 
-		if (crashed) {
+		if (previous === 'stopping' || previous === 'stopped') {
+			this.setState('stopped');
+			return;
+		}
+
+		if (previous === 'starting') {
+			console.warn(`[core] fxServer exited during startup with code ${code}`);
+			this.setState('crashed');
+			return;
+		}
+
+		const graceful = code === 0 || code === 143 || code === null;
+		if (graceful) {
+			this.setState('stopped');
+		} else {
 			console.warn(`[core] fxServer process exited with code ${code}`);
 			this.setState('crashed');
 		}

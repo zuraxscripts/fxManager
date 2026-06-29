@@ -279,6 +279,108 @@ describe('ProcessManager', () => {
 		});
 	});
 
+	describe('Recovery from failed / hung starts', () => {
+		it('marks the server crashed and clears the process when it exits during startup without authenticating', async () => {
+			await processManager.start();
+			expect(processManager.getState().status).toBe('starting');
+
+			pushToStream(
+				stderrController,
+				'An error occurred while checking server license key: HTTP 429: Too Many Requests\n',
+			);
+			if (currentTriggerExit) currentTriggerExit(1);
+			await Bun.sleep(15);
+
+			expect(processManager.getState().status).toBe('crashed');
+			expect((processManager as any).proc).toBeNull();
+		});
+
+		it('lets the operator stop a server that is stuck in starting', async () => {
+			await processManager.start();
+			expect(processManager.getState().status).toBe('starting');
+
+			const result = await processManager.stop();
+
+			expect(result).toBe(true);
+			expect(processManager.getState().status).toBe('stopped');
+			expect((processManager as any).proc).toBeNull();
+		});
+
+		it('kills a start that goes silent and marks it crashed once the stall window elapses', async () => {
+			const watched = new ProcessManagerModule.ProcessManager({
+				startupStallMs: 40,
+			});
+			(watched as any).buffer = {
+				push: mockBufferPush,
+				getHistory: mockGetHistory,
+			};
+
+			await watched.start();
+			expect(watched.getState().status).toBe('starting');
+
+			await Bun.sleep(120);
+
+			expect(watched.getState().status).toBe('crashed');
+			expect((watched as any).proc).toBeNull();
+		});
+
+		it('does not kill a slow start that keeps logging progress past the stall window', async () => {
+			const watched = new ProcessManagerModule.ProcessManager({
+				startupStallMs: 60,
+			});
+			(watched as any).buffer = {
+				push: mockBufferPush,
+				getHistory: mockGetHistory,
+			};
+
+			await watched.start();
+
+			// keep emitting boot output with gaps shorter than the stall window,
+			// for a total span well beyond it
+			for (let i = 0; i < 6; i++) {
+				pushToStream(stdoutController, `Started resource sample-${i}\n`);
+				await Bun.sleep(30);
+			}
+
+			expect(watched.getState().status).toBe('starting');
+			expect((watched as any).proc).not.toBeNull();
+		});
+
+		it('refuses to start again while already starting, avoiding an orphaned child process', async () => {
+			await processManager.start();
+			const spawnCallsAfterFirst = (Bun.spawn as any).mock.calls.length;
+
+			const result = await processManager.start();
+
+			expect(result).toBe(false);
+			expect((Bun.spawn as any).mock.calls.length).toBe(spawnCallsAfterFirst);
+		});
+
+		it('does not get stuck in starting when spawn throws', async () => {
+			Bun.spawn = mock(() => {
+				throw new Error('Fatal Native Binary Execution Fault');
+			}) as any;
+
+			const result = await processManager.start();
+
+			expect(result).toBe(false);
+			expect(processManager.getState().status).not.toBe('starting');
+			expect((processManager as any).proc).toBeNull();
+		});
+
+		it('recovers a server stuck in starting via restart()', async () => {
+			await processManager.start();
+			expect(processManager.getState().status).toBe('starting');
+
+			const stopSpy = spyOn(processManager, 'stop');
+			await processManager.restart();
+
+			expect(stopSpy).toHaveBeenCalled();
+			expect(processManager.getState().status).toBe('starting');
+			expect((processManager as any).proc).not.toBeNull();
+		});
+	});
+
 	describe('sendCommand()', () => {
 		it('should securely throw validation errors if an external user targets an inactive process standard input pipe', () => {
 			expect(() => processManager.sendCommand('status')).toThrow(
