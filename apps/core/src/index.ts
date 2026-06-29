@@ -30,7 +30,7 @@ checkVersion('dev-build');
 
 const cm = ConfigManager.getInstance();
 const { cookieSecret, webServerPort } = cm.getSystemValues();
-const fastify = Fastify({ logger: !isProduction });
+const fastify = Fastify({ logger: !isProduction, forceCloseConnections: true });
 
 fastify.register(fastifyCookie, {
 	secret: cookieSecret,
