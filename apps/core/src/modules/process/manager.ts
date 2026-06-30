@@ -67,7 +67,7 @@ export class ProcessManager {
 		});
 
 		try {
-			this.proc = Bun.spawn([config.executable, ...args], {
+			this.proc = Bun.spawn([config.executablePath, ...args], {
 				cwd: config.serverDataPath,
 				stdin: 'pipe',
 				stdout: 'pipe',
