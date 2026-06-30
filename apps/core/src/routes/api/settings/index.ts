@@ -11,6 +11,7 @@ import { PermissionManager } from '@fxmanager/shared/utils';
 import {
 	SETTINGS_KEYS,
 	SETTINGS_SCOPES,
+	SETTINGS_SENSITIVE_KEYS,
 	UserPermissions,
 } from '@fxmanager/shared/constants';
 import { repo } from '@fxmanager/database';
@@ -74,6 +75,14 @@ const SettingsEndpoints: RouteModule['handler'] = async (
 		}
 
 		repo.settings.set(key, value);
+		
+		const logValue = SETTINGS_SENSITIVE_KEYS.includes(key as SettingsKey) ? 'REDACTED' : value
+		repo.audit.log({
+			adminId: admin.id,
+			action: 'settings.update',
+			metadata: { key, value: logValue }
+		});
+
 		return { success: true, data: undefined };
 	});
 

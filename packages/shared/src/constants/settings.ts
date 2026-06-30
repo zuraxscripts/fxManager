@@ -20,3 +20,7 @@ export const SETTINGS_DEFAULTS = {
 	'fxserver.serverConfigPath': 'server.cfg',
 	'whitelist.mode': 'none',
 } satisfies Partial<Record<SettingsKey, string>>;
+
+export const SETTINGS_SENSITIVE_KEYS: SettingsKey[] = [
+	'whitelist.discordBotToken'
+];
