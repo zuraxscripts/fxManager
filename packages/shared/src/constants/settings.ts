@@ -23,3 +23,7 @@ export const SETTINGS_DEFAULTS = {
 	'restarts.enabled': 'false',
 	'restarts.times': '',
 } satisfies Partial<Record<SettingsKey, string>>;
+
+export const SETTINGS_SENSITIVE_KEYS: SettingsKey[] = [
+	'whitelist.discordBotToken'
+];
