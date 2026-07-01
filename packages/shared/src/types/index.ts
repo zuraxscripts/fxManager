@@ -9,4 +9,6 @@ export * from './security';
 export * from './settings';
 export * from './websockets';
 export * from './perf';
+export * from './disconnect';
+export * from './session';
 export * from './whitelist';

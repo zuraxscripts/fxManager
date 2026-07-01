@@ -230,6 +230,57 @@ export const apiTokens = sqliteTable(
 	(t) => [index('tokens_token_idx').on(t.token)],
 );
 
+export const serverSessions = sqliteTable(
+	'server_sessions',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		startedAt: integer('started_at', { mode: 'timestamp' }).notNull(),
+		endedAt: integer('ended_at', { mode: 'timestamp' }),
+		closeReason: text('close_reason'),
+	},
+	(t) => [index('server_session_started_idx').on(t.startedAt)],
+);
+
+export const sessionDisconnects = sqliteTable('session_disconnects', {
+	sessionId: integer('session_id')
+		.primaryKey()
+		.references(() => serverSessions.id, { onDelete: 'cascade' }),
+	quit: integer('quit').notNull().default(0),
+	crash: integer('crash').notNull().default(0),
+	timeout: integer('timeout').notNull().default(0),
+	kick: integer('kick').notNull().default(0),
+	other: integer('other').notNull().default(0),
+});
+
+export const perfSnapshots = sqliteTable(
+	'perf_snapshots',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		sessionId: integer('session_id')
+			.notNull()
+			.references(() => serverSessions.id, { onDelete: 'cascade' }),
+		ts: integer('ts').notNull(),
+		players: integer('players').notNull().default(0),
+		fxsMemory: integer('fxs_memory'),
+		nodeMemory: integer('node_memory'),
+		perf: text('perf', { mode: 'json' }).notNull(),
+	},
+	(t) => [index('perf_snapshot_session_ts_idx').on(t.sessionId, t.ts)],
+);
+
+export const disconnectEvents = sqliteTable(
+	'disconnect_events',
+	{
+		id: integer('id').primaryKey({ autoIncrement: true }),
+		sessionId: integer('session_id')
+			.notNull()
+			.references(() => serverSessions.id, { onDelete: 'cascade' }),
+		ts: integer('ts').notNull(),
+		category: text('category').notNull(),
+	},
+	(t) => [index('disconnect_event_session_ts_idx').on(t.sessionId, t.ts)],
+);
+
 // region Relations
 
 export const playersRelations = relations(players, ({ many, one }) => ({

@@ -14,6 +14,8 @@ import {
 import { ConfigManager } from '../config/manager';
 import { wsManager } from '../ws/manager';
 import { resourceManager } from '../resource/manager';
+import { disconnectManager } from '../disconnect/manager';
+import { sessionManager } from '../session/manager';
 
 const mockGetHistory = mock(() => []);
 const mockBufferPush = mock(() => {});
@@ -46,6 +48,29 @@ const loadResourcesSpy = spyOn(
 const stoppingServerSpy = spyOn(
 	resourceManager,
 	'stoppingServer',
+).mockImplementation(() => {});
+// setState() drives server-session open/close as a side effect; stub the
+// session + disconnect managers so the real DB is never touched.
+const stubSession = {
+	id: 1,
+	startedAt: 1000,
+	endedAt: null as number | null,
+	closeReason: null as string | null,
+};
+const sessionOpenSpy = spyOn(sessionManager, 'openSession').mockReturnValue(
+	stubSession,
+);
+const sessionCloseSpy = spyOn(sessionManager, 'closeSession').mockReturnValue({
+	...stubSession,
+	endedAt: 5000,
+});
+const onSessionOpenSpy = spyOn(
+	disconnectManager,
+	'onSessionOpen',
+).mockImplementation(() => {});
+const onSessionCloseSpy = spyOn(
+	disconnectManager,
+	'onSessionClose',
 ).mockImplementation(() => {});
 
 const ProcessManagerModule = await import('./manager');
@@ -105,6 +130,10 @@ describe('ProcessManager', () => {
 		broadcastSpy.mockClear();
 		loadResourcesSpy.mockClear();
 		stoppingServerSpy.mockClear();
+		sessionOpenSpy.mockClear();
+		sessionCloseSpy.mockClear();
+		onSessionOpenSpy.mockClear();
+		onSessionCloseSpy.mockClear();
 
 		stdoutController = null;
 		stderrController = null;
@@ -147,6 +176,10 @@ describe('ProcessManager', () => {
 		broadcastSpy.mockRestore();
 		loadResourcesSpy.mockRestore();
 		stoppingServerSpy.mockRestore();
+		sessionOpenSpy.mockRestore();
+		sessionCloseSpy.mockRestore();
+		onSessionOpenSpy.mockRestore();
+		onSessionCloseSpy.mockRestore();
 	});
 
 	const pushToStream = (
@@ -450,6 +483,18 @@ describe('ProcessManager', () => {
 			expect(broadcastSpy).toHaveBeenCalledWith(
 				expect.objectContaining({ channel: 'console', event: 'line' }),
 			);
+		});
+	});
+
+	describe('server session lifecycle', () => {
+		it('opens a session on running and closes it on stopped', () => {
+			const manager = new ProcessManagerModule.ProcessManager();
+			(manager as any).setState('running');
+			expect(sessionOpenSpy).toHaveBeenCalledTimes(1);
+			expect(onSessionOpenSpy).toHaveBeenCalledTimes(1);
+			(manager as any).setState('stopped');
+			expect(sessionCloseSpy).toHaveBeenCalledTimes(1);
+			expect(onSessionCloseSpy).toHaveBeenCalledTimes(1);
 		});
 	});
 });

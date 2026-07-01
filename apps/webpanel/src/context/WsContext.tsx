@@ -18,6 +18,7 @@ export function WSProvider({ children }: { children: ReactNode }) {
 	// handlers keyed by `channel:event`
 	const handlersRef = useRef<Map<string, Set<MessageHandler>>>(new Map());
 	const pendingRef = useRef<Set<Channel>>(new Set()); // subscriptions before connect
+	const subCountsRef = useRef<Map<Channel, number>>(new Map());
 
 	useEffect(() => {
 		if (!user) {
@@ -71,6 +72,12 @@ export function WSProvider({ children }: { children: ReactNode }) {
 
 	const subscribe = useCallback(
 		(channel: Channel) => {
+			const counts = subCountsRef.current;
+			const next = (counts.get(channel) ?? 0) + 1;
+			counts.set(channel, next);
+
+			if (next > 1) return;
+
 			if (socketRef.current?.readyState === WebSocket.OPEN) {
 				send({ type: 'subscribe', channel });
 			} else {
@@ -82,6 +89,18 @@ export function WSProvider({ children }: { children: ReactNode }) {
 
 	const unsubscribe = useCallback(
 		(channel: Channel) => {
+			const counts = subCountsRef.current;
+			const current = counts.get(channel) ?? 0;
+			if (current <= 0) return;
+
+			const next = current - 1;
+
+			if (next > 0) {
+				counts.set(channel, next);
+				return;
+			}
+
+			counts.delete(channel);
 			pendingRef.current.delete(channel);
 			send({ type: 'unsubscribe', channel });
 		},

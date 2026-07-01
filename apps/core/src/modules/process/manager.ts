@@ -10,6 +10,8 @@ import { LogBuffer } from '../buffer/manager';
 import { ConfigManager } from '../config/manager';
 import { wsManager } from '../ws/manager';
 import { resourceManager } from '../resource/manager';
+import { disconnectManager } from '../disconnect/manager';
+import { sessionManager } from '../session/manager';
 
 const STARTUP_STALL_MS = 90_000;
 const KILL_GRACE_MS = 5_000;
@@ -243,9 +245,18 @@ export class ProcessManager {
 
 		if (status === 'running') {
 			resourceManager.loadResources();
+			const session = sessionManager.openSession();
+			disconnectManager.onSessionOpen(session);
 			void this.fetchServerVersion();
 		} else if (status === 'crashed' || status === 'stopping') {
 			resourceManager.stoppingServer();
+		}
+
+		if (status === 'stopped' || status === 'crashed') {
+			const closed = sessionManager.closeSession(
+				status === 'crashed' ? 'crashed' : null,
+			);
+			disconnectManager.onSessionClose(closed);
 		}
 	}
 

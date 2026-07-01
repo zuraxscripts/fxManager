@@ -11,6 +11,8 @@ import type {
 import { wsManager } from '../ws/manager';
 import { discordManager } from '../discord/manager';
 import { ConfigManager } from '../config/manager';
+import { disconnectManager } from '../disconnect/manager';
+import { sessionManager } from '../session/manager';
 
 export class GameManager {
 	private playerlist: OnlinePlayer[] = [];
@@ -162,6 +164,7 @@ export class GameManager {
 		} satisfies OnlinePlayer;
 
 		this.playerlist.push(playerPayload);
+		sessionManager.setPlayerCount(this.playerlist.length);
 		wsManager.broadcast<OnlinePlayer>({
 			channel: 'playerlist',
 			event: 'player_joined',
@@ -169,7 +172,18 @@ export class GameManager {
 		});
 	}
 
-	async playerDrop(serverId: number) {
+	async playerDrop(
+		serverId: number,
+		drop?: { reason?: unknown; resourceName?: string; category?: number },
+	) {
+		if (drop) {
+			disconnectManager.recordDrop({
+				reason: drop.reason,
+				resourceName: drop.resourceName,
+				category: drop.category,
+			});
+		}
+
 		const index = this.playerlist.findIndex((p) => p.serverId === serverId);
 
 		if (index === -1) {
@@ -180,6 +194,7 @@ export class GameManager {
 		}
 
 		const [player] = this.playerlist.splice(index, 1);
+		sessionManager.setPlayerCount(this.playerlist.length);
 		if (!player) {
 			console.warn(
 				`[core] A player (${serverId}) disconnected but wasn't tracked!`,

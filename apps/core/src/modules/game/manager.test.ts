@@ -31,10 +31,21 @@ mock.module('@fxmanager/database', () => ({
 		},
 		settings: { get: mockGetSetting },
 		whitelist: { isAnyIdentifierWhitelisted: mockIsAnyIdentifierWhitelisted },
+		disconnects: {
+			openForSession: () => {},
+			bump: () => {},
+		},
+		serverSessions: {
+			open: () => ({ id: 1, startedAt: 0, endedAt: null, closeReason: null }),
+			close: () => null,
+			closeDangling: () => {},
+			prune: () => {},
+		},
 	},
 }));
 
 const GameManagerModule = await import('./manager');
+import { sessionManager } from '../session/manager';
 import type { PlayerIdentifiers } from '@fxmanager/shared/types';
 
 type GameManagerInstance = InstanceType<typeof GameManagerModule.GameManager>;
@@ -48,6 +59,7 @@ describe('GameManager', () => {
 	let discordConnectSpy: any;
 	let discordCheckWhitelistSpy: any;
 	let configSpy: any;
+	let setPlayerCountSpy: any;
 
 	const sampleIdentifiers: PlayerIdentifiers = {
 		license: 'license:11112222',
@@ -83,6 +95,11 @@ describe('GameManager', () => {
 			getSystemValues: () => ({ resourceApiToken: 'mock-token' }),
 		} as any);
 
+		setPlayerCountSpy = spyOn(
+			sessionManager,
+			'setPlayerCount',
+		).mockImplementation(() => {});
+
 		gameManager = new GameManagerModule.GameManager();
 	});
 
@@ -95,6 +112,7 @@ describe('GameManager', () => {
 		discordConnectSpy.mockRestore();
 		discordCheckWhitelistSpy.mockRestore();
 		configSpy.mockRestore();
+		setPlayerCountSpy.mockRestore();
 	});
 
 	describe('Player Handling Basics', () => {
@@ -337,6 +355,7 @@ describe('GameManager', () => {
 				event: 'player_joined',
 				data: expectedPayload,
 			});
+			expect(setPlayerCountSpy).toHaveBeenCalledWith(1);
 		});
 	});
 
@@ -363,6 +382,7 @@ describe('GameManager', () => {
 
 			expect(gameManager.getPlayerList()).toHaveLength(0);
 			expect(mockUpdatePlaytime).toHaveBeenCalledWith(12, expect.any(Number));
+			expect(setPlayerCountSpy).toHaveBeenCalledWith(0);
 			expect(wsSpy).toHaveBeenCalledWith({
 				channel: 'playerlist',
 				event: 'player_left',
@@ -374,6 +394,25 @@ describe('GameManager', () => {
 			await gameManager.playerDrop(999);
 			expect(mockUpdatePlaytime).not.toHaveBeenCalled();
 			expect(wsSpy).not.toHaveBeenCalled();
+		});
+
+		it('playerDrop forwards drop details to the disconnect manager', async () => {
+			const { disconnectManager } = await import('../disconnect/manager');
+			const recordSpy = spyOn(
+				disconnectManager,
+				'recordDrop',
+			).mockImplementation(() => {});
+			gameManager.playerDrop(42, {
+				reason: 'Exiting',
+				resourceName: 'x',
+				category: 2,
+			});
+			expect(recordSpy).toHaveBeenCalledWith({
+				reason: 'Exiting',
+				resourceName: 'x',
+				category: 2,
+			});
+			recordSpy.mockRestore();
 		});
 	});
 

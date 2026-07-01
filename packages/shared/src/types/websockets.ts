@@ -4,6 +4,7 @@ export type Channel =
 	| 'playerlist'
 	| 'console'
 	| 'perf'
+	| 'disconnects'
 	| `report:general`
 	| `report:${number}`;
 
