@@ -15,6 +15,7 @@ import { gameManager } from './modules/game/manager';
 import { ConfigManager } from './modules/config/manager';
 import { perfManager } from './modules/perf/manager';
 import { sessionManager } from './modules/session/manager';
+import { restartScheduler } from './modules/schedule/manager';
 import { applyMigrations } from '@fxmanager/database';
 import { MIGRATE_WORKER_FLAG, runMigrateWorker } from './migrate-worker';
 
@@ -82,6 +83,7 @@ const gm = gameManager;
 
 perfManager.start();
 sessionManager.init();
+restartScheduler.start(pm);
 
 fastify.register(apiRoutes, { prefix: '/api', pm, gm });
 fastify.register(internalRoutes, { prefix: '/internal', pm, gm });

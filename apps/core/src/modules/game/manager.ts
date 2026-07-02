@@ -13,6 +13,7 @@ import { discordManager } from '../discord/manager';
 import { ConfigManager } from '../config/manager';
 import { disconnectManager } from '../disconnect/manager';
 import { sessionManager } from '../session/manager';
+import { getServerNetEndpoint } from '../../common/fxserver-endpoint';
 
 export class GameManager {
 	private playerlist: OnlinePlayer[] = [];
@@ -246,7 +247,8 @@ export class GameManager {
 	async dropPlayer(serverId: number, reason: string): Promise<ApiResponse> {
 		try {
 			const resourceToken = await this.getApiToken();
-			const response = await fetch('http://localhost:30120/fxManager/drop', {
+			const endpoint = await getServerNetEndpoint();
+			const response = await fetch(`http://${endpoint}/fxManager/drop`, {
 				method: 'POST',
 				body: JSON.stringify({
 					serverId,

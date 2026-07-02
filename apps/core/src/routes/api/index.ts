@@ -9,6 +9,7 @@ import ResourcesModule from './resources';
 import MigrateModule from './migrate';
 import DisconnectsModule from './disconnects';
 import PerfModule from './perf';
+import ConfigModule from './config';
 
 const apiRoutes: RouteModule['handler'] = async (fastify, options) => {
 	fastify.register(AuthModule.handler, {
@@ -59,6 +60,11 @@ const apiRoutes: RouteModule['handler'] = async (fastify, options) => {
 	fastify.register(PerfModule.handler, {
 		...options,
 		prefix: PerfModule.prefix,
+	});
+
+	fastify.register(ConfigModule.handler, {
+		...options,
+		prefix: ConfigModule.prefix,
 	});
 };
 

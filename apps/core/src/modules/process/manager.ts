@@ -13,9 +13,13 @@ import { resourceManager } from '../resource/manager';
 import { disconnectManager } from '../disconnect/manager';
 import { sessionManager } from '../session/manager';
 import { gameManager } from '../game/manager';
+import { txAdminCompat } from '../txadmin/compat';
 
 const STARTUP_STALL_MS = 90_000;
 const KILL_GRACE_MS = 5_000;
+const SHUTDOWN_EVENT_GRACE_MS = 10_000;
+
+type ShutdownOpts = { author?: string; message?: string };
 
 export class ProcessManager {
 	private state: ServerState = {
@@ -28,9 +32,11 @@ export class ProcessManager {
 	private config = ConfigManager.getInstance();
 	private startupTimer: ReturnType<typeof setTimeout> | null = null;
 	private readonly startupStallMs: number;
+	private readonly shutdownGraceMs: number;
 
-	constructor(opts?: { startupStallMs?: number }) {
+	constructor(opts?: { startupStallMs?: number; shutdownGraceMs?: number }) {
 		this.startupStallMs = opts?.startupStallMs ?? STARTUP_STALL_MS;
+		this.shutdownGraceMs = opts?.shutdownGraceMs ?? SHUTDOWN_EVENT_GRACE_MS;
 	}
 
 	// region process methods
@@ -107,7 +113,7 @@ export class ProcessManager {
 		}
 	}
 
-	async stop() {
+	async stop(opts?: ShutdownOpts) {
 		if (
 			!this.proc ||
 			this.state.status === 'stopping' ||
@@ -116,6 +122,7 @@ export class ProcessManager {
 			return false;
 
 		const proc = this.proc;
+		const wasRunning = this.state.status === 'running';
 
 		console.log(`[core] Stopping fxServer`);
 		this.setState('stopping');
@@ -132,6 +139,8 @@ export class ProcessManager {
 				source: 'stdout',
 			} satisfies ProcessOutputLine,
 		});
+
+		if (wasRunning) await this.announceShutdown(opts);
 
 		await this.terminate(proc);
 
@@ -152,12 +161,26 @@ export class ProcessManager {
 		return true;
 	}
 
-	async restart() {
+	async restart(opts?: ShutdownOpts) {
 		if (this.state.status === 'running' || this.state.status === 'starting')
-			await this.stop();
+			await this.stop(opts);
 		await this.start();
 
 		return true;
+	}
+
+	private async announceShutdown(opts?: ShutdownOpts): Promise<void> {
+		const delay = this.shutdownGraceMs;
+
+		await txAdminCompat.emit('serverShuttingDown', {
+			delay,
+			author: opts?.author ?? 'System',
+			message: opts?.message ?? 'Server is shutting down.',
+		});
+
+		if (delay > 0) {
+			await new Promise<void>((resolve) => setTimeout(resolve, delay));
+		}
 	}
 
 	sendCommand(command: string): void {
