@@ -11,50 +11,62 @@ import {
 	type ReactNode,
 } from 'react';
 
+const RECONNECT_MIN_MS = 500;
+const RECONNECT_MAX_MS = 10_000;
+
 export function WSProvider({ children }: { children: ReactNode }) {
 	const { user } = useAuth();
 	const [connected, setConnected] = useState(false);
 	const socketRef = useRef<WebSocket | null>(null);
 	// handlers keyed by `channel:event`
 	const handlersRef = useRef<Map<string, Set<MessageHandler>>>(new Map());
-	const subCountsRef = useRef<Map<Channel, number>>(new Map());
+	// refcounted subscriptions, replayed on reconnect
+	const subsRef = useRef<Map<Channel, number>>(new Map());
 
 	useEffect(() => {
-		if (!user) {
-			if (socketRef.current) {
-				socketRef.current.close();
-				socketRef.current = null;
+		if (!user) return;
+
+		let disposed = false;
+		let retryDelay = RECONNECT_MIN_MS;
+		let retryTimer: ReturnType<typeof setTimeout> | undefined;
+
+		const connect = () => {
+			const ws = new WebSocket(WSUrl());
+			socketRef.current = ws;
+
+			ws.onopen = () => {
+				retryDelay = RECONNECT_MIN_MS;
+				setConnected(true);
+				for (const channel of subsRef.current.keys()) {
+					ws.send(JSON.stringify({ type: 'subscribe', channel }));
+				}
+			};
+
+			ws.onclose = () => {
+				// A stale socket's close can arrive after a newer one took over
+				if (socketRef.current === ws) socketRef.current = null;
+				if (disposed) return;
 				setConnected(false);
-			}
+				retryTimer = setTimeout(connect, retryDelay);
+				retryDelay = Math.min(retryDelay * 2, RECONNECT_MAX_MS);
+			};
 
-			return;
-		}
-
-		if (socketRef.current) return;
-
-		const ws = new WebSocket(WSUrl());
-		socketRef.current = ws;
-
-		ws.onopen = () => {
-			setConnected(true);
-			for (const channel of subCountsRef.current.keys()) {
-				ws.send(JSON.stringify({ type: 'subscribe', channel }));
-			}
+			ws.onmessage = (event) => {
+				try {
+					const msg: WSMessage = JSON.parse(event.data);
+					const key = `${msg.channel}:${msg.event}`;
+					handlersRef.current.get(key)?.forEach((h) => {
+						h(msg);
+					});
+				} catch {}
+			};
 		};
 
-		ws.onclose = () => setConnected(false);
-
-		ws.onmessage = (event) => {
-			try {
-				const msg: WSMessage = JSON.parse(event.data);
-				const key = `${msg.channel}:${msg.event}`;
-				handlersRef.current.get(key)?.forEach((h) => {
-					h(msg);
-				});
-			} catch {}
-		};
+		connect();
 
 		return () => {
+			disposed = true;
+			clearTimeout(retryTimer);
 			socketRef.current?.close();
 			socketRef.current = null;
 			setConnected(false);
@@ -69,9 +81,8 @@ export function WSProvider({ children }: { children: ReactNode }) {
 
 	const subscribe = useCallback(
 		(channel: Channel) => {
-			const counts = subCountsRef.current;
-			counts.set(channel, (counts.get(channel) ?? 0) + 1);
-
+			const count = subsRef.current.get(channel) ?? 0;
+			subsRef.current.set(channel, count + 1);
 			send({ type: 'subscribe', channel });
 		},
 		[send],
@@ -79,19 +90,13 @@ export function WSProvider({ children }: { children: ReactNode }) {
 
 	const unsubscribe = useCallback(
 		(channel: Channel) => {
-			const counts = subCountsRef.current;
-			const current = counts.get(channel) ?? 0;
-			if (current <= 0) return;
-
-			const next = current - 1;
-
-			if (next > 0) {
-				counts.set(channel, next);
-				return;
+			const count = subsRef.current.get(channel) ?? 0;
+			if (count <= 1) {
+				subsRef.current.delete(channel);
+				send({ type: 'unsubscribe', channel });
+			} else {
+				subsRef.current.set(channel, count - 1);
 			}
-
-			counts.delete(channel);
-			send({ type: 'unsubscribe', channel });
 		},
 		[send],
 	);
