@@ -88,7 +88,17 @@ export function SetupApp() {
 			setLoading(false);
 		}
 	}
+	useEffect(() => {
+		const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+			event.preventDefault();
+		};
 
+		window.addEventListener('beforeunload', handleBeforeUnload);
+
+		return () => {
+			window.removeEventListener('beforeunload', handleBeforeUnload);
+		};
+	}, []);
 	return (
 		<div className="flex min-h-screen items-center justify-center p-4 md:p-8 bg-background">
 			<div className="w-full max-w-7xl border p-6 md:p-8 rounded-2xl bg-card shadow-lg">
