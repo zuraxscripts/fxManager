@@ -15,9 +15,12 @@ import {
 	SelectValue,
 } from '@fxmanager/ui/components/select';
 import Ansi from 'ansi-to-react';
-import { ArrowRight, SendHorizonal, Terminal } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { ArrowRight, Filter, SendHorizonal, Terminal, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import './styles.css';
+
+// biome-ignore lint/suspicious/noControlCharactersInRegex: strips ANSI color codes for filter matching
+const ANSI_PATTERN = /\x1b\[[0-9;]*m/g;
 
 function LogLine({ event }: { event: ProcessOutputLine }) {
 	return (
@@ -31,7 +34,7 @@ function LogLine({ event }: { event: ProcessOutputLine }) {
 
 export default function Console() {
 	const [maxLines, setMaxLines] = useState<number>(200);
-	const { lines, sendCommand } = useConsoleSocket({ maxLines });
+	const { lines, sendCommand, clear } = useConsoleSocket({ maxLines });
 	const {
 		state: { status: serverStatus },
 	} = useServerStateSocket();
@@ -41,14 +44,31 @@ export default function Console() {
 	const [input, setInput] = useState<string>('');
 	const [history, setHistory] = useState<string[]>([]);
 	const [histIdx, setHistIdx] = useState<number>(-1);
+	const [filterOpen, setFilterOpen] = useState<boolean>(false);
+	const [filter, setFilter] = useState<string>('');
+
+	const visibleLines = useMemo(() => {
+		const query = filter.trim().toLowerCase();
+		if (!query) return lines;
+		return lines.filter((log) =>
+			log.line.replace(ANSI_PATTERN, '').toLowerCase().includes(query),
+		);
+	}, [lines, filter]);
+
+	const toggleFilter = () => {
+		if (filterOpen) setFilter('');
+		setFilterOpen(!filterOpen);
+	};
 
 	const submit = () => {
 		const cmd = input.trim();
 		if (!cmd) return;
-		sendCommand(cmd);
 		setHistory((h) => [cmd, ...h].slice(0, 50));
 		setHistIdx(-1);
 		setInput('');
+
+		if (cmd === 'clear' || cmd === 'cls') return clear();
+		sendCommand(cmd);
 
 		const el = viewportRef.current;
 		if (!el) return;
@@ -69,35 +89,55 @@ export default function Console() {
 		}
 	};
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: visibleLines re-triggers the scroll on new output
 	useEffect(() => {
 		const el = viewportRef.current;
-		if (!el) return;
-
-		if (autoScroll === true) {
-			el.scrollTop = el.scrollHeight;
-			return;
-		}
-
-		const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-		if (isNearBottom) {
-			el.scrollTop = el.scrollHeight;
-		}
-	}, [autoScroll]);
+		if (!el || autoScroll !== true) return;
+		el.scrollTop = el.scrollHeight;
+	}, [visibleLines, autoScroll]);
 
 	return (
 		<div className="flex h-full flex-col gap-4">
 			<PageHeader Icon={Terminal} title="Console" />
 
 			<Card className="flex flex-1 flex-col min-h-0 pb-0 overflow-hidden gap-0.5">
+				{filterOpen && (
+					<div className="flex flex-none items-center gap-2 border-b px-3 pb-2">
+						<Filter className="h-4 w-4 text-muted-foreground" />
+						<Input
+							value={filter}
+							onChange={(e) => setFilter(e.target.value)}
+							placeholder="Filter output..."
+							className="flex-1 border-0 bg-transparent font-mono text-sm shadow-none outline-none focus-visible:ring-0"
+						/>
+						{filter.trim() && (
+							<span className="text-xs text-muted-foreground whitespace-nowrap">
+								{visibleLines.length}/{lines.length}
+							</span>
+						)}
+						<Button
+							size="icon"
+							variant="ghost"
+							onClick={toggleFilter}
+							className="h-7 w-7 text-muted-foreground"
+						>
+							<X className="h-4 w-4" />
+						</Button>
+					</div>
+				)}
 				<ScrollArea className="flex-1 min-h-0" viewportRef={viewportRef}>
 					<div className="p-4 font-mono text-xs leading-relaxed">
 						{lines.length === 0 ? (
 							<p className="text-muted-foreground text-center py-4">
 								No output yet. Start the server to see logs.
 							</p>
+						) : visibleLines.length === 0 ? (
+							<p className="text-muted-foreground text-center py-4">
+								No lines match the filter.
+							</p>
 						) : (
 							<div className="flex flex-col">
-								{lines.map((log, i) => (
+								{visibleLines.map((log, i) => (
 									// biome-ignore lint/suspicious/noArrayIndexKey: line indexes are immutable ?
 									<LogLine event={log} key={i} />
 								))}
@@ -125,6 +165,16 @@ export default function Console() {
 					</div>
 
 					<div className="flex items-center gap-4 border-l pl-4 h-6 border-muted">
+						<Button
+							size="icon"
+							variant="ghost"
+							onClick={toggleFilter}
+							className={`h-7 w-7 ${
+								filterOpen ? 'text-primary' : 'text-muted-foreground'
+							}`}
+						>
+							<Filter className="h-4 w-4" />
+						</Button>
 						<div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
 							<span className="whitespace-nowrap">Max lines:</span>
 							<Select
