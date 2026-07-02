@@ -13,14 +13,21 @@ import {
 	CardHeader,
 	CardTitle,
 } from '@fxmanager/ui/components/card';
-import { PieChart } from 'lucide-react';
+import {
+	type ChartConfig,
+	ChartContainer,
+	ChartTooltip,
+	ChartTooltipContent,
+} from '@fxmanager/ui/components/chart';
+import { PieChart as PieChartIcon } from 'lucide-react';
 import { format } from 'date-fns';
+import { Label, Pie, PieChart } from 'recharts';
 import { QueryService } from '@/lib/query';
 import { useWsChannel } from '@/hooks/ws-channels/use-ws-core';
 
-const RADIUS = 44;
-const STROKE = 16;
-const CIRC = 2 * Math.PI * RADIUS;
+const chartConfig = Object.fromEntries(
+	DISCONNECT_CATEGORIES.map((c) => [c.key, { label: c.label, color: c.color }]),
+) satisfies ChartConfig;
 
 export function DisconnectDonut({
 	sessionId,
@@ -81,28 +88,19 @@ export function DisconnectDonut({
 				: 'this restart'
 			: 'this session';
 
-	let offset = 0;
-	const segments =
-		total > 0
-			? DISCONNECT_CATEGORIES.map((cat) => {
-					const value = counts[cat.key];
-					const len = (value / total) * CIRC;
-					const seg = {
-						key: cat.key,
-						color: cat.color,
-						dash: `${len} ${CIRC - len}`,
-						offset: -offset,
-					};
-					offset += len;
-					return seg;
-				}).filter((_, i) => counts[DISCONNECT_CATEGORIES[i].key] > 0)
-			: [];
+	const data = DISCONNECT_CATEGORIES.filter((cat) => counts[cat.key] > 0).map(
+		(cat) => ({
+			category: cat.key,
+			count: counts[cat.key],
+			fill: cat.color,
+		}),
+	);
 
 	return (
 		<Card>
 			<CardHeader className="space-y-1.5">
 				<CardTitle className="flex items-center gap-2">
-					<PieChart className="h-4 w-4" />
+					<PieChartIcon className="h-4 w-4" />
 					Disconnect reasons
 				</CardTitle>
 				<CardDescription>
@@ -118,40 +116,56 @@ export function DisconnectDonut({
 					</div>
 				) : (
 					<div className="flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-around">
-						<svg
+						<ChartContainer
+							config={chartConfig}
+							className="aspect-square w-full max-w-[240px] shrink-0"
 							role="img"
 							aria-label="Disconnect reasons breakdown"
-							width={2 * (RADIUS + STROKE / 2)}
-							height={2 * (RADIUS + STROKE / 2)}
-							viewBox={`0 0 ${2 * (RADIUS + STROKE / 2)} ${2 * (RADIUS + STROKE / 2)}`}
-							className="shrink-0"
 						>
-							<title>Disconnect reasons breakdown</title>
-							<g
-								transform={`translate(${RADIUS + STROKE / 2}, ${RADIUS + STROKE / 2}) rotate(-90)`}
-							>
-								{segments.map((seg) => (
-									<circle
-										key={seg.key}
-										r={RADIUS}
-										fill="none"
-										stroke={seg.color}
-										strokeWidth={STROKE}
-										strokeDasharray={seg.dash}
-										strokeDashoffset={seg.offset}
+							<PieChart>
+								<ChartTooltip
+									cursor={false}
+									content={<ChartTooltipContent hideLabel />}
+								/>
+								<Pie
+									data={data}
+									dataKey="count"
+									nameKey="category"
+									innerRadius={60}
+									strokeWidth={5}
+								>
+									<Label
+										content={({ viewBox }) => {
+											if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
+												return (
+													<text
+														x={viewBox.cx}
+														y={viewBox.cy}
+														textAnchor="middle"
+														dominantBaseline="middle"
+													>
+														<tspan
+															x={viewBox.cx}
+															y={viewBox.cy}
+															className="fill-foreground text-3xl font-semibold tabular-nums"
+														>
+															{total.toLocaleString()}
+														</tspan>
+														<tspan
+															x={viewBox.cx}
+															y={(viewBox.cy || 0) + 24}
+															className="fill-muted-foreground"
+														>
+															disconnects
+														</tspan>
+													</text>
+												);
+											}
+										}}
 									/>
-								))}
-							</g>
-							<text
-								x="50%"
-								y="50%"
-								textAnchor="middle"
-								dominantBaseline="central"
-								className="fill-foreground text-2xl font-semibold tabular-nums"
-							>
-								{total}
-							</text>
-						</svg>
+								</Pie>
+							</PieChart>
+						</ChartContainer>
 						<div className="w-full max-w-[240px] space-y-2">
 							{DISCONNECT_CATEGORIES.map((cat) => {
 								const value = counts[cat.key];
