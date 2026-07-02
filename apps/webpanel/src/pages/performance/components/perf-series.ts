@@ -40,24 +40,20 @@ export function bandFractions(
 	);
 }
 
-/** Index of the snapshot closest to ts, restricted to [min, max]; -1 when no
- * snapshot falls inside the window. */
-export function nearestSnapshotIdx(
+/** Index of the heatmap cell [ts_i, next ts) containing ts, mirroring how
+ * cells are painted (the last cell extends to the right edge). -1 when ts is
+ * outside [min, max] or before the first snapshot. */
+export function snapshotIdxAt(
 	snapshots: PerfSnapshot[],
 	ts: number,
 	min: number,
 	max: number,
 ): number {
+	if (ts < min || ts > max) return -1;
 	let idx = -1;
-	let best = Infinity;
 	for (let i = 0; i < snapshots.length; i++) {
-		const t = snapshots[i].ts;
-		if (t < min || t > max) continue;
-		const d = Math.abs(t - ts);
-		if (d < best) {
-			best = d;
-			idx = i;
-		}
+		if (snapshots[i].ts > ts) break;
+		idx = i;
 	}
 	return idx;
 }

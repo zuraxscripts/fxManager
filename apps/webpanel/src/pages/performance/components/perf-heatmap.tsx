@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { BANDS, bandColor, bandLabel } from './perf-buckets';
 import {
 	bandFractions,
-	nearestSnapshotIdx,
+	snapshotIdxAt,
 	type PerfInspect,
 } from './perf-series';
 
@@ -263,13 +263,13 @@ export function PerfHeatmap({
 		ctx.restore();
 	}, [size, snapshots, view, hoverIdx, drag]);
 
-	const nearestAt = useCallback(
+	const cellAt = useCallback(
 		(mx: number, rectW: number) => {
 			const x0 = MARGIN.left;
 			const plotW = rectW - MARGIN.left - MARGIN.right;
 			const span = view.max - view.min || 1;
 			const ts = view.min + ((clamp(mx, x0, x0 + plotW) - x0) / plotW) * span;
-			return nearestSnapshotIdx(snapshots, ts, view.min, view.max);
+			return snapshotIdxAt(snapshots, ts, view.min, view.max);
 		},
 		[snapshots, view],
 	);
@@ -303,10 +303,10 @@ export function PerfHeatmap({
 				setHover(null);
 				return;
 			}
-			const idx = nearestAt(mx, rect.width);
+			const idx = cellAt(mx, rect.width);
 			setHover(idx === -1 ? null : { idx, x: mx, y: my });
 		},
-		[snapshots, drag, nearestAt],
+		[snapshots, drag, cellAt],
 	);
 
 	const onUp = useCallback(

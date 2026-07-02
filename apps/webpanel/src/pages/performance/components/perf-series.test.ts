@@ -5,7 +5,7 @@ import type {
 	RawPerf,
 } from '@fxmanager/shared/types';
 import { BANDS } from './perf-buckets';
-import { bandFractions, nearestSnapshotIdx } from './perf-series';
+import { bandFractions, snapshotIdxAt } from './perf-series';
 
 /** Build a 15-length cumulative buckets array from per-band tick counts. */
 function cumulative(perBand: number[]): number[] {
@@ -65,23 +65,29 @@ describe('bandFractions', () => {
 	});
 });
 
-describe('nearestSnapshotIdx', () => {
+describe('snapshotIdxAt', () => {
 	const snaps = [0, 30_000, 60_000, 90_000].map((ts) =>
 		snapshot(ts, 0, thread(1, [1])),
 	);
 
-	it('returns the snapshot closest to ts within the window', () => {
-		expect(nearestSnapshotIdx(snaps, 40_000, 0, 90_000)).toBe(1);
-		expect(nearestSnapshotIdx(snaps, 50_000, 0, 90_000)).toBe(2);
+	it('returns the cell containing ts, not the nearest snapshot', () => {
+		expect(snapshotIdxAt(snaps, 40_000, 0, 90_000)).toBe(1);
+		// 50s is closer to the 60s sample but still inside the 30s cell
+		expect(snapshotIdxAt(snaps, 50_000, 0, 90_000)).toBe(1);
+		expect(snapshotIdxAt(snaps, 60_000, 0, 90_000)).toBe(2);
 	});
 
-	it('never returns a snapshot outside [min, max]', () => {
-		// hovering near the zoom edge must not pick the out-of-window 90s sample
-		expect(nearestSnapshotIdx(snaps, 74_000, 30_000, 75_000)).toBe(2);
+	it('never returns a snapshot past ts near the zoom edge', () => {
+		expect(snapshotIdxAt(snaps, 74_000, 30_000, 75_000)).toBe(2);
 	});
 
-	it('returns -1 when no snapshot falls inside the window', () => {
-		expect(nearestSnapshotIdx(snaps, 20_000, 15_000, 25_000)).toBe(-1);
-		expect(nearestSnapshotIdx([], 0, 0, 100)).toBe(-1);
+	it('returns the partially visible cell when zoomed between samples', () => {
+		expect(snapshotIdxAt(snaps, 20_000, 15_000, 25_000)).toBe(0);
+	});
+
+	it('returns -1 before the first snapshot, outside the window, or when empty', () => {
+		expect(snapshotIdxAt(snaps, -5_000, -10_000, 90_000)).toBe(-1);
+		expect(snapshotIdxAt(snaps, 95_000, 0, 90_000)).toBe(-1);
+		expect(snapshotIdxAt([], 0, 0, 100)).toBe(-1);
 	});
 });
