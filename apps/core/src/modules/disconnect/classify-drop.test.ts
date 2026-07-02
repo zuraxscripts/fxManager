@@ -18,13 +18,13 @@ describe('classifyDrop — numeric category path', () => {
 		expect(classifyDrop({ reason: 'onesync', category: 12 })).toBe('timeout');
 	});
 	it('RESOURCE kick → kick', () => {
-		expect(classifyDrop({ reason: 'You were banned', category: 1, resourceName: 'fxManager' })).toBe('kick');
+		expect(classifyDrop({ reason: 'You were banned', category: 1 })).toBe('kick');
 	});
 	it('SERVER-initiated → kick', () => {
 		expect(classifyDrop({ reason: 'kicked', category: 3 })).toBe('kick');
 	});
 	it('RESOURCE server_shutting_down → ignored (null)', () => {
-		expect(classifyDrop({ reason: 'server_shutting_down', category: 1, resourceName: 'monitor' })).toBeNull();
+		expect(classifyDrop({ reason: 'server_shutting_down', category: 1 })).toBeNull();
 	});
 	it('SERVER_SHUTDOWN → ignored (null)', () => {
 		expect(classifyDrop({ reason: 'whatever', category: 7 })).toBeNull();

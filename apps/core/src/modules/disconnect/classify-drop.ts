@@ -87,7 +87,6 @@ function guessFromReason(reason: string): DropCategory | null {
  */
 export function classifyDrop(payload: {
 	reason: unknown;
-	resourceName?: string;
 	category?: number;
 }): DropCategory | null {
 	const reason = typeof payload.reason === 'string' ? payload.reason : '';
