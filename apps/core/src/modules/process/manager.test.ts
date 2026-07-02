@@ -526,8 +526,7 @@ describe('ProcessManager', () => {
 	});
 
 	describe('Console output batching', () => {
-		// Stray flush timers from other tests' manager instances can fire mid-test,
-		// so assertions filter broadcasts down to this test's own marked lines
+		// stray flush timers from other tests' instances can fire mid-test
 		const batchesWithMarker = (marker: string) =>
 			broadcastSpy.mock.calls
 				.map((call) => call[0] as any)

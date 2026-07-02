@@ -51,7 +51,6 @@ const LogLine = memo(function LogLine({ event }: { event: ProcessOutputLine }) {
 export default function Console() {
 	const [maxLines, setMaxLines] = useState<number>(200);
 	const [following, setFollowing] = useState<boolean>(true);
-	// Pausing suspends top-trimming so the buffer can't shift under the reader
 	const { lines, sendCommand, clear } = useConsoleSocket({
 		maxLines,
 		suspendTrim: !following,
@@ -138,8 +137,6 @@ export default function Console() {
 		el.scrollTop = el.scrollHeight;
 	}, [visibleLines]);
 
-	// Following is derived from where the user scrolls: leaving the bottom
-	// pauses it (recording the seq for the new-lines badge), returning resumes
 	useEffect(() => {
 		const el = viewportRef.current;
 		if (!el) return;

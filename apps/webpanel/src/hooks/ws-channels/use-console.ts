@@ -4,8 +4,6 @@ import type { ProcessOutputLine } from '@fxmanager/shared/types';
 
 interface UseConsoleOptions {
 	maxLines?: number;
-	// While true, appended lines aren't trimmed from the top so a scrolled-up
-	// reading position stays stable; bounded by TRIM_OVERSHOOT
 	suspendTrim?: boolean;
 }
 
@@ -50,7 +48,6 @@ export function useConsoleSocket({
 			},
 		);
 
-		// Batched delivery; seq filter drops lines already covered by the initial dump
 		const offLines = on<ProcessOutputLine[]>('console', 'lines', ({ data }) => {
 			setLines((prev) => {
 				const lastSeq = prev.length > 0 ? prev[prev.length - 1].seq : -1;

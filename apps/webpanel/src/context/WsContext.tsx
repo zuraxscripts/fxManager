@@ -20,7 +20,7 @@ export function WSProvider({ children }: { children: ReactNode }) {
 	const socketRef = useRef<WebSocket | null>(null);
 	// handlers keyed by `channel:event`
 	const handlersRef = useRef<Map<string, Set<MessageHandler>>>(new Map());
-	// refcounted active subscriptions, replayed after every (re)connect
+	// refcounted subscriptions, replayed on reconnect
 	const subsRef = useRef<Map<Channel, number>>(new Map());
 
 	useEffect(() => {
@@ -37,8 +37,6 @@ export function WSProvider({ children }: { children: ReactNode }) {
 			ws.onopen = () => {
 				retryDelay = RECONNECT_MIN_MS;
 				setConnected(true);
-				// Resubscribe active channels; the server answers each with a
-				// fresh 'initial' dump, restoring state lost while disconnected
 				for (const channel of subsRef.current.keys()) {
 					ws.send(JSON.stringify({ type: 'subscribe', channel }));
 				}
@@ -85,8 +83,6 @@ export function WSProvider({ children }: { children: ReactNode }) {
 		(channel: Channel) => {
 			const count = subsRef.current.get(channel) ?? 0;
 			subsRef.current.set(channel, count + 1);
-			// Always forward: the server re-sends 'initial', so late co-subscribers
-			// still get their state. No-op while disconnected (replayed on open).
 			send({ type: 'subscribe', channel });
 		},
 		[send],
