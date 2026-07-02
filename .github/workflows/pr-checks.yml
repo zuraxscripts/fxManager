@@ -2,12 +2,13 @@ name: PR Code Verification
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
     name: Run Unit Tests
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -25,8 +26,9 @@ jobs:
 
   build:
     name: Verify Build System (${{ matrix.os }})
-    needs: test
     runs-on: ${{ matrix.os }}
+    needs: test
+    if: github.event.pull_request.draft == false
     strategy:
       fail-fast: false
       matrix:
