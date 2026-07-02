@@ -12,6 +12,7 @@ import { wsManager } from '../ws/manager';
 import { resourceManager } from '../resource/manager';
 import { disconnectManager } from '../disconnect/manager';
 import { sessionManager } from '../session/manager';
+import { gameManager } from '../game/manager';
 
 const STARTUP_STALL_MS = 90_000;
 const KILL_GRACE_MS = 5_000;
@@ -245,6 +246,7 @@ export class ProcessManager {
 
 		if (status === 'running') {
 			resourceManager.loadResources();
+			gameManager.resetPlayerlist();
 			const session = sessionManager.openSession();
 			disconnectManager.onSessionOpen(session);
 			void this.fetchServerVersion();
@@ -253,6 +255,7 @@ export class ProcessManager {
 		}
 
 		if (status === 'stopped' || status === 'crashed') {
+			gameManager.resetPlayerlist();
 			const closed = sessionManager.closeSession(
 				status === 'crashed' ? 'crashed' : null,
 			);

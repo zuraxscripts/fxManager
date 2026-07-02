@@ -5,6 +5,7 @@ import { drizzle } from 'drizzle-orm/bun-sqlite';
 import * as schema from '../schema';
 import { migrations, runMigrations } from '../migrations';
 import { createServerSessionsRepository } from './server-sessions';
+import { createPerfSnapshotsRepository } from './perf-snapshots';
 
 describe('ServerSessionsRepository', () => {
 	const logSpy = spyOn(console, 'log').mockImplementation(() => {});
@@ -12,12 +13,15 @@ describe('ServerSessionsRepository', () => {
 	let testSqlite: Database;
 	let testDb: ReturnType<typeof drizzle<typeof schema>>;
 	let repo: ReturnType<typeof createServerSessionsRepository>;
+	let perf: ReturnType<typeof createPerfSnapshotsRepository>;
 
 	beforeEach(() => {
 		logSpy.mockClear();
 
 		const zeroState = createServerSessionsRepository({} as any);
 		(zeroState.constructor as any).instance = undefined;
+		const zeroPerf = createPerfSnapshotsRepository({} as any);
+		(zeroPerf.constructor as any).instance = undefined;
 
 		testSqlite = new Database(':memory:');
 		testSqlite.run('PRAGMA foreign_keys = ON;');
@@ -25,6 +29,7 @@ describe('ServerSessionsRepository', () => {
 
 		testDb = drizzle(testSqlite, { schema });
 		repo = createServerSessionsRepository(testDb);
+		perf = createPerfSnapshotsRepository(testDb);
 	});
 
 	afterAll(() => {
@@ -60,6 +65,22 @@ describe('ServerSessionsRepository', () => {
 		repo.closeDangling(new Date(9000));
 		const open = repo.listRecent(10).filter((r) => r.endedAt === null);
 		expect(open.length).toBe(0);
+	});
+
+	it('closeDangling stamps endedAt from the last perf snapshot, falling back to the given time', () => {
+		const withSnaps = repo.open(new Date(1000));
+		const bare = repo.open(new Date(2000));
+		perf.insert({ sessionId: withSnaps.id, ts: 60_000, players: 3, perf: {} });
+		perf.insert({ sessionId: withSnaps.id, ts: 120_000, players: 2, perf: {} });
+
+		repo.closeDangling(new Date(9_000_000));
+
+		const stamped = repo.get(withSnaps.id)!;
+		expect(stamped.endedAt).toBe(120_000);
+		expect(stamped.closeReason).toBe('dangling');
+		const fallback = repo.get(bare.id)!;
+		expect(fallback.endedAt).toBe(9_000_000);
+		expect(fallback.closeReason).toBe('dangling');
 	});
 
 	it('get returns a session or null', () => {

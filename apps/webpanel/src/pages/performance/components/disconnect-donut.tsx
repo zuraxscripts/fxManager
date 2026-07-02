@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react';
 import {
 	DISCONNECT_CATEGORIES,
 	type DisconnectCounts,
+	type DisconnectSession,
 	type ServerSession,
+	zeroDisconnectCounts,
 } from '@fxmanager/shared/types';
 import {
 	Card,
@@ -14,12 +16,11 @@ import {
 import { PieChart } from 'lucide-react';
 import { format } from 'date-fns';
 import { QueryService } from '@/lib/query';
-import { useDisconnectsSocket } from '@/hooks/ws-channels/use-disconnects';
+import { useWsChannel } from '@/hooks/ws-channels/use-ws-core';
 
 const RADIUS = 44;
 const STROKE = 16;
 const CIRC = 2 * Math.PI * RADIUS;
-const ZERO: DisconnectCounts = { quit: 0, crash: 0, timeout: 0, kick: 0, other: 0 };
 
 export function DisconnectDonut({
 	sessionId,
@@ -32,7 +33,11 @@ export function DisconnectDonut({
 	isLive: boolean;
 	zoom: { start: number; end: number } | null;
 }) {
-	const { live } = useDisconnectsSocket();
+	const { state: live } = useWsChannel<DisconnectSession | null>(
+		'disconnects',
+		'update',
+		null,
+	);
 	const [fetched, setFetched] = useState<DisconnectCounts | null>(null);
 
 	useEffect(() => {
@@ -63,14 +68,8 @@ export function DisconnectDonut({
 	// counts (a whole-session total or a zoomed slice).
 	const counts: DisconnectCounts =
 		isLive && !zoom && live && live.id === sessionId
-			? {
-					quit: live.quit,
-					crash: live.crash,
-					timeout: live.timeout,
-					kick: live.kick,
-					other: live.other,
-				}
-			: (fetched ?? ZERO);
+			? live
+			: (fetched ?? zeroDisconnectCounts());
 
 	const total = DISCONNECT_CATEGORIES.reduce((s, c) => s + counts[c.key], 0);
 

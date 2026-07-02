@@ -1,5 +1,9 @@
 import { repo } from '@fxmanager/database';
-import type { DisconnectSession, ServerSession } from '@fxmanager/shared/types';
+import {
+	type DisconnectSession,
+	type ServerSession,
+	zeroDisconnectCounts,
+} from '@fxmanager/shared/types';
 import { wsManager } from '../ws/manager';
 import { classifyDrop } from './classify-drop';
 
@@ -7,16 +11,11 @@ class DisconnectManager {
 	private live: DisconnectSession | null = null;
 
 	onSessionOpen(session: ServerSession): void {
-		repo.disconnects.openForSession(session.id);
 		this.live = {
 			id: session.id,
 			startedAt: session.startedAt,
 			endedAt: null,
-			quit: 0,
-			crash: 0,
-			timeout: 0,
-			kick: 0,
-			other: 0,
+			...zeroDisconnectCounts(),
 		};
 		this.broadcast();
 	}
@@ -36,7 +35,6 @@ class DisconnectManager {
 		const category = classifyDrop(payload);
 		if (!category || !this.live) return;
 		this.live[category] += 1;
-		repo.disconnects.bump(this.live.id, category);
 		repo.disconnects.recordEvent(this.live.id, Date.now(), category);
 		this.broadcast();
 	}

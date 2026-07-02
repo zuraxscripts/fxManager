@@ -2,6 +2,7 @@
 import { afterAll, beforeEach, describe, expect, it, spyOn } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
+import { zeroDisconnectCounts } from '@fxmanager/shared/types';
 import * as schema from '../schema';
 import { migrations, runMigrations } from '../migrations';
 import { createDisconnectsRepository } from './disconnects';
@@ -37,67 +38,11 @@ describe('DisconnectsRepository', () => {
 		logSpy.mockRestore();
 	});
 
-	it('opens a disconnects row for a session with zeroed counters', () => {
+	it('countsForSession tallies recorded events per category', () => {
 		const s = sessions.open(new Date(1000));
-		repo.openForSession(s.id);
-		const got = repo.getForSession(s.id)!;
-		expect(got.id).toBe(s.id);
-		expect(got.startedAt).toBe(1000);
-		expect(got.endedAt).toBeNull();
-		expect(got.quit + got.crash + got.timeout + got.kick + got.other).toBe(0);
-	});
-
-	it('openForSession is idempotent (no duplicate rows / no reset)', () => {
-		const s = sessions.open(new Date(1000));
-		repo.openForSession(s.id);
-		repo.bump(s.id, 'crash');
-		repo.openForSession(s.id);
-		expect(repo.getForSession(s.id)!.crash).toBe(1);
-	});
-
-	it('bumps a category counter', () => {
-		const s = sessions.open(new Date(1000));
-		repo.openForSession(s.id);
-		repo.bump(s.id, 'crash');
-		repo.bump(s.id, 'crash');
-		repo.bump(s.id, 'quit');
-		const got = repo.getForSession(s.id)!;
-		expect(got.crash).toBe(2);
-		expect(got.quit).toBe(1);
-	});
-
-	it('getForSession reflects the joined session times', () => {
-		const s = sessions.open(new Date(1000));
-		repo.openForSession(s.id);
-		sessions.close(s.id, 'crashed', new Date(5000));
-		const got = repo.getForSession(s.id)!;
-		expect(got.startedAt).toBe(1000);
-		expect(got.endedAt).toBe(5000);
-	});
-
-	it('getForSession returns null for an unknown session', () => {
-		expect(repo.getForSession(999)).toBeNull();
-	});
-
-	it('listRecent returns newest first with counts', () => {
-		const a = sessions.open(new Date(1000));
-		const b = sessions.open(new Date(3000));
-		const c = sessions.open(new Date(2000));
-		repo.openForSession(a.id);
-		repo.openForSession(b.id);
-		repo.openForSession(c.id);
-		repo.bump(b.id, 'kick');
-		const list = repo.listRecent(10);
-		expect(list.map((s) => s.startedAt)).toEqual([3000, 2000, 1000]);
-		expect(list[0].kick).toBe(1);
-	});
-
-	it('countsForSession returns the whole-session tallies', () => {
-		const s = sessions.open(new Date(1000));
-		repo.openForSession(s.id);
-		repo.bump(s.id, 'quit');
-		repo.bump(s.id, 'crash');
-		repo.bump(s.id, 'quit');
+		repo.recordEvent(s.id, 1000, 'quit');
+		repo.recordEvent(s.id, 2000, 'crash');
+		repo.recordEvent(s.id, 3000, 'quit');
 		expect(repo.countsForSession(s.id)).toEqual({
 			quit: 2,
 			crash: 1,
@@ -105,18 +50,43 @@ describe('DisconnectsRepository', () => {
 			kick: 0,
 			other: 0,
 		});
-		expect(repo.countsForSession(999)).toEqual({
-			quit: 0,
-			crash: 0,
-			timeout: 0,
-			kick: 0,
-			other: 0,
-		});
+	});
+
+	it('countsForSession returns zero counts for unknown or drop-free sessions', () => {
+		const s = sessions.open(new Date(1000));
+		expect(repo.countsForSession(s.id)).toEqual(zeroDisconnectCounts());
+		expect(repo.countsForSession(999)).toEqual(zeroDisconnectCounts());
+	});
+
+	it('getForSession joins the session times with derived counts', () => {
+		const s = sessions.open(new Date(1000));
+		repo.recordEvent(s.id, 2000, 'kick');
+		sessions.close(s.id, 'crashed', new Date(5000));
+		const got = repo.getForSession(s.id)!;
+		expect(got.startedAt).toBe(1000);
+		expect(got.endedAt).toBe(5000);
+		expect(got.kick).toBe(1);
+		expect(got.quit + got.crash + got.timeout + got.other).toBe(0);
+	});
+
+	it('getForSession returns null for an unknown session', () => {
+		expect(repo.getForSession(999)).toBeNull();
+	});
+
+	it('listRecent returns newest sessions first with derived counts', () => {
+		const a = sessions.open(new Date(1000));
+		const b = sessions.open(new Date(3000));
+		const c = sessions.open(new Date(2000));
+		repo.recordEvent(b.id, 3500, 'kick');
+		const list = repo.listRecent(10);
+		expect(list.map((s) => s.startedAt)).toEqual([3000, 2000, 1000]);
+		expect(list[0].kick).toBe(1);
+		expect(list.find((s) => s.id === a.id)!.kick).toBe(0);
+		expect(list.find((s) => s.id === c.id)!.kick).toBe(0);
 	});
 
 	it('countsInRange only tallies events within [from, to]', () => {
 		const s = sessions.open(new Date(1000));
-		repo.openForSession(s.id);
 		repo.recordEvent(s.id, 1000, 'quit');
 		repo.recordEvent(s.id, 2000, 'quit');
 		repo.recordEvent(s.id, 2000, 'crash');

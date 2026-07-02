@@ -86,6 +86,36 @@ describe('PerfSnapshotsRepository', () => {
 		expect(repo.listForSession(b.id).map((r) => r.ts)).toEqual([2000]);
 	});
 
+	it('filters snapshots to a [from, to] window', () => {
+		const s = sessions.open(new Date(1000));
+		const perf = {
+			svMain: { count: 1, sum: 1, buckets: [1] },
+			svSync: { count: 1, sum: 1, buckets: [1] },
+			svNetwork: { count: 1, sum: 1, buckets: [1] },
+		};
+		for (const ts of [1000, 2000, 3000, 4000]) {
+			repo.insert({ sessionId: s.id, ts, players: 0, perf });
+		}
+
+		const rows = repo.listForSession(s.id, { from: 2000, to: 3000 });
+		expect(rows.map((r) => r.ts)).toEqual([2000, 3000]);
+	});
+
+	it('limit keeps only the newest snapshots, still ordered ts asc', () => {
+		const s = sessions.open(new Date(1000));
+		const perf = {
+			svMain: { count: 1, sum: 1, buckets: [1] },
+			svSync: { count: 1, sum: 1, buckets: [1] },
+			svNetwork: { count: 1, sum: 1, buckets: [1] },
+		};
+		for (const ts of [1000, 2000, 3000, 4000]) {
+			repo.insert({ sessionId: s.id, ts, players: 0, perf });
+		}
+
+		const rows = repo.listForSession(s.id, { limit: 2 });
+		expect(rows.map((r) => r.ts)).toEqual([3000, 4000]);
+	});
+
 	it('defaults fxsMemory and nodeMemory to null when omitted', () => {
 		const s = sessions.open(new Date(1000));
 		const perf = {

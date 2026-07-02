@@ -1,5 +1,6 @@
 import { repo } from '@fxmanager/database';
 import type { ServerSession } from '@fxmanager/shared/types';
+import { wsManager } from '../ws/manager';
 
 class SessionManager {
 	private current: ServerSession | null = null;
@@ -13,6 +14,7 @@ class SessionManager {
 		if (this.current) return this.current;
 		this.current = repo.serverSessions.open();
 		this.playerCount = 0;
+		this.broadcastSessions();
 		return this.current;
 	}
 
@@ -22,7 +24,16 @@ class SessionManager {
 		repo.serverSessions.prune();
 		this.current = null;
 		this.playerCount = 0;
+		this.broadcastSessions();
 		return closed;
+	}
+
+	private broadcastSessions(): void {
+		wsManager.broadcast<ServerSession[]>({
+			channel: 'sessions',
+			event: 'update',
+			data: repo.serverSessions.listRecent(50),
+		});
 	}
 
 	getCurrent(): ServerSession | null {

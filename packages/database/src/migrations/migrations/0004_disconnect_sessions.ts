@@ -2,7 +2,7 @@ import type { Migration } from '../types';
 
 export const m0004_disconnect_sessions: Migration = {
 	version: 4,
-	description: 'Add server_sessions + session_disconnects + perf_snapshots',
+	description: 'Add server_sessions + perf_snapshots',
 	up: [
 		`CREATE TABLE \`server_sessions\` (
 	\`id\` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -11,15 +11,6 @@ export const m0004_disconnect_sessions: Migration = {
 	\`close_reason\` text
 )`,
 		`CREATE INDEX \`server_session_started_idx\` ON \`server_sessions\` (\`started_at\`)`,
-		`CREATE TABLE \`session_disconnects\` (
-	\`session_id\` integer PRIMARY KEY NOT NULL,
-	\`quit\` integer DEFAULT 0 NOT NULL,
-	\`crash\` integer DEFAULT 0 NOT NULL,
-	\`timeout\` integer DEFAULT 0 NOT NULL,
-	\`kick\` integer DEFAULT 0 NOT NULL,
-	\`other\` integer DEFAULT 0 NOT NULL,
-	FOREIGN KEY (\`session_id\`) REFERENCES \`server_sessions\`(\`id\`) ON UPDATE no action ON DELETE cascade
-)`,
 		`CREATE TABLE \`perf_snapshots\` (
 	\`id\` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	\`session_id\` integer NOT NULL,

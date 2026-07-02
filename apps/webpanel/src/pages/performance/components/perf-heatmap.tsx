@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PerfSnapshot, PerfThread } from '@fxmanager/shared/types';
 import { format } from 'date-fns';
 import { BANDS, bandColor, bandLabel } from './perf-buckets';
-import { bandFractions, type PerfInspect } from './perf-series';
+import {
+	bandFractions,
+	nearestSnapshotIdx,
+	type PerfInspect,
+} from './perf-series';
 
 const MARGIN = { top: 8, right: 50, bottom: 22, left: 36 };
 const AXIS = '#a1a1aa';
@@ -43,6 +47,18 @@ interface Hover {
 	y: number;
 }
 
+/** Scale a canvas for the device pixel ratio and return its 2d context. */
+function prepare2d(canvas: HTMLCanvasElement, w: number, h: number) {
+	const ctx = canvas.getContext('2d');
+	if (!ctx) return null;
+	const dpr = window.devicePixelRatio || 1;
+	canvas.width = Math.round(w * dpr);
+	canvas.height = Math.round(h * dpr);
+	ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+	ctx.clearRect(0, 0, w, h);
+	return ctx;
+}
+
 export function PerfHeatmap({
 	snapshots,
 	thread,
@@ -58,6 +74,7 @@ export function PerfHeatmap({
 }) {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
+	const overlayRef = useRef<HTMLCanvasElement | null>(null);
 	const onInspectRef = useRef(onInspect);
 	onInspectRef.current = onInspect;
 
@@ -92,12 +109,14 @@ export function PerfHeatmap({
 		return { min, max };
 	}, [snapshots, zoom]);
 
-	// Report what to inspect: the hovered point, else the zoomed range, else live.
+	// Report what to inspect: the hovered point, else the zoomed range, else
+	// live. Keyed on the hovered index so parents don't re-render per pixel.
+	const hoverIdx = hover?.idx ?? null;
 	useEffect(() => {
 		const cb = onInspectRef.current;
 		if (!cb) return;
-		if (hover && hover.idx < snapshots.length) {
-			cb({ kind: 'point', snapshot: snapshots[hover.idx] });
+		if (hoverIdx !== null && hoverIdx < snapshots.length) {
+			cb({ kind: 'point', snapshot: snapshots[hoverIdx] });
 		} else if (zoom) {
 			const inRange = snapshots.filter(
 				(s) => s.ts >= zoom.start && s.ts <= zoom.end,
@@ -106,20 +125,15 @@ export function PerfHeatmap({
 		} else {
 			cb(null);
 		}
-	}, [hover, zoom, snapshots]);
+	}, [hoverIdx, zoom, snapshots]);
 
+	// base layer: heatmap cells + player line + axes (no hover/drag deps)
 	useEffect(() => {
 		const canvas = canvasRef.current;
 		const { w, h } = size;
 		if (!canvas || w <= 0 || h <= 0) return;
-		const ctx = canvas.getContext('2d');
+		const ctx = prepare2d(canvas, w, h);
 		if (!ctx) return;
-
-		const dpr = window.devicePixelRatio || 1;
-		canvas.width = Math.round(w * dpr);
-		canvas.height = Math.round(h * dpr);
-		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-		ctx.clearRect(0, 0, w, h);
 
 		const x0 = MARGIN.left;
 		const y0 = MARGIN.top;
@@ -144,9 +158,12 @@ export function PerfHeatmap({
 
 		for (let i = 0; i < n; i++) {
 			const ts = snapshots[i].ts;
-			if (ts < view.min - span || ts > view.max + span) continue;
+			// a cell spans [ts, next ts) — skip it only when that interval
+			// misses the view window entirely
+			const nextTs = i < n - 1 ? snapshots[i + 1].ts : Infinity;
+			if (nextTs < view.min || ts > view.max) continue;
 			const cx = xOf(ts);
-			const nx = i < n - 1 ? xOf(snapshots[i + 1].ts) : x0 + plotW;
+			const nx = i < n - 1 ? xOf(nextTs) : x0 + plotW;
 			const cw = Math.max(1, nx - cx);
 			const fr = model.fractions[i];
 			for (let b = 0; b < BANDS; b++) {
@@ -201,8 +218,31 @@ export function PerfHeatmap({
 			const ts = view.min + (span * k) / ticks;
 			ctx.fillText(format(new Date(ts), 'HH:mm'), xOf(ts), y0 + plotH + 5);
 		}
+	}, [size, snapshots, model, view]);
 
-		// selection rectangle while dragging
+	// overlay layer: drag selection + hover highlight, clipped to the plot
+	useEffect(() => {
+		const canvas = overlayRef.current;
+		const { w, h } = size;
+		if (!canvas || w <= 0 || h <= 0) return;
+		const ctx = prepare2d(canvas, w, h);
+		if (!ctx) return;
+
+		const x0 = MARGIN.left;
+		const y0 = MARGIN.top;
+		const plotW = w - MARGIN.left - MARGIN.right;
+		const plotH = h - MARGIN.top - MARGIN.bottom;
+		const n = snapshots.length;
+		if (plotW <= 0 || plotH <= 0 || n === 0) return;
+
+		const span = view.max - view.min || 1;
+		const xOf = (ts: number) => x0 + ((ts - view.min) / span) * plotW;
+
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(x0, y0, plotW, plotH);
+		ctx.clip();
+
 		if (drag) {
 			const a = clamp(Math.min(drag.x0, drag.x1), x0, x0 + plotW);
 			const b = clamp(Math.max(drag.x0, drag.x1), x0, x0 + plotW);
@@ -211,33 +251,25 @@ export function PerfHeatmap({
 			ctx.strokeStyle = 'rgba(147,197,253,0.7)';
 			ctx.lineWidth = 1;
 			ctx.strokeRect(a + 0.5, y0 + 0.5, b - a, plotH);
-		} else if (hover && hover.idx < n) {
-			const cx = xOf(snapshots[hover.idx].ts);
+		} else if (hoverIdx !== null && hoverIdx < n) {
+			const cx = xOf(snapshots[hoverIdx].ts);
 			const nx =
-				hover.idx < n - 1 ? xOf(snapshots[hover.idx + 1].ts) : x0 + plotW;
+				hoverIdx < n - 1 ? xOf(snapshots[hoverIdx + 1].ts) : x0 + plotW;
 			ctx.strokeStyle = 'rgba(255,255,255,0.7)';
 			ctx.lineWidth = 1;
 			ctx.strokeRect(cx + 0.5, y0 + 0.5, Math.max(1, nx - cx), plotH);
 		}
-	}, [size, snapshots, model, hover, drag, view]);
 
-	const nearestIdx = useCallback(
+		ctx.restore();
+	}, [size, snapshots, view, hoverIdx, drag]);
+
+	const nearestAt = useCallback(
 		(mx: number, rectW: number) => {
-			const n = snapshots.length;
 			const x0 = MARGIN.left;
 			const plotW = rectW - MARGIN.left - MARGIN.right;
 			const span = view.max - view.min || 1;
 			const ts = view.min + ((clamp(mx, x0, x0 + plotW) - x0) / plotW) * span;
-			let idx = 0;
-			let best = Infinity;
-			for (let i = 0; i < n; i++) {
-				const d = Math.abs(snapshots[i].ts - ts);
-				if (d < best) {
-					best = d;
-					idx = i;
-				}
-			}
-			return idx;
+			return nearestSnapshotIdx(snapshots, ts, view.min, view.max);
 		},
 		[snapshots, view],
 	);
@@ -271,10 +303,10 @@ export function PerfHeatmap({
 				setHover(null);
 				return;
 			}
-			const idx = nearestIdx(mx, rect.width);
-			setHover({ idx, x: mx, y: my });
+			const idx = nearestAt(mx, rect.width);
+			setHover(idx === -1 ? null : { idx, x: mx, y: my });
 		},
-		[snapshots, drag, nearestIdx],
+		[snapshots, drag, nearestAt],
 	);
 
 	const onUp = useCallback(
@@ -331,6 +363,11 @@ export function PerfHeatmap({
 			onDoubleClick={() => onZoomChange(null)}
 		>
 			<canvas ref={canvasRef} style={{ width: '100%', height: '100%' }} />
+			<canvas
+				ref={overlayRef}
+				className="pointer-events-none absolute inset-0"
+				style={{ width: '100%', height: '100%' }}
+			/>
 			{tip && hover && (
 				<div
 					className="pointer-events-none absolute z-50 min-w-[9rem] space-y-1 rounded-md border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md"

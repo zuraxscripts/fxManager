@@ -10,16 +10,19 @@ export type DropCategory = 'quit' | 'crash' | 'timeout' | 'kick' | 'other';
 /** Per-category disconnect tallies (a session total or a time-range slice). */
 export type DisconnectCounts = Record<DropCategory, number>;
 
+export const zeroDisconnectCounts = (): DisconnectCounts => ({
+	quit: 0,
+	crash: 0,
+	timeout: 0,
+	kick: 0,
+	other: 0,
+});
+
 /** One server run's disconnect tallies. Timestamps are epoch ms. */
-export interface DisconnectSession {
+export interface DisconnectSession extends DisconnectCounts {
 	id: number;
 	startedAt: number;
 	endedAt: number | null;
-	quit: number;
-	crash: number;
-	timeout: number;
-	kick: number;
-	other: number;
 }
 
 export interface DisconnectCategoryMeta {
@@ -36,5 +39,3 @@ export const DISCONNECT_CATEGORIES: readonly DisconnectCategoryMeta[] = [
 	{ key: 'kick', label: 'Kick/Ban', color: '#406FE6', description: 'Player was kicked or banned by staff or a resource.' },
 	{ key: 'other', label: 'Other', color: '#F13BF7', description: 'Security kicks, replaced sessions, or unknown reasons.' },
 ] as const;
-
-export const DROP_CATEGORY_KEYS = DISCONNECT_CATEGORIES.map((c) => c.key);

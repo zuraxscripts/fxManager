@@ -30,13 +30,6 @@ const timeoutCategories = new Set<number>([
 	FxsDropReasonGroups.CLIENT_CONNECTION_TIMED_OUT_WITH_PENDING_COMMANDS,
 	FxsDropReasonGroups.ONE_SYNC_TOO_MANY_MISSED_FRAMES,
 ]);
-const otherCategories = new Set<number>([
-	FxsDropReasonGroups.CLIENT_REPLACED,
-	FxsDropReasonGroups.STATE_BAG_RATE_LIMIT,
-	FxsDropReasonGroups.NET_EVENT_RATE_LIMIT,
-	FxsDropReasonGroups.LATENT_NET_EVENT_RATE_LIMIT,
-	FxsDropReasonGroups.COMMAND_RATE_LIMIT,
-]);
 
 // Crash message prefixes are translated client-side; cover the top FiveM languages.
 const crashRulesIntl = [
@@ -73,29 +66,18 @@ const timeoutRules = [
 	`connection timed out`,
 	`timed out after 60 seconds`,
 ];
-const securityRules = [
-	`reliable network event overflow`,
-	`reliable network event size overflow:`,
-	`reliable server command overflow`,
-	`reliable state bag packet overflow`,
-	`unreliable network event overflow`,
-	`connection to cnl timed out`,
-	`server command overflow`,
-	`invalid client configuration. restart your game and reconnect`,
-];
 
 const isCrash = (reason: string) => crashRulesIntl.some((r) => reason.includes(r));
 
 /** String-only fallback for fxserver builds that don't pass a numeric category. */
 function guessFromReason(reason: string): DropCategory | null {
-	const r = reason.trim().toLocaleLowerCase();
+	const r = reason.trim().toLowerCase();
 	if (!r.length) return 'other';
 	if (isCrash(r)) return 'crash';
 	if (playerInitiatedRules.some((rule) => r.startsWith(rule))) return 'quit';
 	if (timeoutRules.some((rule) => r.includes(rule))) return 'timeout';
 	if (serverShutdownRules.some((rule) => r.startsWith(rule))) return null;
 	if (serverKickRules.some((rule) => r.startsWith(rule))) return 'kick';
-	if (securityRules.some((rule) => r.includes(rule))) return 'other';
 	return 'other';
 }
 
@@ -120,11 +102,10 @@ export function classifyDrop(payload: {
 		return 'kick';
 	}
 	if (category === FxsDropReasonGroups.CLIENT) {
-		return isCrash(reason.toLocaleLowerCase()) ? 'crash' : 'quit';
+		return isCrash(reason.toLowerCase()) ? 'crash' : 'quit';
 	}
 	if (category === FxsDropReasonGroups.SERVER) return 'kick';
 	if (category === FxsDropReasonGroups.SERVER_SHUTDOWN) return null;
 	if (timeoutCategories.has(category)) return 'timeout';
-	if (otherCategories.has(category)) return 'other';
 	return 'other';
 }

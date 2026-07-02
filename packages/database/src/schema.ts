@@ -241,17 +241,6 @@ export const serverSessions = sqliteTable(
 	(t) => [index('server_session_started_idx').on(t.startedAt)],
 );
 
-export const sessionDisconnects = sqliteTable('session_disconnects', {
-	sessionId: integer('session_id')
-		.primaryKey()
-		.references(() => serverSessions.id, { onDelete: 'cascade' }),
-	quit: integer('quit').notNull().default(0),
-	crash: integer('crash').notNull().default(0),
-	timeout: integer('timeout').notNull().default(0),
-	kick: integer('kick').notNull().default(0),
-	other: integer('other').notNull().default(0),
-});
-
 export const perfSnapshots = sqliteTable(
 	'perf_snapshots',
 	{

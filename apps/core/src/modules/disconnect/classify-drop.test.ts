@@ -64,3 +64,19 @@ describe('classifyDrop — string fallback (no category)', () => {
 		expect(classifyDrop({ reason: null })).toBe('other');
 	});
 });
+
+describe('classifyDrop — host-locale independence', () => {
+	it('classifies crash prefixes containing I on a Turkish host locale', () => {
+		const original = String.prototype.toLocaleLowerCase;
+		String.prototype.toLocaleLowerCase = function (this: string) {
+			return original.call(this, 'tr-TR');
+		};
+		try {
+			const reason = 'Il gioco ha smesso di funzionare: errore';
+			expect(classifyDrop({ reason, category: 2 })).toBe('crash');
+			expect(classifyDrop({ reason })).toBe('crash');
+		} finally {
+			String.prototype.toLocaleLowerCase = original;
+		}
+	});
+});

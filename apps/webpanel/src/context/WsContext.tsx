@@ -17,7 +17,6 @@ export function WSProvider({ children }: { children: ReactNode }) {
 	const socketRef = useRef<WebSocket | null>(null);
 	// handlers keyed by `channel:event`
 	const handlersRef = useRef<Map<string, Set<MessageHandler>>>(new Map());
-	const pendingRef = useRef<Set<Channel>>(new Set()); // subscriptions before connect
 	const subCountsRef = useRef<Map<Channel, number>>(new Map());
 
 	useEffect(() => {
@@ -38,11 +37,9 @@ export function WSProvider({ children }: { children: ReactNode }) {
 
 		ws.onopen = () => {
 			setConnected(true);
-			// Flush subscriptions that were registered before the socket connected
-			for (const channel of pendingRef.current) {
+			for (const channel of subCountsRef.current.keys()) {
 				ws.send(JSON.stringify({ type: 'subscribe', channel }));
 			}
-			pendingRef.current.clear();
 		};
 
 		ws.onclose = () => setConnected(false);
@@ -73,16 +70,9 @@ export function WSProvider({ children }: { children: ReactNode }) {
 	const subscribe = useCallback(
 		(channel: Channel) => {
 			const counts = subCountsRef.current;
-			const next = (counts.get(channel) ?? 0) + 1;
-			counts.set(channel, next);
+			counts.set(channel, (counts.get(channel) ?? 0) + 1);
 
-			if (next > 1) return;
-
-			if (socketRef.current?.readyState === WebSocket.OPEN) {
-				send({ type: 'subscribe', channel });
-			} else {
-				pendingRef.current.add(channel);
-			}
+			send({ type: 'subscribe', channel });
 		},
 		[send],
 	);
@@ -101,7 +91,6 @@ export function WSProvider({ children }: { children: ReactNode }) {
 			}
 
 			counts.delete(channel);
-			pendingRef.current.delete(channel);
 			send({ type: 'unsubscribe', channel });
 		},
 		[send],

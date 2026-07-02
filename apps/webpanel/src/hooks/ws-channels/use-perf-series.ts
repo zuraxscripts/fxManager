@@ -5,15 +5,7 @@ import type {
 } from '@fxmanager/shared/types';
 import { QueryService } from '@/lib/query';
 import { useWSBase } from './use-ws-core';
-
-/** Insert a snapshot into a ts-sorted list, replacing any sample with the same
- * timestamp. */
-function upsert(list: PerfSnapshot[], snap: PerfSnapshot): PerfSnapshot[] {
-	const next = list.filter((s) => s.ts !== snap.ts);
-	next.push(snap);
-	next.sort((a, b) => a.ts - b.ts);
-	return next;
-}
+import { mergeSnapshots, upsertSnapshot } from './perf-merge';
 
 /**
  * Loads the stored perf series for a session, then (when it is the live
@@ -24,10 +16,8 @@ export function usePerfSeries(sessionId: number | null, isLive: boolean) {
 	const [snapshots, setSnapshots] = useState<PerfSnapshot[]>([]);
 
 	useEffect(() => {
-		if (sessionId === null) {
-			setSnapshots([]);
-			return;
-		}
+		setSnapshots([]);
+		if (sessionId === null) return;
 
 		let active = true;
 		QueryService<PerfSeriesResponse>({
@@ -37,7 +27,7 @@ export function usePerfSeries(sessionId: number | null, isLive: boolean) {
 			.then((res) => {
 				if (!active) return;
 				const sorted = [...res.snapshots].sort((a, b) => a.ts - b.ts);
-				setSnapshots(sorted);
+				setSnapshots((prev) => mergeSnapshots(sorted, prev));
 			})
 			.catch(() => {
 				if (active) setSnapshots([]);
@@ -53,7 +43,7 @@ export function usePerfSeries(sessionId: number | null, isLive: boolean) {
 		subscribe('perf');
 
 		const offSample = on<PerfSnapshot>('perf', 'sample', ({ data }) => {
-			setSnapshots((prev) => upsert(prev, data));
+			setSnapshots((prev) => upsertSnapshot(prev, data));
 		});
 
 		return () => {

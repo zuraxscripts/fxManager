@@ -1,5 +1,14 @@
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
+import {
+	afterAll,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	mock,
+	spyOn,
+} from 'bun:test';
 import type { ServerSession } from '@fxmanager/shared/types';
+import { wsManager } from '../ws/manager';
 
 const openStub = (): ServerSession => ({
 	id: 7,
@@ -18,6 +27,7 @@ const mockOpen = mock(() => openStub());
 const mockClose = mock(() => closedStub());
 const mockCloseDangling = mock(() => {});
 const mockPrune = mock(() => {});
+const mockListRecent = mock(() => [closedStub()]);
 
 mock.module('@fxmanager/database', () => ({
 	repo: {
@@ -26,6 +36,7 @@ mock.module('@fxmanager/database', () => ({
 			close: mockClose,
 			closeDangling: mockCloseDangling,
 			prune: mockPrune,
+			listRecent: mockListRecent,
 		},
 	},
 }));
@@ -33,6 +44,8 @@ mock.module('@fxmanager/database', () => ({
 const { sessionManager } = await import('./manager');
 
 describe('sessionManager', () => {
+	const wsSpy = spyOn(wsManager, 'broadcast').mockImplementation(() => {});
+
 	beforeEach(() => {
 		// clear any current session leaking between tests, then reset mocks
 		(sessionManager as unknown as { current: ServerSession | null }).current =
@@ -41,6 +54,12 @@ describe('sessionManager', () => {
 		mockClose.mockReset().mockReturnValue(closedStub());
 		mockCloseDangling.mockReset();
 		mockPrune.mockReset();
+		mockListRecent.mockReset().mockReturnValue([closedStub()]);
+		wsSpy.mockClear();
+	});
+
+	afterAll(() => {
+		wsSpy.mockRestore();
 	});
 
 	it('init closes dangling sessions from a previous run', () => {
@@ -87,5 +106,27 @@ describe('sessionManager', () => {
 		sessionManager.setPlayerCount(9);
 		sessionManager.openSession();
 		expect(sessionManager.getPlayerCount()).toBe(0);
+	});
+
+	it('broadcasts the refreshed session list on open and close', () => {
+		sessionManager.openSession();
+		expect(wsSpy).toHaveBeenCalledWith({
+			channel: 'sessions',
+			event: 'update',
+			data: [closedStub()],
+		});
+
+		wsSpy.mockClear();
+		sessionManager.closeSession('crashed');
+		expect(wsSpy).toHaveBeenCalledWith({
+			channel: 'sessions',
+			event: 'update',
+			data: [closedStub()],
+		});
+	});
+
+	it('does not broadcast when closeSession is a no-op', () => {
+		sessionManager.closeSession();
+		expect(wsSpy).not.toHaveBeenCalled();
 	});
 });

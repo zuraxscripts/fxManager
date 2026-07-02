@@ -1,4 +1,5 @@
 import { repo } from '@fxmanager/database';
+import { zeroDisconnectCounts } from '@fxmanager/shared/types';
 import { sessionAuth } from '../../middleware/session';
 import type { RouteModule } from '../../types';
 
@@ -17,7 +18,7 @@ const DisconnectEndpoints: RouteModule['handler'] = async (fastify) => {
 		const { from, to } = request.query as { from?: string; to?: string };
 		const sessionId = parseInt(id, 10);
 		if (Number.isNaN(sessionId)) {
-			return { quit: 0, crash: 0, timeout: 0, kick: 0, other: 0 };
+			return zeroDisconnectCounts();
 		}
 		const f = from ? parseInt(from, 10) : Number.NaN;
 		const t = to ? parseInt(to, 10) : Number.NaN;

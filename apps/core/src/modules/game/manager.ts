@@ -35,6 +35,12 @@ export class GameManager {
 		return this.playerlist.find((p) => p.id === id);
 	}
 
+	/** Drop all tracked players when a server session opens or closes. */
+	resetPlayerlist() {
+		this.playerlist = [];
+		sessionManager.setPlayerCount(0);
+	}
+
 	// region receiving actions
 
 	async playerDeferralChecks(
@@ -163,7 +169,9 @@ export class GameManager {
 			...player,
 		} satisfies OnlinePlayer;
 
-		this.playerlist.push(playerPayload);
+		const existing = this.playerlist.findIndex((p) => p.serverId === serverId);
+		if (existing !== -1) this.playerlist[existing] = playerPayload;
+		else this.playerlist.push(playerPayload);
 		sessionManager.setPlayerCount(this.playerlist.length);
 		wsManager.broadcast<OnlinePlayer>({
 			channel: 'playerlist',
@@ -176,14 +184,6 @@ export class GameManager {
 		serverId: number,
 		drop?: { reason?: unknown; resourceName?: string; category?: number },
 	) {
-		if (drop) {
-			disconnectManager.recordDrop({
-				reason: drop.reason,
-				resourceName: drop.resourceName,
-				category: drop.category,
-			});
-		}
-
 		const index = this.playerlist.findIndex((p) => p.serverId === serverId);
 
 		if (index === -1) {
@@ -191,6 +191,14 @@ export class GameManager {
 				`[core] A player (${serverId}) disconnected but wasn't tracked!`,
 			);
 			return;
+		}
+
+		if (drop) {
+			disconnectManager.recordDrop({
+				reason: drop.reason,
+				resourceName: drop.resourceName,
+				category: drop.category,
+			});
 		}
 
 		const [player] = this.playerlist.splice(index, 1);
@@ -278,3 +286,5 @@ export class GameManager {
 		}
 	}
 }
+
+export const gameManager = new GameManager();

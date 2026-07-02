@@ -16,6 +16,7 @@ import { wsManager } from '../ws/manager';
 import { resourceManager } from '../resource/manager';
 import { disconnectManager } from '../disconnect/manager';
 import { sessionManager } from '../session/manager';
+import { gameManager } from '../game/manager';
 
 const mockGetHistory = mock(() => []);
 const mockBufferPush = mock(() => {});
@@ -71,6 +72,10 @@ const onSessionOpenSpy = spyOn(
 const onSessionCloseSpy = spyOn(
 	disconnectManager,
 	'onSessionClose',
+).mockImplementation(() => {});
+const resetPlayerlistSpy = spyOn(
+	gameManager,
+	'resetPlayerlist',
 ).mockImplementation(() => {});
 
 const ProcessManagerModule = await import('./manager');
@@ -134,6 +139,7 @@ describe('ProcessManager', () => {
 		sessionCloseSpy.mockClear();
 		onSessionOpenSpy.mockClear();
 		onSessionCloseSpy.mockClear();
+		resetPlayerlistSpy.mockClear();
 
 		stdoutController = null;
 		stderrController = null;
@@ -180,6 +186,7 @@ describe('ProcessManager', () => {
 		sessionCloseSpy.mockRestore();
 		onSessionOpenSpy.mockRestore();
 		onSessionCloseSpy.mockRestore();
+		resetPlayerlistSpy.mockRestore();
 	});
 
 	const pushToStream = (
@@ -495,6 +502,14 @@ describe('ProcessManager', () => {
 			(manager as any).setState('stopped');
 			expect(sessionCloseSpy).toHaveBeenCalledTimes(1);
 			expect(onSessionCloseSpy).toHaveBeenCalledTimes(1);
+		});
+
+		it('resets the tracked playerlist on session open and close', () => {
+			const manager = new ProcessManagerModule.ProcessManager();
+			(manager as any).setState('running');
+			expect(resetPlayerlistSpy).toHaveBeenCalledTimes(1);
+			(manager as any).setState('crashed');
+			expect(resetPlayerlistSpy).toHaveBeenCalledTimes(2);
 		});
 	});
 });

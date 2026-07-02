@@ -1,4 +1,4 @@
-import { asc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, lte } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { perfSnapshots } from '../schema';
 import type * as schema from '../schema';
@@ -37,14 +37,22 @@ class PerfSnapshotsRepository {
 			.run();
 	}
 
-	listForSession(sessionId: number): Array<{
+	listForSession(
+		sessionId: number,
+		opts: { from?: number; to?: number; limit?: number } = {},
+	): Array<{
 		ts: number;
 		players: number;
 		fxsMemory: number | null;
 		nodeMemory: number | null;
 		perf: unknown;
 	}> {
-		return this.db
+		const conditions = [eq(perfSnapshots.sessionId, sessionId)];
+		if (opts.from !== undefined)
+			conditions.push(gte(perfSnapshots.ts, opts.from));
+		if (opts.to !== undefined) conditions.push(lte(perfSnapshots.ts, opts.to));
+
+		const query = this.db
 			.select({
 				ts: perfSnapshots.ts,
 				players: perfSnapshots.players,
@@ -53,9 +61,16 @@ class PerfSnapshotsRepository {
 				perf: perfSnapshots.perf,
 			})
 			.from(perfSnapshots)
-			.where(eq(perfSnapshots.sessionId, sessionId))
-			.orderBy(asc(perfSnapshots.ts))
-			.all();
+			.where(and(...conditions));
+
+		if (opts.limit !== undefined) {
+			return query
+				.orderBy(desc(perfSnapshots.ts))
+				.limit(opts.limit)
+				.all()
+				.reverse();
+		}
+		return query.orderBy(asc(perfSnapshots.ts)).all();
 	}
 }
 

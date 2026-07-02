@@ -5,7 +5,7 @@ import type {
 	RawPerf,
 } from '@fxmanager/shared/types';
 import { BANDS } from './perf-buckets';
-import { bandFractions, buildPerfChartData } from './perf-series';
+import { bandFractions, nearestSnapshotIdx } from './perf-series';
 
 /** Build a 15-length cumulative buckets array from per-band tick counts. */
 function cumulative(perBand: number[]): number[] {
@@ -65,44 +65,23 @@ describe('bandFractions', () => {
 	});
 });
 
-describe('buildPerfChartData', () => {
-	it('converts ts to unix seconds and passes players through', () => {
-		const snaps = [
-			snapshot(1_000, 4, thread(10, [10])),
-			snapshot(31_500, 9, thread(20, [20])),
-		];
-		const cd = buildPerfChartData(snaps, 'svMain');
-		expect(cd.time).toEqual([1, 32]); // 31_500/1000 rounds to 32
-		expect(cd.players).toEqual([4, 9]);
+describe('nearestSnapshotIdx', () => {
+	const snaps = [0, 30_000, 60_000, 90_000].map((ts) =>
+		snapshot(ts, 0, thread(1, [1])),
+	);
+
+	it('returns the snapshot closest to ts within the window', () => {
+		expect(nearestSnapshotIdx(snaps, 40_000, 0, 90_000)).toBe(1);
+		expect(nearestSnapshotIdx(snaps, 50_000, 0, 90_000)).toBe(2);
 	});
 
-	it('produces a full stacked band curve summing to ~1 when count > 0', () => {
-		const snaps = [
-			snapshot(1_000, 4, thread(10, [2, 3, 0, 5])),
-			snapshot(31_000, 9, thread(4, [1, 0, 3])),
-		];
-		const cd = buildPerfChartData(snaps, 'svMain');
-
-		expect(cd.stacked).toHaveLength(BANDS);
-		for (let i = 0; i < snaps.length; i++) {
-			// top band == full cumulative ~= 1
-			expect(cd.stacked[BANDS - 1][i]).toBeCloseTo(1);
-			// cumulative & non-decreasing down the column
-			for (let b = 1; b < BANDS; b++) {
-				expect(cd.stacked[b][i]).toBeGreaterThanOrEqual(cd.stacked[b - 1][i]);
-			}
-			// band b equals sum of fractions 0..b
-			let acc = 0;
-			for (let b = 0; b < BANDS; b++) {
-				acc += cd.fractions[i][b];
-				expect(cd.stacked[b][i]).toBeCloseTo(acc);
-			}
-		}
+	it('never returns a snapshot outside [min, max]', () => {
+		// hovering near the zoom edge must not pick the out-of-window 90s sample
+		expect(nearestSnapshotIdx(snaps, 74_000, 30_000, 75_000)).toBe(2);
 	});
 
-	it('keeps the stacked top band at 0 when a snapshot has no ticks', () => {
-		const snaps = [snapshot(1_000, 0, thread(0, []))];
-		const cd = buildPerfChartData(snaps, 'svMain');
-		expect(cd.stacked[BANDS - 1][0]).toBeCloseTo(0);
+	it('returns -1 when no snapshot falls inside the window', () => {
+		expect(nearestSnapshotIdx(snaps, 20_000, 15_000, 25_000)).toBe(-1);
+		expect(nearestSnapshotIdx([], 0, 0, 100)).toBe(-1);
 	});
 });

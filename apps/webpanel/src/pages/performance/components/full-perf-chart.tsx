@@ -1,5 +1,6 @@
 import {
 	PERF_THREADS,
+	type PerfSnapshot,
 	type PerfThread,
 	type ServerSession,
 } from '@fxmanager/shared/types';
@@ -19,7 +20,6 @@ import {
 } from '@fxmanager/ui/components/select';
 import { format } from 'date-fns';
 import { LineChart, X } from 'lucide-react';
-import { usePerfSeries } from '@/hooks/ws-channels/use-perf-series';
 import { PerfHeatmap } from './perf-heatmap';
 import type { PerfInspect } from './perf-series';
 
@@ -35,6 +35,7 @@ function sessionLabel(s: ServerSession) {
 export function FullPerfChart({
 	thread,
 	onThreadChange,
+	snapshots,
 	sessions,
 	selectedId,
 	onSelect,
@@ -44,6 +45,7 @@ export function FullPerfChart({
 }: {
 	thread: PerfThread;
 	onThreadChange: (t: PerfThread) => void;
+	snapshots: PerfSnapshot[];
 	sessions: ServerSession[];
 	selectedId: number | null;
 	onSelect: (id: number) => void;
@@ -51,10 +53,6 @@ export function FullPerfChart({
 	onZoomChange: (zoom: { start: number; end: number } | null) => void;
 	onInspect?: (inspect: PerfInspect | null) => void;
 }) {
-	const selected = sessions.find((s) => s.id === selectedId) ?? null;
-	const isLive = selected?.endedAt === null;
-
-	const { snapshots } = usePerfSeries(selectedId, isLive);
 	const hasData = snapshots.length >= 2;
 
 	return (

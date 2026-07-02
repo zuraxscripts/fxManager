@@ -11,7 +11,7 @@ import { checkVersion } from './common/version_check';
 import apiRoutes from './routes/api';
 import internalRoutes from './routes/internal';
 import { ProcessManager } from './modules/process/manager';
-import { GameManager } from './modules/game/manager';
+import { gameManager } from './modules/game/manager';
 import { ConfigManager } from './modules/config/manager';
 import { perfManager } from './modules/perf/manager';
 import { sessionManager } from './modules/session/manager';
@@ -78,7 +78,7 @@ fastify.get('/api/health', async () => {
 });
 
 const pm = new ProcessManager();
-const gm = new GameManager();
+const gm = gameManager;
 
 perfManager.start();
 sessionManager.init();

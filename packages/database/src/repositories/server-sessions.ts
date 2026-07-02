@@ -1,7 +1,16 @@
-import { and, desc, eq, isNotNull, isNull, lt, notInArray } from 'drizzle-orm';
+import {
+	and,
+	desc,
+	eq,
+	isNotNull,
+	isNull,
+	lt,
+	max,
+	notInArray,
+} from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import type { ServerSession } from '@fxmanager/shared/types';
-import { serverSessions } from '../schema';
+import { perfSnapshots, serverSessions } from '../schema';
 import type * as schema from '../schema';
 
 type DB = BunSQLiteDatabase<typeof schema>;
@@ -48,11 +57,27 @@ class ServerSessionsRepository {
 	}
 
 	closeDangling(endedAt = new Date()): void {
-		this.db
-			.update(serverSessions)
-			.set({ endedAt })
+		const dangling = this.db
+			.select({ id: serverSessions.id })
+			.from(serverSessions)
 			.where(isNull(serverSessions.endedAt))
-			.run();
+			.all();
+
+		for (const { id } of dangling) {
+			const last = this.db
+				.select({ ts: max(perfSnapshots.ts) })
+				.from(perfSnapshots)
+				.where(eq(perfSnapshots.sessionId, id))
+				.get();
+			this.db
+				.update(serverSessions)
+				.set({
+					endedAt: last?.ts ? new Date(last.ts) : endedAt,
+					closeReason: 'dangling',
+				})
+				.where(eq(serverSessions.id, id))
+				.run();
+		}
 	}
 
 	get(id: number): ServerSession | null {

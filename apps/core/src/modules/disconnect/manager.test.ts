@@ -2,15 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, mock, spyOn } from 'bun:te
 import type { ServerSession } from '@fxmanager/shared/types';
 import { wsManager } from '../ws/manager';
 
-const mockOpenForSession = mock(() => {});
-const mockBump = mock(() => {});
 const mockRecordEvent = mock(() => {});
 
 mock.module('@fxmanager/database', () => ({
 	repo: {
 		disconnects: {
-			openForSession: mockOpenForSession,
-			bump: mockBump,
 			recordEvent: mockRecordEvent,
 		},
 	},
@@ -28,8 +24,6 @@ const stubSession = (): ServerSession => ({
 describe('disconnectManager', () => {
 	let wsSpy: ReturnType<typeof spyOn>;
 	beforeEach(() => {
-		mockOpenForSession.mockReset();
-		mockBump.mockReset();
 		mockRecordEvent.mockReset();
 		wsSpy = spyOn(wsManager, 'broadcast').mockImplementation(() => {});
 		// clear any live session leaking between tests
@@ -37,9 +31,8 @@ describe('disconnectManager', () => {
 	});
 	afterEach(() => wsSpy.mockRestore());
 
-	it('onSessionOpen creates a counts row, sets live, and broadcasts', () => {
+	it('onSessionOpen sets a zeroed live session and broadcasts', () => {
 		disconnectManager.onSessionOpen(stubSession());
-		expect(mockOpenForSession).toHaveBeenCalledWith(1);
 		const live = disconnectManager.getLiveSession()!;
 		expect(live.id).toBe(1);
 		expect(live.startedAt).toBe(1000);
@@ -50,24 +43,28 @@ describe('disconnectManager', () => {
 		expect(wsSpy).toHaveBeenCalled();
 	});
 
-	it('records a classified drop: bumps counter + broadcasts', () => {
+	it('records a classified drop: persists an event + bumps live counter + broadcasts', () => {
 		disconnectManager.onSessionOpen(stubSession());
 		wsSpy.mockClear();
 		disconnectManager.recordDrop({ reason: 'Game crashed: x', category: 2 });
-		expect(mockBump).toHaveBeenCalledWith(1, 'crash');
+		expect(mockRecordEvent).toHaveBeenCalledWith(
+			1,
+			expect.any(Number),
+			'crash',
+		);
 		expect(disconnectManager.getLiveSession()?.crash).toBe(1);
 		expect(wsSpy).toHaveBeenCalledTimes(1);
 	});
 
-	it('ignores server-shutdown drops (no bump)', () => {
+	it('ignores server-shutdown drops (no event)', () => {
 		disconnectManager.onSessionOpen(stubSession());
 		disconnectManager.recordDrop({ reason: 'x', category: 7 });
-		expect(mockBump).not.toHaveBeenCalled();
+		expect(mockRecordEvent).not.toHaveBeenCalled();
 	});
 
 	it('does not record when there is no live session', () => {
 		disconnectManager.recordDrop({ reason: 'Exiting', category: 2 });
-		expect(mockBump).not.toHaveBeenCalled();
+		expect(mockRecordEvent).not.toHaveBeenCalled();
 	});
 
 	it('onSessionClose sets endedAt, broadcasts, and clears live', () => {
