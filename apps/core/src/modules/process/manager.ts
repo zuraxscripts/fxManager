@@ -497,3 +497,5 @@ export class ProcessManager {
 		}
 	}
 }
+
+export const processManager = new ProcessManager();

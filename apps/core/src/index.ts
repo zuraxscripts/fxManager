@@ -10,7 +10,7 @@ import { isFxManagerSetup, isProduction } from './common/utils';
 import { checkVersion } from './common/version_check';
 import apiRoutes from './routes/api';
 import internalRoutes from './routes/internal';
-import { ProcessManager } from './modules/process/manager';
+import { processManager } from './modules/process/manager';
 import { gameManager } from './modules/game/manager';
 import { ConfigManager } from './modules/config/manager';
 import { perfManager } from './modules/perf/manager';
@@ -78,7 +78,7 @@ fastify.get('/api/health', async () => {
 	return { status: 'ok' };
 });
 
-const pm = new ProcessManager();
+const pm = processManager;
 const gm = gameManager;
 
 perfManager.start();
