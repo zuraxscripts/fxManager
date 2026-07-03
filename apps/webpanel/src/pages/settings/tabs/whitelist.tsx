@@ -180,7 +180,6 @@ export default function WhitelistTab({
 					disabled={disabled}
 					onSave={(roles) => {
 						onChange('whitelist.discordRoleIds', roles.join(','));
-						console.log(roles);
 					}}
 				/>
 			</div>
