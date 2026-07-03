@@ -57,7 +57,6 @@ export default function AdminCreate() {
 				);
 			},
 			error: (err) => {
-				console.log('Failed to create admin:', err);
 				return `Failed to create admin: ${err.message}`;
 			},
 			finally: () => setSaving(false),

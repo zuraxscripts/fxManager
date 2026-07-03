@@ -136,7 +136,6 @@ export default function AdminView() {
 			.then((res) => {
 				setError(null);
 				if (res.success) {
-					console.log(res);
 					setAdminData(res.data);
 				} else {
 					setError(res.error);

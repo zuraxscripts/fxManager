@@ -190,9 +190,6 @@ export class ProcessManager {
 	}
 
 	sendCommand(command: string): void {
-		// other possible option ?
-		// if (this.state.status !== 'running' || !this.proc) throw new Error('Server stdin not available');
-		// this.proc.send(command + '\n');
 		const stdin = this.proc?.stdin;
 		if (!stdin || typeof stdin === 'number')
 			throw new Error('Server stdin not available');

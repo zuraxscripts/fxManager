@@ -20,8 +20,6 @@ export class GameManager {
 	private playerlist: OnlinePlayer[] = [];
 	private config = ConfigManager.getInstance();
 
-	constructor() {}
-
 	private async getApiToken() {
 		const { resourceApiToken } = this.config.getSystemValues();
 		return resourceApiToken;

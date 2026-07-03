@@ -12,8 +12,6 @@ class ResourceManager {
 	private available: boolean | 'errored' = false;
 	private resourcelist: ResourceData[] = [];
 
-	constructor() {}
-
 	private getApiToken() {
 		const { resourceApiToken } = this.config.getSystemValues();
 		return resourceApiToken;
