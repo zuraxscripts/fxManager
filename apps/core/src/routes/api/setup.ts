@@ -61,7 +61,7 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 			: path.join(cfg.serverDataPath, cfg.serverConfigFile);
 
 		const [executable, dataPath, cfgFound] = await Promise.all([
-			fileExists(cfg.executable),
+			fileExists(cfg.executablePath),
 			fileExists(cfg.serverDataPath),
 			fileExists(cfgPath),
 		]);
@@ -69,7 +69,7 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 		return {
 			success: true,
 			data: {
-				executable: cfg.executable,
+				executable: cfg.executablePath,
 				dataPath: cfg.serverDataPath,
 				cfgPath,
 				found: { executable, dataPath, cfg: cfgFound },
@@ -87,8 +87,8 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 
 			const { username, password, server, customGroups } = request.body;
 
-			repo.settings.set('executable', server.fxserverPath);
-			repo.settings.set('serverDataPath', server.resourcePath);
+			repo.settings.set('fxserver.executablePath', server.fxserverPath);
+			repo.settings.set('fxserver.serverDataPath', server.resourcePath);
 
 			if (customGroups.length > 0) {
 				try {
