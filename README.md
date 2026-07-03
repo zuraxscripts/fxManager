@@ -1,4 +1,18 @@
-# fxManager
+<h1 align="center">
+	<img width="1280" height="354" alt="fxManager banner" src="./.github/assets/banner.png" />
+</h1>
+
+<p align="center">
+	<img alt="GitHub License" src="https://img.shields.io/github/license/fxManagerProject/fxManager">
+	<img alt="GitHub commits since latest release" src="https://img.shields.io/github/commits-since/fxManagerProject/fxManager/latest">
+	<img alt="GitHub contributors" src="https://img.shields.io/github/contributors/fxManagerProject/fxManager">
+</p>
+
+<!--
+![GitHub License](https://img.shields.io/github/license/fxManagerProject/fxManager)
+![GitHub commits since latest release](https://img.shields.io/github/commits-since/fxManagerProject/fxManager/latest)
+![GitHub contributors](https://img.shields.io/github/contributors/fxManagerProject/fxManager)
+-->
 
 A self-contained, cross-platform admin panel for FiveM & RedM servers.  
 Single binary deployment - no runtime dependencies required on the target machine.
@@ -158,4 +172,4 @@ The panel will be available at `http://your-server-ip:4000`.
 
 ## Errrh anything else ?
 
-![dumb monke](.github/image.png)
+![dumb monke](.github/assets/image.png)
