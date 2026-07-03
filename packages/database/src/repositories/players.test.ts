@@ -434,6 +434,27 @@ describe('PlayersRepository', () => {
 				expect(executionResult.reason).toBe('Severe escalation extension');
 			}
 		});
+
+		it('should record a null issuer for external (ingame API) bans', async () => {
+			const [player] = testDb
+				.insert(players)
+				.values({ name: 'Ingame_Banned' })
+				.returning()
+				.all();
+
+			const result = await playersRepo.addBan(
+				player.id,
+				null,
+				'Banned via ingame API',
+				null,
+			);
+
+			expect(result).not.toBe(false);
+			if (typeof result === 'object') {
+				expect(result.issuer).toBeNull();
+				expect(result.reason).toBe('Banned via ingame API');
+			}
+		});
 	});
 
 	describe('addKick() and addWarn() Standard Logging', () => {

@@ -384,7 +384,7 @@ class PlayersRepository {
 		playerId: number,
 		expiresAt: Date | null,
 		reason: string,
-		adminId: number,
+		adminId: number | null,
 	) {
 		const now = new Date();
 
@@ -446,7 +446,7 @@ class PlayersRepository {
 		});
 	}
 
-	async addKick(playerId: number, reason: string, adminId: number) {
+	async addKick(playerId: number, reason: string, adminId: number | null) {
 		return await this.db.transaction(async (tx) => {
 			const player = tx
 				.select()

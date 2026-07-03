@@ -4,6 +4,7 @@ export const AUDIT_LOG_ACTIONS = {
 		'player.warn',
 		'player.kick',
 		'player.ban',
+		'player.unban',
 		'player.note',
 		'player.new',
 	],

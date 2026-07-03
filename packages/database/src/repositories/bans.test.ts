@@ -246,4 +246,97 @@ describe('BansRepository', () => {
 			expect(pageResult[0].bans.reason).toBe('Ban 2');
 		});
 	});
+
+	describe('search()', () => {
+		it('should return flat rows newest-first when no query is given', () => {
+			const alice = seedPlayerWithLicense('Alice', 'license:aaa');
+			const bob = seedPlayerWithLicense('Bob', 'license:bbb');
+
+			testDb
+				.insert(bans)
+				.values([
+					{
+						playerId: alice.id,
+						reason: 'first',
+						createdAt: new Date('2026-06-14T08:00:00Z'),
+					},
+					{
+						playerId: bob.id,
+						reason: 'second',
+						createdAt: new Date('2026-06-14T09:00:00Z'),
+					},
+				])
+				.run();
+
+			const result = bansRepo.search();
+
+			expect(result.length).toBe(2);
+			// newest first
+			expect(result[0].reason).toBe('second');
+			expect(result[0].name).toBe('Bob');
+			expect(result[1].reason).toBe('first');
+			// flat shape
+			expect(result[0]).toMatchObject({
+				id: expect.any(Number),
+				playerId: bob.id,
+				name: 'Bob',
+				reason: 'second',
+				issuer: null,
+				revokedAt: null,
+			});
+			expect(result[0].createdAt).toBeInstanceOf(Date);
+		});
+
+		it('should filter by player name', () => {
+			const alice = seedPlayerWithLicense('Alice', 'license:aaa');
+			const bob = seedPlayerWithLicense('Bob', 'license:bbb');
+			testDb
+				.insert(bans)
+				.values([
+					{ playerId: alice.id, reason: 'r1', createdAt: new Date() },
+					{ playerId: bob.id, reason: 'r2', createdAt: new Date() },
+				])
+				.run();
+
+			const result = bansRepo.search({ query: 'Ali' });
+
+			expect(result.length).toBe(1);
+			expect(result[0].name).toBe('Alice');
+		});
+
+		it('should filter by identifier value without duplicating rows for multi-identifier players', () => {
+			const charlie = seedPlayerWithLicense('Charlie', 'license:ccc');
+			testDb
+				.insert(playerIdentifiers)
+				.values({ playerId: charlie.id, type: 'discord', value: 'discord:999' })
+				.run();
+			testDb
+				.insert(bans)
+				.values({ playerId: charlie.id, reason: 'exploiting', createdAt: new Date() })
+				.run();
+
+			const byLicense = bansRepo.search({ query: 'ccc' });
+			expect(byLicense.length).toBe(1);
+			expect(byLicense[0].name).toBe('Charlie');
+
+			const byName = bansRepo.search({ query: 'Charlie' });
+			expect(byName.length).toBe(1);
+		});
+
+		it('should filter by ban reason', () => {
+			const dave = seedPlayerWithLicense('Dave', 'license:ddd');
+			testDb
+				.insert(bans)
+				.values([
+					{ playerId: dave.id, reason: 'aimbot detected', createdAt: new Date() },
+					{ playerId: dave.id, reason: 'toxicity', createdAt: new Date() },
+				])
+				.run();
+
+			const result = bansRepo.search({ query: 'aimbot' });
+
+			expect(result.length).toBe(1);
+			expect(result[0].reason).toBe('aimbot detected');
+		});
+	});
 });
