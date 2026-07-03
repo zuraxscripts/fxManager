@@ -505,5 +505,19 @@ describe('PlayersRepository', () => {
 				.get();
 			expect(rowCheck).toBeDefined();
 		});
+
+		it('should record warns and kicks with a null issuer for external actions', async () => {
+			const [player] = testDb
+				.insert(players)
+				.values({ name: 'External_Actioned' })
+				.returning()
+				.all();
+
+			const warn = await playersRepo.addWarn(player.id, 'ingame warn', null);
+			const kick = await playersRepo.addKick(player.id, 'ingame kick', null);
+
+			expect(warn.issuer).toBeNull();
+			expect(kick.issuer).toBeNull();
+		});
 	});
 });

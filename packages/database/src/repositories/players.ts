@@ -475,7 +475,7 @@ class PlayersRepository {
 		});
 	}
 
-	async addWarn(playerId: number, reason: string, adminId: number) {
+	async addWarn(playerId: number, reason: string, adminId: number | null) {
 		return await this.db.transaction(async (tx) => {
 			const player = tx
 				.select()

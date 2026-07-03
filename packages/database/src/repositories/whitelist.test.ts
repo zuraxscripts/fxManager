@@ -245,4 +245,24 @@ describe('WhitelistRepository Integration Tests', () => {
 			expect(check).toBeUndefined();
 		});
 	});
+
+	describe('revokeByValue()', () => {
+		it('should delete a whitelist record by its identifier value', () => {
+			whitelistRepo.add({ type: 'license', value: 'license:abc123' });
+
+			const revoked = whitelistRepo.revokeByValue('license:abc123');
+			expect(revoked?.value).toBe('license:abc123');
+
+			const check = testDb
+				.select()
+				.from(whitelistedIdentifers)
+				.where(eq(whitelistedIdentifers.value, 'license:abc123'))
+				.get();
+			expect(check).toBeUndefined();
+		});
+
+		it('should return undefined when no record matches the value', () => {
+			expect(whitelistRepo.revokeByValue('license:ghost')).toBeUndefined();
+		});
+	});
 });

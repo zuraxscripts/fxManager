@@ -3,7 +3,10 @@ import type { PlayerIdentifiers } from '@fxmanager/shared/types';
 import { resourceAuth } from '../../middleware/resource';
 import type { RouteModule } from '../../types';
 import { txAdminCompat } from '../../modules/txadmin/compat';
-import { buildBannedPayload } from '../../modules/txadmin/payloads';
+import {
+	buildBannedPayload,
+	buildWarnedPayload,
+} from '../../modules/txadmin/payloads';
 import {
 	resolveExpiry,
 	resolveIssuer,
@@ -27,7 +30,7 @@ const parsePage = (v: unknown) =>
 	typeof v === 'string' && v ? Number(v) : undefined;
 
 const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
-	const { gm } = options;
+	const { gm, pm } = options;
 
 	fastify.addHook('preHandler', resourceAuth);
 
@@ -68,6 +71,25 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	});
 
 	fastify.get('/players', () => gm.getPlayerList());
+
+	fastify.get('/players/search', (request) => {
+		const q = request.query as {
+			q?: string;
+			page?: string;
+			pageSize?: string;
+			sortBy?: string;
+			sortOrder?: string;
+		};
+		const sortBy = (['playtime', 'lastSeen', 'firstSeen'] as const).find(
+			(s) => s === q.sortBy,
+		);
+		const sortOrder = q.sortOrder === 'asc' ? 'asc' : undefined;
+		return repo.players.list(
+			parsePage(q.page) ?? 1,
+			parsePage(q.pageSize) ?? 50,
+			{ search: q.q, sortBy, sortOrder },
+		);
+	});
 
 	fastify.get('/players/lookup', async (request, reply) => {
 		const q = request.query as {
@@ -259,6 +281,238 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 			console.error('[ingame-api] kick failed:', error.message);
 			return reply.code(500).send({ message: 'internal_error' });
 		}
+	});
+
+	fastify.post('/warn', async (request, reply) => {
+		const body = request.body as {
+			target?: unknown;
+			reason?: string;
+			by?: number;
+			resource?: string;
+		};
+
+		const target = parseTarget(body.target);
+		if (!target) return reply.code(400).send({ message: 'invalid_target' });
+		if (!body.reason || typeof body.reason !== 'string')
+			return reply.code(400).send({ message: 'reason_required' });
+
+		const resolved = resolveTarget(target, targetDeps);
+		if (!resolved) return reply.code(404).send({ message: 'player_not_found' });
+
+		const acting = resolveIssuer(body.by, issuerDeps);
+		const issuer = acting?.id ?? null;
+		const author = acting?.username ?? 'Ingame API';
+
+		try {
+			const result = await repo.players.addWarn(
+				resolved.playerId,
+				body.reason,
+				issuer,
+			);
+
+			repo.audit.log({
+				adminId: issuer ?? undefined,
+				action: 'player.warn',
+				playerId: result.player?.id,
+				metadata: {
+					reason: result.reason,
+					source: 'ingame-api',
+					resource: body.resource ?? null,
+					author,
+				},
+			});
+
+			const online = resolved.onlinePlayer;
+			const profile =
+				online ?? (await repo.players.findById(resolved.playerId));
+			void txAdminCompat.emit(
+				'playerWarned',
+				buildWarnedPayload({
+					author,
+					reason: body.reason,
+					warnId: result.id,
+					targetNetId: online?.serverId ?? null,
+					targetName: profile?.name ?? 'Unknown',
+					identifiers: profile?.identifiers,
+				}),
+			);
+
+			return { warnId: result.id };
+		} catch (err) {
+			const error = err as Error;
+			if (error.message === 'player_not_found')
+				return reply.code(404).send({ message: 'player_not_found' });
+			console.error('[ingame-api] warn failed:', error.message);
+			return reply.code(500).send({ message: 'internal_error' });
+		}
+	});
+
+	fastify.post('/notes', async (request, reply) => {
+		const body = request.body as {
+			target?: unknown;
+			content?: string;
+			by?: number;
+			resource?: string;
+		};
+
+		const target = parseTarget(body.target);
+		if (!target) return reply.code(400).send({ message: 'invalid_target' });
+		if (typeof body.content !== 'string')
+			return reply.code(400).send({ message: 'invalid_input' });
+
+		const acting = resolveIssuer(body.by, issuerDeps);
+		if (!acting) return reply.code(400).send({ message: 'actor_required' });
+
+		const resolved = resolveTarget(target, targetDeps);
+		if (!resolved) return reply.code(404).send({ message: 'player_not_found' });
+
+		try {
+			await repo.players.updatePlayerNotes(
+				resolved.playerId,
+				acting.id,
+				body.content,
+			);
+
+			repo.audit.log({
+				adminId: acting.id,
+				action: 'player.note',
+				playerId: resolved.playerId,
+				metadata: {
+					source: 'ingame-api',
+					resource: body.resource ?? null,
+					author: acting.username,
+				},
+			});
+
+			return { saved: true };
+		} catch (err) {
+			const error = err as Error;
+			if (error.message === 'player_not_found')
+				return reply.code(404).send({ message: 'player_not_found' });
+			if (error.message === 'content_too_short')
+				return reply.code(400).send({ message: 'content_too_short' });
+			console.error('[ingame-api] note failed:', error.message);
+			return reply.code(500).send({ message: 'internal_error' });
+		}
+	});
+
+	fastify.post('/whitelist', (request, reply) => {
+		const body = request.body as {
+			type?: string;
+			value?: string;
+			by?: number;
+			resource?: string;
+		};
+
+		if (!body.type || !body.value)
+			return reply.code(400).send({ message: 'invalid_input' });
+
+		const value = body.value.startsWith(`${body.type}:`)
+			? body.value
+			: `${body.type}:${body.value}`;
+		const acting = resolveIssuer(body.by, issuerDeps);
+
+		try {
+			repo.whitelist.add({ type: body.type, value, adminId: acting?.id });
+
+			repo.audit.log({
+				adminId: acting?.id ?? undefined,
+				action: 'whitelist.add',
+				metadata: {
+					type: body.type,
+					value,
+					source: 'ingame-api',
+					resource: body.resource ?? null,
+					author: acting?.username ?? 'Ingame API',
+				},
+			});
+
+			return { whitelisted: true };
+		} catch (err) {
+			return reply.code(400).send({ message: (err as Error).message });
+		}
+	});
+
+	fastify.post('/whitelist/remove', (request, reply) => {
+		const body = request.body as {
+			type?: string;
+			value?: string;
+			by?: number;
+			resource?: string;
+		};
+
+		if (!body.type || !body.value)
+			return reply.code(400).send({ message: 'invalid_input' });
+
+		const value = body.value.startsWith(`${body.type}:`)
+			? body.value
+			: `${body.type}:${body.value}`;
+
+		const removed = repo.whitelist.revokeByValue(value);
+		if (!removed) return reply.code(404).send({ message: 'not_whitelisted' });
+
+		const acting = resolveIssuer(body.by, issuerDeps);
+		repo.audit.log({
+			adminId: acting?.id ?? undefined,
+			action: 'whitelist.revoke',
+			metadata: {
+				value,
+				source: 'ingame-api',
+				resource: body.resource ?? null,
+				author: acting?.username ?? 'Ingame API',
+			},
+		});
+
+		return { removed: true };
+	});
+
+	const runServerAction = async (
+		body: { by?: number; resource?: string },
+		action: 'server.start' | 'server.stop' | 'server.restart',
+		run: (author: string) => Promise<boolean>,
+	): Promise<boolean> => {
+		const acting = resolveIssuer(body.by, issuerDeps);
+		const author = acting?.username ?? 'Ingame API';
+
+		const result = await run(author);
+
+		repo.audit.log({
+			adminId: acting?.id ?? undefined,
+			action,
+			metadata: {
+				success: result,
+				source: 'ingame-api',
+				resource: body.resource ?? null,
+				author,
+			},
+		});
+
+		return result;
+	};
+
+	fastify.post('/server/start', async (request, reply) => {
+		const body = (request.body ?? {}) as { by?: number; resource?: string };
+		const ok = await runServerAction(body, 'server.start', () => pm.start());
+		if (!ok) return reply.code(500).send({ message: 'server_action_failed' });
+		return { success: true };
+	});
+
+	fastify.post('/server/stop', async (request, reply) => {
+		const body = (request.body ?? {}) as { by?: number; resource?: string };
+		const ok = await runServerAction(body, 'server.stop', (author) =>
+			pm.stop({ author, message: 'Server stopped via the ingame API.' }),
+		);
+		if (!ok) return reply.code(500).send({ message: 'server_action_failed' });
+		return { success: true };
+	});
+
+	fastify.post('/server/restart', async (request, reply) => {
+		const body = (request.body ?? {}) as { by?: number; resource?: string };
+		const ok = await runServerAction(body, 'server.restart', (author) =>
+			pm.restart({ author, message: 'Server is restarting (ingame API).' }),
+		);
+		if (!ok) return reply.code(500).send({ message: 'server_action_failed' });
+		return { success: true };
 	});
 };
 

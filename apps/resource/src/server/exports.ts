@@ -96,3 +96,65 @@ exports('revokeBan', (banId: number, opts?: { by?: number }) =>
 exports('kick', (input: { target: Target; reason: string; by?: number }) =>
 	call('/ingame/kick', 'POST', { ...input, resource: GetInvokingResource() }),
 );
+
+exports('warnPlayer', (input: { target: Target; reason: string; by?: number }) =>
+	call('/ingame/warn', 'POST', { ...input, resource: GetInvokingResource() }),
+);
+
+exports(
+	'searchPlayers',
+	(
+		query: string,
+		opts?: {
+			page?: number;
+			pageSize?: number;
+			sortBy?: 'playtime' | 'lastSeen' | 'firstSeen';
+			sortOrder?: 'asc' | 'desc';
+		},
+	) => {
+		const params = pageQuery(opts);
+		if (query) params.set('q', query);
+		if (opts?.sortBy) params.set('sortBy', opts.sortBy);
+		if (opts?.sortOrder) params.set('sortOrder', opts.sortOrder);
+		return call(`/ingame/players/search?${params.toString()}`, 'GET');
+	},
+);
+
+exports(
+	'addNote',
+	(input: { target: Target; content: string; by: number }) =>
+		call('/ingame/notes', 'POST', { ...input, resource: GetInvokingResource() }),
+);
+
+exports(
+	'whitelistAdd',
+	(input: { type: string; value: string; by?: number }) =>
+		call('/ingame/whitelist', 'POST', {
+			...input,
+			resource: GetInvokingResource(),
+		}),
+);
+
+exports(
+	'whitelistRemove',
+	(input: { type: string; value: string; by?: number }) =>
+		call('/ingame/whitelist/remove', 'POST', {
+			...input,
+			resource: GetInvokingResource(),
+		}),
+);
+
+exports('serverStart', (by?: number) =>
+	call('/ingame/server/start', 'POST', { by, resource: GetInvokingResource() }),
+);
+
+exports('serverStop', (by?: number) =>
+	call('/ingame/server/stop', 'POST', { by, resource: GetInvokingResource() }),
+);
+
+exports('serverRestart', (by?: number) =>
+	call('/ingame/server/restart', 'POST', {
+		by,
+		resource: GetInvokingResource(),
+	}),
+);
