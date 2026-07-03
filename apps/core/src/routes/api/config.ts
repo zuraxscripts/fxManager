@@ -184,10 +184,12 @@ const ConfigEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		}
 
 		if (await fileExists(target.abs)) {
-			return reply.code(409).send({
-				success: false,
-				error: 'A file with that name already exists',
-			});
+			return reply
+				.code(409)
+				.send({
+					success: false,
+					error: 'A file with that name already exists',
+				});
 		}
 
 		try {
