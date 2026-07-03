@@ -7,7 +7,8 @@
 		"dev": "bun --watch src/index.ts",
 		"start": "bun src/index.ts",
 		"lint": "biome lint ./src",
-		"format": "biome format --write ."
+		"format": "biome format --write .",
+		"typecheck": "tsc --noEmit"
 	},
 	"devDependencies": {
 		"@types/bun": "latest",
