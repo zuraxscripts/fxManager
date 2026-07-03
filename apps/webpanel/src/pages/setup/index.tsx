@@ -10,6 +10,7 @@ import { ImportStep } from './ImportStep';
 import { QueryService } from '@/lib/query';
 import { toast } from 'sonner';
 import type { ApiError } from '@fxmanager/shared/types';
+import { getSetupToken } from './setup-token';
 
 export function SetupApp() {
 	const [step, setStep] = useState<SetupSteps>('account');
@@ -62,6 +63,7 @@ export function SetupApp() {
 			const result = await QueryService<{ success: boolean }>({
 				endpoint: '/setup',
 				method: 'POST',
+				headers: { 'x-setup-token': getSetupToken() },
 				body: {
 					username: formData.username,
 					password: formData.password,

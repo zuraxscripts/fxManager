@@ -16,6 +16,7 @@ import { ConfigManager } from './modules/config/manager';
 import { perfManager } from './modules/perf/manager';
 import { sessionManager } from './modules/session/manager';
 import { restartScheduler } from './modules/schedule/manager';
+import { setupTokenManager } from './modules/setup/token';
 import { applyMigrations } from '@fxmanager/database';
 import { MIGRATE_WORKER_FLAG, runMigrateWorker } from './migrate-worker';
 
@@ -31,6 +32,14 @@ checkVersion('dev-build');
 
 const cm = ConfigManager.getInstance();
 const { cookieSecret, webServerPort } = cm.getSystemValues();
+
+if (!isFxManagerSetup()) {
+	const setupToken = setupTokenManager.ensure();
+	console.log('[core] First-run setup required.');
+	console.log(
+		`[core] Open: http://<your-server-ip>:${webServerPort}/setup?token=${setupToken}`,
+	);
+}
 const fastify = Fastify({ logger: !isProduction, forceCloseConnections: true });
 
 fastify.register(fastifyCookie, {

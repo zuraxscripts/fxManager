@@ -11,6 +11,7 @@ import {
 	isProduction,
 } from '../../common/utils';
 import { ConfigManager } from '../../modules/config/manager';
+import { setupTokenManager } from '../../modules/setup/token';
 import type { RouteModule } from '../../types';
 
 interface DetectResult {
@@ -50,9 +51,15 @@ const SetupBody = Type.Object({
 type SetupBodyType = Static<typeof SetupBody>;
 
 const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
-	fastify.get('/detect', async (_request, reply) => {
+	fastify.get('/detect', async (request, reply) => {
 		if (isFxManagerSetup()) {
 			return reply.code(403).send({ success: false, error: 'Already set up' });
+		}
+
+		if (!setupTokenManager.validate(request.headers['x-setup-token'])) {
+			return reply
+				.code(401)
+				.send({ success: false, error: 'Invalid setup token' });
 		}
 
 		const cfg = ConfigManager.getInstance().getFxServerValues();
@@ -83,6 +90,10 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 		async (request, reply) => {
 			if (isFxManagerSetup()) {
 				return reply.code(403).send({ error: 'Already set up' });
+			}
+
+			if (!setupTokenManager.validate(request.headers['x-setup-token'])) {
+				return reply.code(401).send({ error: 'Invalid setup token' });
 			}
 
 			const { username, password, server, customGroups } = request.body;
@@ -119,6 +130,8 @@ const SetupEndpoint: FastifyPluginAsync = async (fastify) => {
 			);
 
 			const session = repo.auth.createSession(user.id);
+
+			setupTokenManager.clear();
 
 			return reply
 				.setCookie(COOKIE_NAME, session.id, {
