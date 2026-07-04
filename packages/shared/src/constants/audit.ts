@@ -17,4 +17,5 @@ export const AUDIT_LOG_ACTIONS = {
 	SETTINGS: ['settings.update'],
 	CONFIG: ['config.update'],
 	MIGRATE: ['migrate.txadmin'],
+	CUSTOM: ['custom.action'],
 } as const;

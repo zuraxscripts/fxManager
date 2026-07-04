@@ -565,6 +565,80 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 		return { removed: true };
 	});
 
+	fastify.post('/recap', (request, reply) => {
+		const body = request.body as {
+			serverId?: number;
+			label?: unknown;
+			target?: unknown;
+			metadata?: unknown;
+			resource?: string;
+		};
+
+		const label = typeof body.label === 'string' ? body.label.trim() : '';
+		if (!/^[a-z0-9_.-]{1,48}$/.test(label))
+			return reply.code(400).send({ message: 'invalid_label' });
+
+		const acting = resolveIssuer(body.serverId, issuerDeps);
+		if (!acting) return reply.code(400).send({ message: 'actor_required' });
+
+		let playerId: number | undefined;
+		if (body.target !== undefined && body.target !== null) {
+			const target = parseTarget(body.target);
+			if (!target) return reply.code(400).send({ message: 'invalid_target' });
+			const resolved = resolveTarget(target, targetDeps);
+			if (!resolved)
+				return reply.code(404).send({ message: 'player_not_found' });
+			playerId = resolved.playerId;
+		}
+
+		const metadata =
+			body.metadata && typeof body.metadata === 'object'
+				? (body.metadata as Record<string, unknown>)
+				: {};
+
+		const entry = repo.audit.log({
+			adminId: acting.id,
+			action: 'custom.action',
+			playerId,
+			metadata: {
+				...metadata,
+				label,
+				source: 'ingame-api',
+				resource: body.resource ?? null,
+			},
+		});
+
+		return { recapId: entry.id };
+	});
+
+	fastify.get('/recap', (request, reply) => {
+		const q = request.query as {
+			adminId?: string;
+			serverId?: string;
+			page?: string;
+			pageSize?: string;
+		};
+
+		let adminId: number | null = null;
+		const parsedAdminId = q.adminId ? Number(q.adminId) : Number.NaN;
+		if (Number.isInteger(parsedAdminId) && parsedAdminId > 0) {
+			adminId = parsedAdminId;
+		} else if (q.serverId) {
+			adminId = resolveIssuer(Number(q.serverId), issuerDeps)?.id ?? null;
+		}
+
+		if (adminId === null)
+			return reply.code(400).send({ message: 'admin_required' });
+
+		return repo.audit.list(
+			parsePage(q.page) ?? 1,
+			parsePage(q.pageSize) ?? 50,
+			undefined,
+			undefined,
+			[adminId],
+		);
+	});
+
 	const runServerAction = async (
 		body: { by?: number; resource?: string },
 		action: 'server.start' | 'server.stop' | 'server.restart',
