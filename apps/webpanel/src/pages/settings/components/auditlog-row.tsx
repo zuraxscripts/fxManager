@@ -13,6 +13,7 @@ import {
 	FileQuestion,
 	FileSliders,
 	MessagesSquare,
+	Puzzle,
 	ScanEye,
 	Server,
 	Shield,
@@ -34,6 +35,7 @@ const ACTION_ICON_MAP: Record<
 	settings: Cog,
 	migrate: Upload,
 	config: FileSliders,
+	custom: Puzzle,
 };
 
 const META_KEY_LABELS: Record<string, string> = {

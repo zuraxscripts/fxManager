@@ -104,7 +104,32 @@ const mockWhitelistAdd = mock((_data: unknown) => true as const);
 const mockWhitelistRevoke = mock((value: string) =>
 	value === 'license:missing' ? undefined : { id: 1, value },
 );
-const mockAuditLog = mock((_entry: unknown) => {});
+const mockAuditLog = mock((_entry: unknown) => ({ id: 800 }));
+const mockAuditList = mock(
+	(
+		page: number,
+		pageSize: number,
+		_action?: unknown,
+		_target?: unknown,
+		admins?: number[],
+	) => ({
+		items: [
+			{
+				id: 1,
+				admin: 'FjamZoo',
+				adminId: admins?.[0] ?? null,
+				action: 'player.kick',
+				playerId: 10,
+				player: 'Alice',
+				metadata: { source: 'ingame-api' },
+				createdAt: new Date(0),
+			},
+		],
+		total: 1,
+		page,
+		pageSize,
+	}),
+);
 
 const fakeRepo = {
 	players: {
@@ -122,7 +147,7 @@ const fakeRepo = {
 	bans: { search: mockBansSearch, revoke: mockBansRevoke },
 	admins: { findByPlayerId: mockFindAdmin },
 	whitelist: { add: mockWhitelistAdd, revokeByValue: mockWhitelistRevoke },
-	audit: { log: mockAuditLog },
+	audit: { log: mockAuditLog, list: mockAuditList },
 };
 
 const mockEmit = mock(async (_event: string, _data: unknown) => {});
@@ -197,6 +222,7 @@ describe('ingame API integration (HTTP)', () => {
 			mockWhitelistAdd,
 			mockWhitelistRevoke,
 			mockAuditLog,
+			mockAuditList,
 			mockEmit,
 			dropPlayer,
 			pmStart,
@@ -469,5 +495,84 @@ describe('ingame API integration (HTTP)', () => {
 		const failed = await call('POST', '/server/start', {});
 		expect(failed.statusCode).toBe(500);
 		expect(failed.json().message).toBe('server_action_failed');
+	});
+
+	it('records a custom action recap under the acting admin', async () => {
+		const res = await call('POST', '/recap', {
+			serverId: 1,
+			label: 'freeze',
+			target: 2,
+			metadata: { seconds: 60 },
+		});
+		expect(res.statusCode).toBe(200);
+		expect(res.json() as any).toEqual({ recapId: 800 });
+		expect(mockAuditLog).toHaveBeenCalledTimes(1);
+		expect(mockAuditLog.mock.calls[0]?.[0]).toMatchObject({
+			adminId: 4,
+			action: 'custom.action',
+			playerId: 20,
+			metadata: {
+				label: 'freeze',
+				seconds: 60,
+				source: 'ingame-api',
+			},
+		});
+	});
+
+	it('records a custom action recap without a target', async () => {
+		const res = await call('POST', '/recap', {
+			serverId: 1,
+			label: 'announce',
+		});
+		expect(res.statusCode).toBe(200);
+		expect(mockAuditLog.mock.calls[0]?.[0]).toMatchObject({
+			adminId: 4,
+			action: 'custom.action',
+			metadata: { label: 'announce', source: 'ingame-api' },
+		});
+		expect((mockAuditLog.mock.calls[0]?.[0] as any).playerId).toBeUndefined();
+	});
+
+	it('requires the acting admin to resolve for a custom recap', async () => {
+		const res = await call('POST', '/recap', { serverId: 2, label: 'freeze' });
+		expect(res.statusCode).toBe(400);
+		expect(res.json().message).toBe('actor_required');
+		expect(mockAuditLog).not.toHaveBeenCalled();
+	});
+
+	it('rejects a custom recap with a missing or malformed label', async () => {
+		const missing = await call('POST', '/recap', { serverId: 1 });
+		expect(missing.statusCode).toBe(400);
+		expect(missing.json().message).toBe('invalid_label');
+
+		const bad = await call('POST', '/recap', {
+			serverId: 1,
+			label: 'NOT VALID!',
+		});
+		expect(bad.statusCode).toBe(400);
+		expect(bad.json().message).toBe('invalid_label');
+
+		expect(mockAuditLog).not.toHaveBeenCalled();
+	});
+
+	it('fetches an action recap by admin id', async () => {
+		const res = await call('GET', '/recap?adminId=4');
+		expect(res.statusCode).toBe(200);
+		expect(mockAuditList).toHaveBeenCalledWith(1, 50, undefined, undefined, [4]);
+		expect(res.json().items).toHaveLength(1);
+		expect(res.json().total).toBe(1);
+	});
+
+	it('fetches an action recap by acting server id with paging', async () => {
+		const res = await call('GET', '/recap?serverId=1&page=2&pageSize=10');
+		expect(res.statusCode).toBe(200);
+		expect(mockAuditList).toHaveBeenCalledWith(2, 10, undefined, undefined, [4]);
+	});
+
+	it('400s an action recap lookup with no resolvable admin', async () => {
+		const res = await call('GET', '/recap');
+		expect(res.statusCode).toBe(400);
+		expect(res.json().message).toBe('admin_required');
+		expect(mockAuditList).not.toHaveBeenCalled();
 	});
 });

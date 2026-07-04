@@ -151,6 +151,27 @@ exports('addNote', (input: { target: Target; content: string; by: number }) =>
 	post('/ingame/notes', input),
 );
 
+exports(
+	'actionRecap',
+	(input: {
+		serverId: number;
+		label: string;
+		target?: Target;
+		metadata?: Record<string, unknown>;
+	}) => post('/ingame/recap', input),
+);
+
+exports(
+	'getActionRecap',
+	(opts: PageOpts & { adminId?: number; serverId?: number }) => {
+		const params = pageParams(opts);
+		if (opts.adminId !== undefined) params.set('adminId', String(opts.adminId));
+		if (opts.serverId !== undefined)
+			params.set('serverId', String(opts.serverId));
+		return get(`/ingame/recap${qs(params)}`);
+	},
+);
+
 exports('whitelistAdd', (input: { type: string; value: string; by?: number }) =>
 	post('/ingame/whitelist', input),
 );
