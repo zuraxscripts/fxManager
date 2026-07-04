@@ -3,7 +3,6 @@ import './common/env';
 import path, { join } from 'node:path';
 import { readFileSync } from 'node:fs';
 import Fastify from 'fastify';
-import open from 'open';
 import fastifyStatic from '@fastify/static';
 import fastifyWebsocket from '@fastify/websocket';
 import fastifyCookie from '@fastify/cookie';
@@ -20,6 +19,7 @@ import { sessionManager } from './modules/session/manager';
 import { restartScheduler } from './modules/schedule/manager';
 import { setupTokenManager } from './modules/setup/token';
 import { MIGRATE_WORKER_FLAG, runMigrateWorker } from './migrate-worker';
+import open from 'open';
 
 const ip = getIp();
 
@@ -47,7 +47,7 @@ if (!isFxManagerSetup()) {
 			`\t${localhostUrl}`,
 	);
 
-	open(localhostUrl);
+	open(localhostUrl).catch(() => {});
 }
 const fastify = Fastify({ logger: !isProduction, forceCloseConnections: true });
 
