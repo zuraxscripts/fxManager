@@ -122,6 +122,8 @@ describe('resolveExpiry', () => {
 	});
 
 	it('ignores non-positive durationSeconds', () => {
-		expect(resolveExpiry({ durationSeconds: 0, expiresAt: null }, now)).toBeNull();
+		expect(
+			resolveExpiry({ durationSeconds: 0, expiresAt: null }, now),
+		).toBeNull();
 	});
 });

@@ -119,8 +119,10 @@ exports('kick', (input: { target: Target; reason: string; by?: number }) =>
 	post('/ingame/kick', input),
 );
 
-exports('warnPlayer', (input: { target: Target; reason: string; by?: number }) =>
-	post('/ingame/warn', input),
+exports(
+	'warnPlayer',
+	(input: { target: Target; reason: string; by?: number }) =>
+		post('/ingame/warn', input),
 );
 
 exports('addNote', (input: { target: Target; content: string; by: number }) =>

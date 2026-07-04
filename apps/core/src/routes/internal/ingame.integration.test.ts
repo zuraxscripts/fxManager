@@ -34,7 +34,6 @@ const roster = [
 	onlinePlayer(20, 2, 'license:bob'),
 ];
 
-
 const mockFindByLicense = mock(
 	(license: string) =>
 		dbPlayers.find((p) => p.identifiers.license === license) ?? null,
@@ -239,7 +238,10 @@ describe('ingame API integration (HTTP)', () => {
 	});
 
 	it('searches the full player DB with paging/sort', async () => {
-		const res = await call('GET', '/players/search?q=ali&page=1&sortBy=playtime');
+		const res = await call(
+			'GET',
+			'/players/search?q=ali&page=1&sortBy=playtime',
+		);
 		expect(res.statusCode).toBe(200);
 		expect(mockList).toHaveBeenLastCalledWith(1, 50, {
 			search: 'ali',
@@ -308,7 +310,11 @@ describe('ingame API integration (HTTP)', () => {
 	});
 
 	it('warns a player and emits the compat event', async () => {
-		const res = await call('POST', '/warn', { target: 2, reason: 'lang', by: 1 });
+		const res = await call('POST', '/warn', {
+			target: 2,
+			reason: 'lang',
+			by: 1,
+		});
 		expect(res.statusCode).toBe(200);
 		expect(res.json() as any).toEqual({ warnId: 700 });
 		expect(mockAddWarn).toHaveBeenCalledWith(20, 'lang', 4);

@@ -312,7 +312,11 @@ describe('BansRepository', () => {
 				.run();
 			testDb
 				.insert(bans)
-				.values({ playerId: charlie.id, reason: 'exploiting', createdAt: new Date() })
+				.values({
+					playerId: charlie.id,
+					reason: 'exploiting',
+					createdAt: new Date(),
+				})
 				.run();
 
 			const byLicense = bansRepo.search({ query: 'ccc' });
@@ -328,7 +332,11 @@ describe('BansRepository', () => {
 			testDb
 				.insert(bans)
 				.values([
-					{ playerId: dave.id, reason: 'aimbot detected', createdAt: new Date() },
+					{
+						playerId: dave.id,
+						reason: 'aimbot detected',
+						createdAt: new Date(),
+					},
 					{ playerId: dave.id, reason: 'toxicity', createdAt: new Date() },
 				])
 				.run();

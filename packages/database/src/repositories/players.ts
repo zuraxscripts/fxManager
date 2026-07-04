@@ -54,7 +54,10 @@ class PlayersRepository {
 		return !!result;
 	}
 
-	findByIdentifier(type: keyof PlayerIdentifiers, value: string): Player | null {
+	findByIdentifier(
+		type: keyof PlayerIdentifiers,
+		value: string,
+	): Player | null {
 		const result = this.db
 			.select({ player: players })
 			.from(players)
