@@ -1,9 +1,59 @@
 import { ACE_PREFIX } from '@fxmanager/shared/constants';
+import type { PlayerIdentifiers } from '@fxmanager/shared/types';
+import { QueryManager } from './utils/query';
 
-// usage from any resource:
-//   exports.fxManager.hasPermission(source, 'players.kick')
-// keys are defined in PERMISSION_ACE_KEYS; permissions are registered as aces
-// by the fxManager core, so plain IsPlayerAceAllowed also works.
+type Target =
+	| number
+	| { serverId: number }
+	| { playerId: number }
+	| { identifiers: Partial<PlayerIdentifiers> };
+
+type Result<T> = { ok: true; data: T } | { ok: false; error: string };
+type PageOpts = { page?: number; pageSize?: number };
+
+async function call<T>(
+	endpoint: string,
+	method: 'GET' | 'POST',
+	body?: unknown,
+): Promise<Result<T>> {
+	try {
+		const data = await QueryManager<T>({ endpoint, method, body });
+		return { ok: true, data };
+	} catch (err) {
+		return { ok: false, error: (err as Error).message };
+	}
+}
+
+const get = <T>(endpoint: string) => call<T>(endpoint, 'GET');
+
+const post = <T>(endpoint: string, input: object) =>
+	call<T>(endpoint, 'POST', { ...input, resource: GetInvokingResource() });
+
+function qs(params: URLSearchParams): string {
+	const query = params.toString();
+	return query ? `?${query}` : '';
+}
+
+function pageParams(opts?: PageOpts): URLSearchParams {
+	const params = new URLSearchParams();
+	if (opts?.page) params.set('page', String(opts.page));
+	if (opts?.pageSize) params.set('pageSize', String(opts.pageSize));
+	return params;
+}
+
+function lookupQuery(target: Target): string {
+	const params = new URLSearchParams();
+	if (typeof target === 'number') params.set('serverId', String(target));
+	else if ('serverId' in target)
+		params.set('serverId', String(target.serverId));
+	else if ('playerId' in target)
+		params.set('playerId', String(target.playerId));
+	else
+		for (const [type, value] of Object.entries(target.identifiers))
+			if (value) params.set(type, value);
+	return params.toString();
+}
+
 exports(
 	'hasPermission',
 	(playerId: number | string, permissionKey: string): boolean => {
@@ -15,4 +65,80 @@ exports(
 			`${ACE_PREFIX}.${permissionKey}`,
 		);
 	},
+);
+
+exports('fetchPlayers', () => get('/ingame/players'));
+
+exports('getPlayer', (target: Target) =>
+	get(`/ingame/players/lookup?${lookupQuery(target)}`),
+);
+
+exports(
+	'searchPlayers',
+	(
+		query: string,
+		opts?: PageOpts & {
+			sortBy?: 'playtime' | 'lastSeen' | 'firstSeen';
+			sortOrder?: 'asc' | 'desc';
+		},
+	) => {
+		const params = pageParams(opts);
+		if (query) params.set('q', query);
+		if (opts?.sortBy) params.set('sortBy', opts.sortBy);
+		if (opts?.sortOrder) params.set('sortOrder', opts.sortOrder);
+		return get(`/ingame/players/search${qs(params)}`);
+	},
+);
+
+exports('recentBans', (opts?: PageOpts) =>
+	get(`/ingame/bans${qs(pageParams(opts))}`),
+);
+
+exports('searchBans', (query: string, opts?: PageOpts) => {
+	const params = pageParams(opts);
+	if (query) params.set('q', query);
+	return get(`/ingame/bans/search${qs(params)}`);
+});
+
+exports(
+	'ban',
+	(input: {
+		target: Target;
+		reason: string;
+		expiresAt?: string | null;
+		durationSeconds?: number;
+		by?: number;
+	}) => post('/ingame/bans', input),
+);
+
+exports('revokeBan', (banId: number, opts?: { by?: number }) =>
+	post(`/ingame/bans/${banId}/revoke`, opts ?? {}),
+);
+
+exports('kick', (input: { target: Target; reason: string; by?: number }) =>
+	post('/ingame/kick', input),
+);
+
+exports('warnPlayer', (input: { target: Target; reason: string; by?: number }) =>
+	post('/ingame/warn', input),
+);
+
+exports('addNote', (input: { target: Target; content: string; by: number }) =>
+	post('/ingame/notes', input),
+);
+
+exports('whitelistAdd', (input: { type: string; value: string; by?: number }) =>
+	post('/ingame/whitelist', input),
+);
+
+exports(
+	'whitelistRemove',
+	(input: { type: string; value: string; by?: number }) =>
+		post('/ingame/whitelist/remove', input),
+);
+
+exports('serverStop', (by?: number) => post('/ingame/server/stop', { by }));
+
+exports('serverRestart', (by?: number) =>
+	post('/ingame/server/restart', { by }),
 );

@@ -182,6 +182,14 @@ class WhitelistRepository {
 			.returning()
 			.get();
 	}
+
+	revokeByValue(value: string) {
+		return this.db
+			.delete(whitelistedIdentifers)
+			.where(eq(whitelistedIdentifers.value, value))
+			.returning()
+			.get();
+	}
 }
 
 export function createWhitelistRepository(db: DB) {

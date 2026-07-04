@@ -1,4 +1,4 @@
-import { eq, and, isNull, or, gt } from 'drizzle-orm';
+import { eq, and, isNull, or, gt, desc, like } from 'drizzle-orm';
 import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
 import { bans, players, playerIdentifiers } from '../schema';
 import type * as schema from '../schema';
@@ -66,6 +66,47 @@ class BansRepository {
 			.from(bans)
 			.innerJoin(players, eq(bans.playerId, players.id))
 			.orderBy(bans.createdAt)
+			.limit(pageSize)
+			.offset((page - 1) * pageSize)
+			.all();
+	}
+
+	search(opts?: { query?: string; page?: number; pageSize?: number }) {
+		const { query, page = 1, pageSize = 50 } = opts ?? {};
+
+		const base = this.db
+			.select({
+				id: bans.id,
+				playerId: bans.playerId,
+				name: players.name,
+				reason: bans.reason,
+				issuer: bans.issuer,
+				createdAt: bans.createdAt,
+				expiresAt: bans.expiresAt,
+				revokedAt: bans.revokedAt,
+			})
+			.from(bans)
+			.innerJoin(players, eq(bans.playerId, players.id))
+			.$dynamic();
+
+		const filtered = query
+			? base
+					.leftJoin(
+						playerIdentifiers,
+						eq(playerIdentifiers.playerId, players.id),
+					)
+					.where(
+						or(
+							like(players.name, `%${query}%`),
+							like(playerIdentifiers.value, `%${query}%`),
+							like(bans.reason, `%${query}%`),
+						),
+					)
+					.groupBy(bans.id)
+			: base;
+
+		return filtered
+			.orderBy(desc(bans.createdAt))
 			.limit(pageSize)
 			.offset((page - 1) * pageSize)
 			.all();

@@ -112,6 +112,36 @@ describe('PlayersRepository', () => {
 		});
 	});
 
+	describe('findByIdentifier()', () => {
+		it('should resolve a player by a non-license identifier type', () => {
+			const [player] = testDb
+				.insert(players)
+				.values({ name: 'Discord_User' })
+				.returning()
+				.all();
+			testDb
+				.insert(playerIdentifiers)
+				.values({
+					playerId: player.id,
+					type: 'discord',
+					value: 'discord:99998888',
+				})
+				.run();
+
+			const profile = playersRepo.findByIdentifier(
+				'discord',
+				'discord:99998888',
+			);
+
+			expect(profile?.name).toBe('Discord_User');
+			expect(profile?.identifiers.discord).toBe('discord:99998888');
+		});
+
+		it('should return null when the identifier cannot be found', () => {
+			expect(playersRepo.findByIdentifier('steam', 'steam:ghost')).toBeNull();
+		});
+	});
+
 	// region upsert actions
 
 	describe('upsert()', () => {
@@ -434,6 +464,27 @@ describe('PlayersRepository', () => {
 				expect(executionResult.reason).toBe('Severe escalation extension');
 			}
 		});
+
+		it('should record a null issuer for external (ingame API) bans', async () => {
+			const [player] = testDb
+				.insert(players)
+				.values({ name: 'Ingame_Banned' })
+				.returning()
+				.all();
+
+			const result = await playersRepo.addBan(
+				player.id,
+				null,
+				'Banned via ingame API',
+				null,
+			);
+
+			expect(result).not.toBe(false);
+			if (typeof result === 'object') {
+				expect(result.issuer).toBeNull();
+				expect(result.reason).toBe('Banned via ingame API');
+			}
+		});
 	});
 
 	describe('addKick() and addWarn() Standard Logging', () => {
@@ -483,6 +534,20 @@ describe('PlayersRepository', () => {
 				.where(eq(kicks.playerId, player.id))
 				.get();
 			expect(rowCheck).toBeDefined();
+		});
+
+		it('should record warns and kicks with a null issuer for external actions', async () => {
+			const [player] = testDb
+				.insert(players)
+				.values({ name: 'External_Actioned' })
+				.returning()
+				.all();
+
+			const warn = await playersRepo.addWarn(player.id, 'ingame warn', null);
+			const kick = await playersRepo.addKick(player.id, 'ingame kick', null);
+
+			expect(warn.issuer).toBeNull();
+			expect(kick.issuer).toBeNull();
 		});
 	});
 });

@@ -28,6 +28,16 @@ class AdminsRepository {
 		return AdminsRepository.instance;
 	}
 
+	findByPlayerId(playerId: number): { id: number; username: string } | null {
+		return (
+			this.db
+				.select({ id: adminUsers.id, username: adminUsers.username })
+				.from(adminUsers)
+				.where(eq(adminUsers.playerId, playerId))
+				.get() ?? null
+		);
+	}
+
 	list(
 		page = 1,
 		pageSize = 20,
