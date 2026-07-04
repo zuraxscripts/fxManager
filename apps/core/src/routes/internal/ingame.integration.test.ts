@@ -6,7 +6,11 @@ import type { OnlinePlayer } from '@fxmanager/shared/types';
 const dbPlayers = [
 	{ id: 10, name: 'Alice', identifiers: { license: 'license:alice' } },
 	{ id: 20, name: 'Bob', identifiers: { license: 'license:bob' } },
-	{ id: 30, name: 'Carol', identifiers: { license: 'license:carol' } },
+	{
+		id: 30,
+		name: 'Carol',
+		identifiers: { license: 'license:carol', fivem: 'fivem:carol' },
+	},
 ];
 
 const onlinePlayer = (
@@ -34,6 +38,12 @@ const roster = [
 const mockFindByLicense = mock(
 	(license: string) =>
 		dbPlayers.find((p) => p.identifiers.license === license) ?? null,
+);
+const mockFindByIdentifier = mock(
+	(type: string, value: string) =>
+		dbPlayers.find(
+			(p) => (p.identifiers as Record<string, string>)[type] === value,
+		) ?? null,
 );
 const mockFindById = mock(
 	async (id: number) => dbPlayers.find((p) => p.id === id) ?? null,
@@ -94,6 +104,7 @@ const mockAuditLog = mock((_entry: unknown) => {});
 const fakeRepo = {
 	players: {
 		findByLicense: mockFindByLicense,
+		findByIdentifier: mockFindByIdentifier,
 		findById: mockFindById,
 		list: mockList,
 		addBan: mockAddBan,
@@ -164,6 +175,7 @@ describe('ingame API integration (HTTP)', () => {
 	beforeEach(() => {
 		for (const m of [
 			mockFindByLicense,
+			mockFindByIdentifier,
 			mockFindById,
 			mockList,
 			mockAddBan,
@@ -217,6 +229,13 @@ describe('ingame API integration (HTTP)', () => {
 
 		const missing = await call('GET', '/players/lookup?serverId=99');
 		expect(missing.statusCode).toBe(404);
+	});
+
+	it('looks up an offline player by a non-license identifier', async () => {
+		const res = await call('GET', '/players/lookup?fivem=fivem:carol');
+		expect(res.statusCode).toBe(200);
+		expect(res.json().id).toBe(30);
+		expect(mockFindByIdentifier).toHaveBeenCalledWith('fivem', 'fivem:carol');
 	});
 
 	it('searches the full player DB with paging/sort', async () => {

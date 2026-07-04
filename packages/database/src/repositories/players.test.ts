@@ -112,6 +112,36 @@ describe('PlayersRepository', () => {
 		});
 	});
 
+	describe('findByIdentifier()', () => {
+		it('should resolve a player by a non-license identifier type', () => {
+			const [player] = testDb
+				.insert(players)
+				.values({ name: 'Discord_User' })
+				.returning()
+				.all();
+			testDb
+				.insert(playerIdentifiers)
+				.values({
+					playerId: player.id,
+					type: 'discord',
+					value: 'discord:99998888',
+				})
+				.run();
+
+			const profile = playersRepo.findByIdentifier(
+				'discord',
+				'discord:99998888',
+			);
+
+			expect(profile?.name).toBe('Discord_User');
+			expect(profile?.identifiers.discord).toBe('discord:99998888');
+		});
+
+		it('should return null when the identifier cannot be found', () => {
+			expect(playersRepo.findByIdentifier('steam', 'steam:ghost')).toBeNull();
+		});
+	});
+
 	// region upsert actions
 
 	describe('upsert()', () => {

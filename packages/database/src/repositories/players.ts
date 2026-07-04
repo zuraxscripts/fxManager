@@ -54,15 +54,15 @@ class PlayersRepository {
 		return !!result;
 	}
 
-	findByLicense(license: string): Player | null {
+	findByIdentifier(type: keyof PlayerIdentifiers, value: string): Player | null {
 		const result = this.db
 			.select({ player: players })
 			.from(players)
 			.innerJoin(playerIdentifiers, eq(playerIdentifiers.playerId, players.id))
 			.where(
 				and(
-					eq(playerIdentifiers.type, 'license'),
-					eq(playerIdentifiers.value, license),
+					eq(playerIdentifiers.type, type),
+					eq(playerIdentifiers.value, value),
 				),
 			)
 			.get();
@@ -84,6 +84,10 @@ class PlayersRepository {
 		const isStaff = this.isStaff(result.player.id);
 
 		return { ...result.player, isStaff, identifiers };
+	}
+
+	findByLicense(license: string): Player | null {
+		return this.findByIdentifier('license', license);
 	}
 
 	/* ToDo:

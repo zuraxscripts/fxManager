@@ -14,14 +14,36 @@ import {
 	type IngameTarget,
 } from './ingame.resolve';
 
+const IDENTIFIER_KEYS: (keyof PlayerIdentifiers)[] = [
+	'license',
+	'fivem',
+	'discord',
+	'steam',
+];
+
+function pickIdentifiers(
+	source: Record<string, unknown>,
+): Partial<PlayerIdentifiers> | null {
+	const identifiers: Partial<PlayerIdentifiers> = {};
+	for (const key of IDENTIFIER_KEYS) {
+		const value = source[key];
+		if (typeof value === 'string' && value) identifiers[key] = value;
+	}
+	return Object.keys(identifiers).length > 0 ? identifiers : null;
+}
+
 function parseTarget(raw: unknown): IngameTarget | null {
 	if (typeof raw === 'number') return raw;
 	if (raw && typeof raw === 'object') {
 		const t = raw as Record<string, unknown>;
 		if (typeof t.serverId === 'number') return { serverId: t.serverId };
 		if (typeof t.playerId === 'number') return { playerId: t.playerId };
-		if (t.identifiers && typeof t.identifiers === 'object')
-			return { identifiers: t.identifiers as Partial<PlayerIdentifiers> };
+		if (t.identifiers && typeof t.identifiers === 'object') {
+			const identifiers = pickIdentifiers(
+				t.identifiers as Record<string, unknown>,
+			);
+			return identifiers ? { identifiers } : null;
+		}
 	}
 	return null;
 }
@@ -40,8 +62,17 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	const targetDeps = {
 		onlineByServerId,
 		onlineByPlayerId: (pid: number) => gm.getPlayer(pid),
-		playerIdByIdentifiers: (ids: Partial<PlayerIdentifiers>) =>
-			ids.license ? (repo.players.findByLicense(ids.license)?.id ?? null) : null,
+		playerIdByIdentifiers: (ids: Partial<PlayerIdentifiers>) => {
+			for (const [type, value] of Object.entries(ids)) {
+				if (!value) continue;
+				const found = repo.players.findByIdentifier(
+					type as keyof PlayerIdentifiers,
+					value,
+				);
+				if (found) return found.id;
+			}
+			return null;
+		},
 	};
 
 	const issuerDeps = {
@@ -92,16 +123,15 @@ const IngameEndpoints: RouteModule['handler'] = async (fastify, options) => {
 	});
 
 	fastify.get('/players/lookup', async (request, reply) => {
-		const q = request.query as {
-			serverId?: string;
-			playerId?: string;
-			license?: string;
-		};
+		const q = request.query as Record<string, string | undefined>;
 
 		let target: IngameTarget | null = null;
 		if (q.serverId) target = { serverId: Number(q.serverId) };
 		else if (q.playerId) target = { playerId: Number(q.playerId) };
-		else if (q.license) target = { identifiers: { license: q.license } };
+		else {
+			const identifiers = pickIdentifiers(q);
+			if (identifiers) target = { identifiers };
+		}
 
 		if (!target) return reply.code(400).send({ message: 'invalid_target' });
 

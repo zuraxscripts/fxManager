@@ -37,8 +37,9 @@ function lookupQuery(target: Target): string {
 		params.set('serverId', String(target.serverId));
 	else if ('playerId' in target)
 		params.set('playerId', String(target.playerId));
-	else if (target.identifiers.license)
-		params.set('license', target.identifiers.license);
+	else
+		for (const [type, value] of Object.entries(target.identifiers))
+			if (value) params.set(type, value);
 	return params.toString();
 }
 
