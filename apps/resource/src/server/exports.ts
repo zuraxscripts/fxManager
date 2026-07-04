@@ -9,6 +9,7 @@ type Target =
 	| { identifiers: Partial<PlayerIdentifiers> };
 
 type Result<T> = { ok: true; data: T } | { ok: false; error: string };
+type PageOpts = { page?: number; pageSize?: number };
 
 async function call<T>(
 	endpoint: string,
@@ -23,7 +24,17 @@ async function call<T>(
 	}
 }
 
-function pageQuery(opts?: { page?: number; pageSize?: number }): URLSearchParams {
+const get = <T>(endpoint: string) => call<T>(endpoint, 'GET');
+
+const post = <T>(endpoint: string, input: object) =>
+	call<T>(endpoint, 'POST', { ...input, resource: GetInvokingResource() });
+
+function qs(params: URLSearchParams): string {
+	const query = params.toString();
+	return query ? `?${query}` : '';
+}
+
+function pageParams(opts?: PageOpts): URLSearchParams {
 	const params = new URLSearchParams();
 	if (opts?.page) params.set('page', String(opts.page));
 	if (opts?.pageSize) params.set('pageSize', String(opts.pageSize));
@@ -56,25 +67,38 @@ exports(
 	},
 );
 
-exports('recentBans', (opts?: { page?: number; pageSize?: number }) => {
-	const qs = pageQuery(opts).toString();
-	return call(`/ingame/bans${qs ? `?${qs}` : ''}`, 'GET');
-});
+exports('fetchPlayers', () => get('/ingame/players'));
+
+exports('getPlayer', (target: Target) =>
+	get(`/ingame/players/lookup?${lookupQuery(target)}`),
+);
 
 exports(
-	'searchBans',
-	(query: string, opts?: { page?: number; pageSize?: number }) => {
-		const params = pageQuery(opts);
+	'searchPlayers',
+	(
+		query: string,
+		opts?: PageOpts & {
+			sortBy?: 'playtime' | 'lastSeen' | 'firstSeen';
+			sortOrder?: 'asc' | 'desc';
+		},
+	) => {
+		const params = pageParams(opts);
 		if (query) params.set('q', query);
-		return call(`/ingame/bans/search?${params.toString()}`, 'GET');
+		if (opts?.sortBy) params.set('sortBy', opts.sortBy);
+		if (opts?.sortOrder) params.set('sortOrder', opts.sortOrder);
+		return get(`/ingame/players/search${qs(params)}`);
 	},
 );
 
-exports('fetchPlayers', () => call('/ingame/players', 'GET'));
-
-exports('getPlayer', (target: Target) =>
-	call(`/ingame/players/lookup?${lookupQuery(target)}`, 'GET'),
+exports('recentBans', (opts?: PageOpts) =>
+	get(`/ingame/bans${qs(pageParams(opts))}`),
 );
+
+exports('searchBans', (query: string, opts?: PageOpts) => {
+	const params = pageParams(opts);
+	if (query) params.set('q', query);
+	return get(`/ingame/bans/search${qs(params)}`);
+});
 
 exports(
 	'ban',
@@ -84,78 +108,39 @@ exports(
 		expiresAt?: string | null;
 		durationSeconds?: number;
 		by?: number;
-	}) => call('/ingame/bans', 'POST', { ...input, resource: GetInvokingResource() }),
+	}) => post('/ingame/bans', input),
 );
 
 exports('revokeBan', (banId: number, opts?: { by?: number }) =>
-	call(`/ingame/bans/${banId}/revoke`, 'POST', {
-		...opts,
-		resource: GetInvokingResource(),
-	}),
+	post(`/ingame/bans/${banId}/revoke`, opts ?? {}),
 );
 
 exports('kick', (input: { target: Target; reason: string; by?: number }) =>
-	call('/ingame/kick', 'POST', { ...input, resource: GetInvokingResource() }),
+	post('/ingame/kick', input),
 );
 
 exports('warnPlayer', (input: { target: Target; reason: string; by?: number }) =>
-	call('/ingame/warn', 'POST', { ...input, resource: GetInvokingResource() }),
+	post('/ingame/warn', input),
 );
 
-exports(
-	'searchPlayers',
-	(
-		query: string,
-		opts?: {
-			page?: number;
-			pageSize?: number;
-			sortBy?: 'playtime' | 'lastSeen' | 'firstSeen';
-			sortOrder?: 'asc' | 'desc';
-		},
-	) => {
-		const params = pageQuery(opts);
-		if (query) params.set('q', query);
-		if (opts?.sortBy) params.set('sortBy', opts.sortBy);
-		if (opts?.sortOrder) params.set('sortOrder', opts.sortOrder);
-		return call(`/ingame/players/search?${params.toString()}`, 'GET');
-	},
+exports('addNote', (input: { target: Target; content: string; by: number }) =>
+	post('/ingame/notes', input),
 );
 
-exports(
-	'addNote',
-	(input: { target: Target; content: string; by: number }) =>
-		call('/ingame/notes', 'POST', { ...input, resource: GetInvokingResource() }),
-);
-
-exports(
-	'whitelistAdd',
-	(input: { type: string; value: string; by?: number }) =>
-		call('/ingame/whitelist', 'POST', {
-			...input,
-			resource: GetInvokingResource(),
-		}),
+exports('whitelistAdd', (input: { type: string; value: string; by?: number }) =>
+	post('/ingame/whitelist', input),
 );
 
 exports(
 	'whitelistRemove',
 	(input: { type: string; value: string; by?: number }) =>
-		call('/ingame/whitelist/remove', 'POST', {
-			...input,
-			resource: GetInvokingResource(),
-		}),
+		post('/ingame/whitelist/remove', input),
 );
 
-exports('serverStart', (by?: number) =>
-	call('/ingame/server/start', 'POST', { by, resource: GetInvokingResource() }),
-);
+exports('serverStart', (by?: number) => post('/ingame/server/start', { by }));
 
-exports('serverStop', (by?: number) =>
-	call('/ingame/server/stop', 'POST', { by, resource: GetInvokingResource() }),
-);
+exports('serverStop', (by?: number) => post('/ingame/server/stop', { by }));
 
 exports('serverRestart', (by?: number) =>
-	call('/ingame/server/restart', 'POST', {
-		by,
-		resource: GetInvokingResource(),
-	}),
+	post('/ingame/server/restart', { by }),
 );
