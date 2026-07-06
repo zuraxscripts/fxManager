@@ -1,6 +1,6 @@
 {
   "name": "fxmanager",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "private": true,
   "packageManager": "bun@1.3.2",
   "scripts": {
