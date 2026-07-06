@@ -129,12 +129,12 @@ Output in `dist/`:
 dist/
   fxmanager-linux          ← Linux binary
   fxmanager-windows.exe    ← Windows binary
-  public/                  ← UI assets - must stay next to the binary
+  assets/                  ← UI assets - must stay next to the binary
   resource/                ← Drop into your server's resources/ folder
 ```
 
 > [!IMPORTANT]
-> The `public/` folder must remain in the same directory as the binary when deploying. The server resolves it relative to its own location at runtime.
+> The `assets/` folder must remain in the same directory as the binary when deploying. The server resolves it relative to its own location at runtime.
 
 ---
 
@@ -145,7 +145,7 @@ dist/
 ```
 your-deploy-folder/
   fxmanager-linux      (or fxmanager-windows.exe)
-  public/
+  assets/
   .env
 ```
 
