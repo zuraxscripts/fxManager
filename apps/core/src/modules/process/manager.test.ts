@@ -323,11 +323,10 @@ describe('ProcessManager', () => {
 	});
 
 	describe('Piped Output Streams & Line Parsing', () => {
-		it('should promote tracking context to running and load system resources when authentication patterns match', async () => {
+		it('should promote tracking context to running and load system resources when setFxServerReady is explicitly called', async () => {
 			await processManager.start();
 
-			pushToStream(stdoutController, 'Some random bootup message...\n');
-			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+			processManager.setFxServerReady();
 
 			await Bun.sleep(15); // Extended sleep value to let the text decoder transform stream cycles settle
 
@@ -340,7 +339,7 @@ describe('ProcessManager', () => {
 		it('reads, parses, and stores the fxServer artifact build once the server is running', async () => {
 			await processManager.start();
 
-			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+			processManager.setFxServerReady();
 			await Bun.sleep(15);
 
 			expect(processManager.getState().status).toBe('running');
@@ -387,7 +386,7 @@ describe('ProcessManager', () => {
 		it('should bypass graceful shutdown and terminate immediately when forceCrash is true', async () => {
 			await processManager.start();
 
-			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+			processManager.setFxServerReady();
 			await Bun.sleep(15);
 
 			const stopPromise = processManager.stop({ forceCrash: true });
@@ -462,7 +461,7 @@ describe('ProcessManager', () => {
 	describe('txAdmin serverShuttingDown compat', () => {
 		it('relays serverShuttingDown when stopping a running server, with the grace delay and author', async () => {
 			await processManager.start();
-			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+			processManager.setFxServerReady();
 			await Bun.sleep(15);
 			expect(processManager.getState().status).toBe('running');
 
@@ -478,7 +477,7 @@ describe('ProcessManager', () => {
 
 		it('defaults the author to System when none is supplied', async () => {
 			await processManager.start();
-			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+			processManager.setFxServerReady();
 			await Bun.sleep(15);
 
 			const stopPromise = processManager.stop();
@@ -502,7 +501,7 @@ describe('ProcessManager', () => {
 
 		it('relays serverShuttingDown once on the stop leg of a restart', async () => {
 			await processManager.start();
-			pushToStream(stdoutController, 'Authenticated with cfx.re Nucleus\n');
+			processManager.setFxServerReady();
 			await Bun.sleep(15);
 
 			const restartPromise = processManager.restart({ author: 'Maximus' });
